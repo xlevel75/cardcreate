@@ -524,15 +524,29 @@ async function editSlot(req, slot, canvas, ctx, instr) {
     fillSlot(req, slot, canvas, { ...ctx, error: e.message || String(e), lastInstr: instr });
   } finally { state.pending--; updateQueueStatus(); }
 }
+// 같은 요청(등급·스킬·컨셉)으로 그림을 처음부터 다시 만듦. 이전 그림은 ↶ 로 되돌릴 수 있음
+async function regenSlot(req, slot, canvas, ctx) {
+  if (req.engine !== 'builtin' && !state.settings[ENGINES[req.engine].key]) { $('#apiBox').open = true; toast(`${ENGINES[req.engine].label} API 키를 먼저 입력해 주세요`); return; }
+  slot.className = 'slot pending editing'; slot.innerHTML = '';
+  slot.append(el('div', { class: 'img' }, canvasCopy(canvas), el('div', { class: 'over' }, el('div', { class: 'spinner' }), el('div', { class: 'pmsg', style: 'position:static' }, `🔄 ${ENGINES[req.engine].label} 새로 만드는 중…`))));
+  state.pending++; updateQueueStatus();
+  try {
+    const nc = req.engine !== 'builtin' ? await genAiArt(req) : (await sleep(200), renderArt(req, (Math.random() * 1e9) | 0));
+    fillSlot(req, slot, nc, { name: ctx.name, history: [...ctx.history, canvas], edits: [...ctx.edits, '🔄 새로 만들기'] });
+    if (req.texture) slot._runTexture?.();
+  } catch (e) {
+    fillSlot(req, slot, canvas, { ...ctx, error: e.message || String(e), errTitle: '⚠ 새로 만들기 실패 — 원래 그림을 유지했습니다' });
+  } finally { state.pending--; updateQueueStatus(); }
+}
 function fillSlot(req, slot, canvas, ctx = {}) {
   ctx = { name: null, history: [], edits: [], ...ctx };
   slot.className = 'slot done'; slot.innerHTML = ''; slot._artId = null;
   const imgBox = el('div', { class: 'img', onclick: () => lightbox(canvasCopy(canvas)) }, canvas);
-  if (ctx.edits.length) imgBox.append(el('span', { class: 'editTag', title: ctx.edits.map((x, i) => `${i + 1}. ${x}`).join('\n') }, `✏ 편집 ${ctx.edits.length}회`));
+  if (ctx.edits.length) imgBox.append(el('span', { class: 'editTag', title: ctx.edits.map((x, i) => `${i + 1}. ${x}`).join('\n') }, `✏ 변경 ${ctx.edits.length}회`));
   const nameIn = el('input', { value: ctx.name || defaultArtName(req), title: '저장 이름', oninput: e => ctx.name = e.target.value });
   ctx.name = nameIn.value;
   const editIn = el('input', { class: 'editIn', placeholder: '어떻게 바꿀까요? 입력 후 Enter (예: 배경을 밤하늘로, 알을 더 크게)', value: ctx.lastInstr || '' });
-  const editRow = el('div', { class: 'editRow', hidden: !ctx.error }, editIn);
+  const editRow = el('div', { class: 'editRow', hidden: !ctx.error || !!ctx.errTitle }, editIn);
   editIn.onkeydown = e => {
     if (e.key === 'Enter' && !e.isComposing && editIn.value.trim()) editSlot(req, slot, canvas, ctx, editIn.value.trim());
     if (e.key === 'Escape') editRow.hidden = true;
@@ -577,16 +591,17 @@ function fillSlot(req, slot, canvas, ctx = {}) {
   };
   const saveBtn = el('button', { class: 'btn primary', onclick: () => slot._save() }, '💾 저장');
   slot.append(imgBox,
-    ...(ctx.error ? [el('div', { class: 'errMsg editErr' }, '⚠ 편집 실패 — 원래 그림을 유지했습니다\n' + ctx.error)] : []),
+    ...(ctx.error ? [el('div', { class: 'errMsg editErr' }, (ctx.errTitle || '⚠ 편집 실패 — 원래 그림을 유지했습니다') + '\n' + ctx.error)] : []),
     texRow,
     el('div', { class: 'saveRow' }, nameIn),
     editRow,
     el('div', { class: 'acts' }, saveBtn,
+      el('button', { class: 'btn', title: '같은 등급·스킬·컨셉으로 그림을 처음부터 새로 만들기 (↶ 로 되돌리기 가능)', onclick: () => regenSlot(req, slot, canvas, ctx) }, '🔄 새로 만들기'),
       el('button', { class: 'btn', title: '이 그림을 바탕으로 수정 요청', onclick: () => { editRow.hidden = !editRow.hidden; if (!editRow.hidden) editIn.focus(); } }, '✏ 편집'),
       ctx.history.length ? el('button', { class: 'btn', title: '편집 전 그림으로 되돌리기', onclick: () => fillSlot(req, slot, ctx.history.at(-1), { name: ctx.name, history: ctx.history.slice(0, -1), edits: ctx.edits.slice(0, -1) }) }, '↶') : null,
       el('button', { class: 'btn', onclick: () => { if (slot._artId) openCombine({ artId: slot._artId }); else openCombine({ temp: { canvas, skills: req.skills, grade: req.grade, name: nameIn.value } }); } }, '🧩 조합'),
       el('button', { class: 'btn danger', onclick: () => slot._discard() }, '🗑')));
-  if (ctx.error) editIn.focus();
+  if (ctx.error && !ctx.errTitle) editIn.focus();
 }
 async function genAiArt(req) { return coverTo(await aiImage({ engine: req.engine, prompt: buildPrompt(req), aspect: '2:3' }), W, H); }
 

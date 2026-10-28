@@ -29,9 +29,9 @@ const SKILLS = [
   { id: 'thorns', ko: '가시', desc: '나를 친 알을 세게 튕겨냄', color: '#ff4d6d', en: 'THORNS — sharp glowing crystal spikes burst out from the rim of the stone like armor, crackling with retaliating energy' },
   { id: 'revive', ko: '부활', desc: '바깥에서 죽으면 근처에서 부활', color: '#ffb547', en: 'RESURRECTION — huge blazing phoenix wings unfold behind the stone, a pillar of rebirth light and a radiant halo above it' },
   { id: 'split', ko: '분열', desc: '공격 시 알이 둘로 나뉨', color: '#c77dff', en: 'SPLIT — the stone splits into two glowing mirror twins flanking it, connected by a bright dividing energy slash' },
-  { id: 'magnet', ko: '자석', desc: '날아가는 알을 내 쪽으로 휘게 함', color: '#ff5a5a', en: 'MAGNETISM — powerful red and blue magnetic field lines swirl around the stone, small floating debris bending toward it' },
+  { id: 'magnet', ko: '자석', desc: '날아가는 알을 내 쪽으로 휘게 함', color: '#ff5a5a', en: 'MAGNETISM — an overwhelming magnetic vortex sucks everything toward the stone: glowing red and blue field lines spiral inward and converge into its centre, iron filings, metal shards, sparks, debris and smaller enemy stones are dragged toward it with motion streaks, the surrounding background visibly warps and bends inward like a gravity well, crackling electromagnetic arcs, a red N glow on one side and a blue S glow on the other' },
   { id: 'mark', ko: '표식', desc: '상대 스킬을 봉인', color: '#ff4fd8', en: 'MARK / SEAL — a large glowing magic seal sigil with runes hovers around the stone, chains of light and a targeting reticle' },
-  { id: 'cloak', ko: '클로킹', desc: '투명해져 보이지 않음', color: '#9ff5e6', en: 'CLOAKING — the stone is half-invisible, its body dissolving into refractive shimmer, glitching light fragments and mist' },
+  { id: 'cloak', ko: '클로킹', desc: '투명해져 보이지 않음', color: '#9ff5e6', en: 'CLOAKING — the stone is semi-transparent like clear ghostly glass: the background scenery is clearly visible THROUGH its body, slightly magnified and bent by refraction; a cloaking field spreads around it so the surrounding background also turns see-through, pale and faded, dissolving into translucent haze with heat-haze ripples; only a thin shimmering rim of light, glitching light fragments and faint distortion reveal where it is' },
   { id: 'support', ko: '지원', desc: '반경 내 아군 강화', color: '#5df08a', en: 'SUPPORT AURA — a warm radiant aura and glowing circle around the stone, rising plus-shaped sparks and blessing light' },
 ];
 
@@ -842,23 +842,51 @@ const SKFX = {
   },
   magnet: {
     back(c, col) {
-      const { g, S, rnd } = c; g.save(); g.globalCompositeOperation = 'lighter'; g.shadowBlur = c.glow; g.shadowColor = '#ff6a6a';
-      const top = S.y - S.ry * .3, bot = S.y + S.th + S.ry * .4;
-      for (let k = 1; k <= 5; k++) for (const side of [-1, 1]) {
-        const gr = g.createLinearGradient(0, S.y - 300, 0, S.y + 300); gr.addColorStop(0, 'rgba(255,90,90,.7)'); gr.addColorStop(1, 'rgba(90,150,255,.7)');
-        g.strokeStyle = gr; g.lineWidth = 2.5; g.beginPath(); g.moveTo(S.x, top);
-        g.bezierCurveTo(S.x + side * (S.rx + k * 60), S.y - S.ry - k * 70, S.x + side * (S.rx + k * 60), S.y + S.th + S.ry + k * 50, S.x, bot); g.stroke();
+      const { g, S, rnd, Q } = c, cx = S.x, cy = S.y + S.th * .4;
+      // 중심으로 휘감겨 들어가는 자기장 소용돌이
+      g.save(); g.translate(cx, cy); g.scale(1, .62); radial(g, 0, 0, 460, '#2a0b3a', .55); g.restore();
+      g.save(); g.globalCompositeOperation = 'lighter'; g.lineCap = 'round';
+      const N = 14;
+      for (let k = 0; k < N; k++) {
+        const a0 = k / N * Math.PI * 2, red = k % 2 === 0;
+        g.shadowColor = red ? '#ff4d4d' : '#4d8bff'; g.shadowBlur = c.glow;
+        for (let j = 0; j < 46; j++) {
+          const u0 = j / 46, u1 = (j + 1) / 46, r0 = 470 * (1 - u0) + 60, r1 = 470 * (1 - u1) + 60, t0 = a0 + u0 * 3.4, t1 = a0 + u1 * 3.4;
+          g.strokeStyle = rgba(red ? '#ff6a6a' : '#6aa0ff', .12 + u1 * .7); g.lineWidth = .8 + u1 * 3.2;
+          g.beginPath(); g.moveTo(cx + Math.cos(t0) * r0, cy + Math.sin(t0) * r0 * .62); g.lineTo(cx + Math.cos(t1) * r1, cy + Math.sin(t1) * r1 * .62); g.stroke();
+        }
+      }
+      // 빨려 들어가는 쇳조각 · 파편 (꼬리가 바깥쪽)
+      for (let i = 0; i < 70 * Q + 20; i++) {
+        const a = rnd() * Math.PI * 2, d = 150 + rnd() * 340, x = cx + Math.cos(a) * d, y = cy + Math.sin(a) * d * .7;
+        const L = 30 + rnd() * 70, ux = (cx - x) / d, uy = (cy - y) / d, hx = x + ux * L, hy = y + uy * L;
+        const gr = g.createLinearGradient(x, y, hx, hy); gr.addColorStop(0, rgba(col, 0)); gr.addColorStop(1, rgba(rnd() < .5 ? '#ffd0d0' : '#cfe0ff', .9));
+        g.shadowBlur = 6; g.shadowColor = col; g.strokeStyle = gr; g.lineWidth = 1.5 + rnd() * 2.5; g.beginPath(); g.moveTo(x, y); g.lineTo(hx, hy); g.stroke();
+        g.fillStyle = '#e8ecf4'; g.save(); g.translate(hx, hy); g.rotate(a + rnd()); const sz = 2 + rnd() * 6; g.fillRect(-sz, -sz * .4, sz * 2, sz * .8); g.restore();
       }
       g.restore();
-      for (const [x, y, cxo] of [[110, 300, 1], [700, 380, -1], [690, 900, -1]]) {
+      // 끌려오는 적 알 (잔상)
+      for (const [x, y, cxo] of [[150, 330, 1], [660, 400, -1], [640, 880, -1]]) {
         g.save(); g.globalCompositeOperation = 'lighter'; g.setLineDash([12, 10]); g.lineWidth = 4; g.strokeStyle = rgba(col, .75); g.shadowColor = col; g.shadowBlur = 10;
-        g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo((x + S.x) / 2 + cxo * 160, (y + S.y) / 2 - 120, S.x + (x - S.x) * .35, S.y + (y - S.y) * .35); g.stroke(); g.restore();
+        g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo((x + S.x) / 2 + cxo * 120, (y + S.y) / 2 - 80, S.x + (x - S.x) * .3, S.y + (y - S.y) * .3); g.stroke(); g.restore();
+        for (let k = 3; k >= 1; k--) { g.save(); g.globalAlpha = .12 * (4 - k); drawStone(g, x + (S.x - x) * .07 * k, y + (S.y - y) * .07 * k, 46, 28, 12, c.enemy, {}); g.restore(); }
         drawStone(g, x, y, 46, 28, 12, c.enemy, { rim: col, rimA: .8, glow: c.glow });
       }
     },
     front(c) {
-      const { g, S } = c;
-      radial(g, S.x - S.rx * .6, S.y - 10, 120, '#ff4d4d', .35, 'lighter'); radial(g, S.x + S.rx * .6, S.y + S.th, 120, '#4d8bff', .35, 'lighter');
+      const { g, S, rnd } = c, cx = S.x, cy = S.y + S.th * .4;
+      radial(g, S.x - S.rx * .7, S.y - 10, 140, '#ff4d4d', .45, 'lighter'); radial(g, S.x + S.rx * .7, S.y + S.th, 140, '#4d8bff', .45, 'lighter');
+      // 안쪽으로 조여드는 흡입 링
+      g.save(); g.globalCompositeOperation = 'lighter'; g.shadowBlur = 12;
+      for (let k = 0; k < 4; k++) { const r = S.rx * (1.25 + k * .32); g.shadowColor = k % 2 ? '#4d8bff' : '#ff4d4d'; g.strokeStyle = rgba(k % 2 ? '#8fb6ff' : '#ff9a9a', .5 - k * .1); g.lineWidth = 3 - k * .5; g.beginPath(); g.ellipse(cx, cy, r, r * .55, 0, Math.PI * (.05 + k * .1), Math.PI * (1.6 + k * .1)); g.stroke(); }
+      // 전자기 스파크
+      g.strokeStyle = '#ffffff'; g.lineWidth = 2; g.shadowColor = '#bcd4ff';
+      for (let i = 0; i < 5; i++) {
+        let a = rnd() * Math.PI * 2, r = S.rx * 1.05, x = cx + Math.cos(a) * r, y = cy + Math.sin(a) * r * .6; g.beginPath(); g.moveTo(x, y);
+        for (let j = 0; j < 5; j++) { r += 18 + rnd() * 18; a += (rnd() - .5) * .5; x = cx + Math.cos(a) * r; y = cy + Math.sin(a) * r * .6; g.lineTo(x, y); }
+        g.stroke();
+      }
+      g.restore();
     },
   },
   mark: {
@@ -925,11 +953,24 @@ function drawMainStone(c, ids, col) {
   stoneShadow(g, S.x, S.y + S.th + S.ry * .55, S.rx, ids.includes('cloak') ? .2 : .55);
   if (ids.includes('cloak')) {
     const sp = stoneSprite(S.rx, S.ry, S.th, stone, col, .25), X = S.x - sp.width / 2, Y = S.y - S.ry - 8;
-    g.save(); g.globalAlpha = .22; g.drawImage(sp, X, Y); g.restore();
+    const cx = S.x, cy = S.y + S.th / 2, snap = mk(); snap.getContext('2d').drawImage(g.canvas, 0, 0);
+    // 은신장: 알 주위 배경이 흐릿하고 옅게 비쳐 보임
+    const f = mk(), fg = f.getContext('2d');
+    fg.filter = `blur(5px) saturate(.35) brightness(${c.t >= 3 ? .8 : 1.2})`; fg.drawImage(snap, 0, 0); fg.filter = 'none';
+    fg.globalCompositeOperation = 'destination-in'; fg.save(); fg.translate(cx, cy); fg.scale(1, .72);
+    const rg = fg.createRadialGradient(0, 0, 0, 0, 0, S.rx * 2.1); rg.addColorStop(0, '#000'); rg.addColorStop(.55, 'rgba(0,0,0,.9)'); rg.addColorStop(1, 'rgba(0,0,0,0)');
+    fg.fillStyle = rg; fg.fillRect(-W, -H, W * 2, H * 2); fg.restore();
+    g.save(); g.globalAlpha = .8; g.drawImage(f, 0, 0); g.restore();
+    // 알 몸통: 뒤 배경이 굴절돼(살짝 확대) 그대로 비침
+    g.save(); g.beginPath(); g.ellipse(cx, S.y, S.rx, S.ry, 0, Math.PI, 0); g.lineTo(cx + S.rx, S.y + S.th); g.ellipse(cx, S.y + S.th, S.rx, S.ry, 0, 0, Math.PI); g.closePath(); g.clip();
+    g.translate(cx, cy); g.scale(1.22, 1.22); g.translate(-cx, -cy); g.filter = `saturate(1.3) contrast(1.15) brightness(${c.t >= 3 ? .75 : .95})`; g.drawImage(snap, 0, 0); g.restore();
+    g.save(); g.globalAlpha = .16; g.drawImage(sp, X, Y); g.restore();
     for (let i = 0; i < 10; i++) {
       const y0 = Y + i * sp.height / 10, dx = (c.rnd() - .5) * 30;
-      g.save(); g.beginPath(); g.rect(0, y0, W, sp.height / 10 + 1); g.clip(); g.globalAlpha = .2 + c.rnd() * .15; g.globalCompositeOperation = 'lighter'; g.drawImage(sp, X + dx, Y); g.restore();
+      g.save(); g.beginPath(); g.rect(0, y0, W, sp.height / 10 + 1); g.clip(); g.globalAlpha = .08 + c.rnd() * .08; g.drawImage(sp, X + dx, Y); g.restore();
     }
+    g.save(); g.globalCompositeOperation = 'lighter'; g.shadowColor = '#ffffff'; g.shadowBlur = 8; g.strokeStyle = 'rgba(255,255,255,.55)'; g.lineWidth = 1.5;
+    g.beginPath(); g.ellipse(S.x, S.y, S.rx * .98, S.ry * .98, 0, Math.PI * 1.05, Math.PI * 1.7); g.stroke(); g.restore();
     g.save(); g.globalCompositeOperation = 'lighter'; g.setLineDash([18, 10]); g.shadowColor = col; g.shadowBlur = 12; g.strokeStyle = rgba(col, .7); g.lineWidth = 2.5;
     g.beginPath(); g.ellipse(S.x, S.y, S.rx, S.ry, 0, 0, 7); g.stroke(); g.restore();
     return;
@@ -978,7 +1019,8 @@ function renderArt(req, seed) {
   const colFor = s => mix(s.color, th.accent, .2);
   const mainCol = skills[0] ? colFor(skills[0]) : th.accent;
   drawSky(ctx); drawEnv(ctx, 'back'); drawFloor(ctx);
-  if (t >= 3) { radial(g, 400, 620, 360, mainCol, th.bright ? .22 : .42, 'lighter'); if (isNoble(req.concept)) radial(g, 400, 560, 300, '#ffd76a', th.bright ? .15 : .3, 'lighter'); }
+  const cloaked = skills.some(s => s.id === 'cloak'); // 은신: 알 뒤 후광을 줄여야 비쳐 보임
+  if (t >= 3) { radial(g, 400, 620, 360, mainCol, (th.bright ? .22 : .42) * (cloaked ? .3 : 1), 'lighter'); if (isNoble(req.concept)) radial(g, 400, 560, 300, '#ffd76a', th.bright ? .15 : .3, 'lighter'); }
   for (const s of skills) SKFX[s.id].back?.(ctx, colFor(s));
   drawMainStone(ctx, skills.map(s => s.id), mainCol);
   for (const s of skills) SKFX[s.id].front?.(ctx, colFor(s));
