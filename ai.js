@@ -39,7 +39,7 @@ async function aiImage({ engine, prompt, refs = [], aspect = '2:3' }) {
   const S = state.settings;
   try {
     if (engine === 'openai') {
-      const model = S.openaiModel || 'gpt-image-1', dalle = model.startsWith('dall-e');
+      const model = S.openaiModel || 'gpt-image-2', dalle = model.startsWith('dall-e');
       const size = aspect === '1:1' ? '1024x1024' : dalle ? '1024x1792' : '1024x1536';
       let r;
       if (refs.length && !dalle) {

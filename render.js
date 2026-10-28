@@ -1027,6 +1027,7 @@ const _frameCache = new Map(), _iconCache = new Map();
 const aiAssets = new Map();
 function getFrameCanvas(d, t) {
   if (d.kind === 'ai') { const a = aiAssets.get(d.id)?.[t]; if (a?.frame) return a.frame; }
+  if (d.shape == null) d = { ...randomFrameDesign(d.seed || 1), ...d }; // 그림이 없는 AI 그룹 → 기본 모양으로 대신 그림
   const k = frameKey(d, t); if (!_frameCache.has(k)) { if (_frameCache.size > 60) _frameCache.clear(); _frameCache.set(k, renderFrame(d, t)); } return _frameCache.get(k);
 }
 function getIconCanvas(set, role, size = 256) {

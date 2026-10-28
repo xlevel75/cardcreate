@@ -125,7 +125,7 @@ const state = {
   frameProp: randomFrameDesign((Date.now() >> 4) & 0xffff),
   iconSets: [], frameGroups: [], arts: [],
   activeIcon: LS.get('activeIcon', null), activeFrame: LS.get('activeFrame', null),
-  settings: Object.assign({ openaiKey: '', openaiModel: 'gpt-image-1', openaiQuality: 'medium', geminiKey: '', geminiModel: 'gemini-2.5-flash-image' }, LS.get('settings', {})),
+  settings: Object.assign({ openaiKey: '', openaiModel: 'gpt-image-2', openaiQuality: 'medium', geminiKey: '', geminiModel: 'gemini-2.5-flash-image' }, LS.get('settings', {})),
   gen: Object.assign({ grade: 'A', skills: ['pierce'], stone: 'black', count: 2, engine: 'gemini', concept: '' }, LS.get('gen', {})),
   reqSeq: 0, pending: 0,
   cmb: { frameId: null, t: 2, iconId: null, role: 'atk', artId: null, temp: null, name: '', showName: true, showSkills: true, zoom: 100, ox: 0, oy: 0,
@@ -172,6 +172,7 @@ $('#icApprove').onclick = async () => {
 };
 function renderIconSets() {
   const box = $('#iconSets'); box.innerHTML = '';
+  box.append(...brokenRows(aiBroken.icons, 'iconSets', '아이콘 세트', renderIconSets));
   if (!state.iconSets.length) { box.append(el('div', { class: 'empty' }, '아직 등록된 아이콘 세트가 없습니다.')); return; }
   for (const s of state.iconSets) {
     const thumbs = el('div', { class: 'thumbs' }, ROLES.map(R => { const c = mk(116, 116); c.getContext('2d').drawImage(getIconCanvas(s, R.id, 256), 0, 0, 116, 116); c.style.height = '52px'; c.style.background = 'none'; return c; }));
@@ -223,6 +224,7 @@ $('#frApprove').onclick = async () => {
 };
 function renderFrameGroups() {
   const box = $('#frameGroups'); box.innerHTML = '';
+  box.append(...brokenRows(aiBroken.frames, 'frameGroups', '프레임 그룹', renderFrameGroups));
   if (!state.frameGroups.length) { box.append(el('div', { class: 'empty' }, '아직 등록된 프레임 그룹이 없습니다.')); return; }
   for (const f of state.frameGroups) {
     const thumbs = el('div', { class: 'thumbs' }, GRADES.map((g, t) => thumbOf(getFrameCanvas(f, t), 80)));
@@ -289,6 +291,7 @@ function renderAiFrames() {
 }
 $('#aiFrGo').onclick = runAiFrames;
 $('#aiFrApprove').onclick = async () => {
+  if (aiFr.cells.length !== GRADES.length || !aiFr.cells.every(c => c.status === 'done' && c.frame)) return toast('먼저 5개 등급 프레임을 모두 생성해 주세요');
   const name = $('#aiFrName').value.trim() || `AI 프레임 ${state.frameGroups.length + 1}`, id = uid();
   const frames = await Promise.all(aiFr.cells.map(c => canvasToBlob(c.frame))), masks = await Promise.all(aiFr.cells.map(c => canvasToBlob(c.mask)));
   const grp = { ...aiFr.design, id, name, created: Date.now(), kind: 'ai', aiStyle: aiFr.style, engine: aiFr.engine, frames, masks };
@@ -328,12 +331,26 @@ function renderAiIcons() {
 }
 $('#aiIcGo').onclick = runAiIcons;
 $('#aiIcApprove').onclick = async () => {
+  if (!ROLES.every(R => aiIc.cells[R.id]?.status === 'done' && aiIc.cells[R.id].icon)) return toast('먼저 5개 역할 아이콘을 모두 생성해 주세요');
   const name = $('#aiIcName').value.trim() || `AI 아이콘 ${state.iconSets.length + 1}`, id = uid(), images = {}, cvs = {};
   for (const R of ROLES) { cvs[R.id] = aiIc.cells[R.id].icon; images[R.id] = await canvasToBlob(cvs[R.id]); }
   const set = { ...aiIc.guide, id, name, created: Date.now(), kind: 'ai', aiStyle: aiIc.style, engine: aiIc.engine, images };
   await DB.put('iconSets', set); aiAssets.set(id, cvs); state.iconSets.push(set); state.activeIcon = id; LS.set('activeIcon', id);
   $('#aiIcName').value = ''; renderIconSets(); updateHint(); toast(`✅ AI 아이콘 세트 “${name}” 등록 완료`);
 };
+// 그림이 빠진 AI 그룹(예전 버그로 빈 채 등록된 것)은 목록에서 빼고 따로 보여 줌
+const aiBroken = { frames: [], icons: [] };
+function splitBrokenAi() {
+  const badF = f => f.kind === 'ai' && !(f.frames?.length === GRADES.length && f.masks?.length === GRADES.length);
+  const badI = s => s.kind === 'ai' && !ROLES.every(R => s.images?.[R.id]);
+  aiBroken.frames = state.frameGroups.filter(badF); state.frameGroups = state.frameGroups.filter(f => !badF(f));
+  aiBroken.icons = state.iconSets.filter(badI); state.iconSets = state.iconSets.filter(s => !badI(s));
+}
+function brokenRows(list, store, label, rerender) {
+  return list.map(x => el('div', { class: 'item', style: 'border-color:var(--danger)' },
+    el('div', { class: 'nm' }, x.name, el('small', { style: 'color:var(--danger)' }, `⚠ 그림 없이 등록된 빈 ${label}입니다. 삭제한 뒤 다시 만들어 주세요.`)),
+    el('button', { class: 'btn sm danger', onclick: async () => { await DB.del(store, x.id); const i = list.indexOf(x); if (i >= 0) list.splice(i, 1); rerender(); toast(`🗑 “${x.name}” 삭제`); } }, '삭제')));
+}
 async function loadAiAssets() {
   for (const f of state.frameGroups) if (f.kind === 'ai') aiAssets.set(f.id, await Promise.all(f.frames.map(async (b, i) => ({ frame: await blobCanvas(b), mask: await blobCanvas(f.masks[i]) }))));
   for (const s of state.iconSets) if (s.kind === 'ai') { const o = {}; for (const R of ROLES) o[R.id] = await blobCanvas(s.images[R.id]); aiAssets.set(s.id, o); }
@@ -367,14 +384,36 @@ function initGenForm() {
     $('#proxyState').style.color = AI.proxy ? 'var(--ok)' : 'var(--danger)';
     if (e.key && !key) $('#apiBox').open = true;
   };
-  for (const [id, key] of [['sOpenaiKey', 'openaiKey'], ['sOpenaiModel', 'openaiModel'], ['sOpenaiQuality', 'openaiQuality'], ['sGeminiKey', 'geminiKey'], ['sGeminiModel', 'geminiModel']]) {
+  for (const [id, key] of [['sOpenaiKey', 'openaiKey'], ['sOpenaiQuality', 'openaiQuality'], ['sGeminiKey', 'geminiKey'], ['sGeminiModel', 'geminiModel']]) {
     $('#' + id).value = S[key]; $('#' + id).onchange = e => { S[key] = e.target.value.trim(); LS.set('settings', S); renderEngine(); };
   }
+  if (!$('#sGeminiModel').value) $('#sGeminiModel').value = S.geminiModel = 'gemini-2.5-flash-image';
+  initGptModel(renderEngine);
   if (!ENGINES[G.engine]) G.engine = 'gemini';
   renderEngine();
   $('#gTexture').checked = G.texture !== false; $('#gTexture').onchange = e => { G.texture = e.target.checked; saveGen(); };
   $('#gSubmit').onclick = submitRequest;
   updatePrompt();
+}
+// GPT 모델: gpt-image-2 이상만 허용 (gpt-image-1 계열은 동작하지 않음)
+const gptModelOk = m => { const v = /^gpt-image-(\d+(?:\.\d+)?)(?:-|$)/.exec(m || ''); return !!v && parseFloat(v[1]) >= 2; };
+function initGptModel(renderEngine) {
+  const S = state.settings, sel = $('#sOpenaiModel'), cus = $('#sOpenaiModelCustom');
+  if (!gptModelOk(S.openaiModel)) { S.openaiModel = 'gpt-image-2'; LS.set('settings', S); }
+  const known = [...sel.options].some(o => o.value === S.openaiModel);
+  sel.value = known ? S.openaiModel : '__custom';
+  cus.hidden = known; cus.value = known ? '' : S.openaiModel;
+  const save = m => { S.openaiModel = m; LS.set('settings', S); renderEngine(); };
+  sel.onchange = () => {
+    if (sel.value === '__custom') { cus.hidden = false; cus.focus(); return; }
+    cus.hidden = true; save(sel.value);
+  };
+  cus.onchange = () => {
+    const m = cus.value.trim();
+    if (!m) return;
+    if (!gptModelOk(m)) { toast('⚠ gpt-image-2 이상 모델만 쓸 수 있습니다 (예: gpt-image-2, gpt-image-3)'); cus.value = gptModelOk(S.openaiModel) && S.openaiModel !== 'gpt-image-2' ? S.openaiModel : ''; return; }
+    save(m);
+  };
 }
 function renderSkillChips() {
   const G = state.gen, box = $('#gSkills'); box.innerHTML = '';
@@ -744,11 +783,13 @@ function layerOf(id) { const L = state.cmb.layout, k = layoutKey(id); return (L[
   try { await Promise.race([Promise.all(['900 40px Cinzel', '400 30px "Black Han Sans"', '700 20px "Noto Sans KR"'].map(f => document.fonts.load(f))), sleep(2500)]); } catch { }
   await detectProxy(); await DB.open();
   [state.iconSets, state.frameGroups, state.arts] = await Promise.all([DB.all('iconSets'), DB.all('frameGroups'), DB.all('arts')]);
-  await loadAiAssets();
+  splitBrokenAi();
+  try { await loadAiAssets(); } catch (e) { console.warn(e); toast('⚠ AI 프레임·아이콘 그림 일부를 불러오지 못했습니다'); }
   aiEngineSeg($('#aiFrEngine'), 'aiFrEngine'); aiEngineSeg($('#aiIcEngine'), 'aiIcEngine');
   state.iconSets.sort((a, b) => a.created - b.created); state.frameGroups.sort((a, b) => a.created - b.created); state.arts.sort((a, b) => b.created - a.created);
   if (state.activeIcon && !state.iconSets.some(s => s.id === state.activeIcon)) state.activeIcon = state.iconSets[0]?.id || null;
   if (state.activeFrame && !state.frameGroups.some(s => s.id === state.activeFrame)) state.activeFrame = state.frameGroups[0]?.id || null;
-  renderIconProposal(); renderIconSets(); renderFrameProposal(); renderFrameGroups();
-  initGenForm(); initVault(); updateQueueStatus(); updateHint();
+  for (const f of [renderIconProposal, renderIconSets, renderFrameProposal, renderFrameGroups, initGenForm, initVault, updateQueueStatus, updateHint]) {
+    try { f(); } catch (e) { console.error(f.name, e); toast(`⚠ 화면 일부(${f.name})를 그리지 못했습니다: ${e.message}`); }
+  }
 })();
