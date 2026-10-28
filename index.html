@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>슈퍼알까기 카드 스튜디오</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Do+Hyeon&family=Jua&family=Gugi&family=Nanum+Myeongjo:wght@800&family=Nanum+Pen+Script&family=Cinzel:wght@700;900&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0b1129;--panel:#141d45;--panel2:#1b275a;--line:#2b3a7a;--text:#e9edff;--muted:#97a3d4;--accent:#ffc83d;--accent2:#4fb6ff;--danger:#ff5d6c;--ok:#3ddc84;
+  --checker:repeating-conic-gradient(#2a3157 0 25%,#222846 0 50%) 0 0/18px 18px}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:radial-gradient(ellipse at top,#1b2860 0,#0a0f24 70%) fixed;color:var(--text);font:14px/1.5 'Noto Sans KR',system-ui,sans-serif;min-height:100vh}
+button,input,select,textarea{font:inherit;color:inherit}
+header{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:18px;padding:10px 20px;background:rgba(10,15,36,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);flex-wrap:wrap}
+.brand{font-family:'Black Han Sans',sans-serif;font-size:22px;letter-spacing:.5px;display:flex;align-items:center;gap:10px;white-space:nowrap}
+.brand .dots{display:inline-flex;gap:3px}.brand .dots i{width:16px;height:16px;border-radius:50%;display:block;box-shadow:inset -3px -3px 5px rgba(0,0,0,.4)}
+.brand .dots i:first-child{background:#111}.brand .dots i:last-child{background:#f4f4f4}
+.brand b{color:var(--accent)}
+nav{display:flex;gap:6px;flex-wrap:wrap}
+nav button{background:transparent;border:1px solid var(--line);padding:8px 14px;border-radius:999px;cursor:pointer;color:var(--muted);font-weight:700}
+nav button.on{background:linear-gradient(180deg,#ffd76a,#f0a91a);color:#2b1a00;border-color:#ffd76a}
+nav button .badge[hidden]{display:none}
+nav button .badge{display:inline-block;min-width:18px;padding:0 5px;margin-left:4px;border-radius:9px;background:var(--danger);color:#fff;font-size:11px;line-height:18px}
+#stepHint{margin-left:auto;color:var(--muted);font-size:13px}
+main{padding:18px 20px 60px;max-width:1500px;margin:0 auto}
+.tab{display:none}.tab.on{display:block}
+.panel{background:linear-gradient(180deg,var(--panel),#111838);border:1px solid var(--line);border-radius:16px;padding:16px 18px;margin-bottom:18px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.ph{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.ph h2{margin:0;font-size:18px}.ph h2 small{font-weight:400;color:var(--muted);font-size:13px;margin-left:6px}
+h3{font-size:14px;color:var(--muted);margin:16px 0 8px;font-weight:700}
+.tag{font-size:12px;padding:3px 10px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.tag.ok{border-color:var(--ok);color:var(--ok)}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.ctrl label{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:13px}
+select,input[type=text],input[type=password],input:not([type]),textarea{background:#0c1330;border:1px solid var(--line);border-radius:10px;padding:8px 10px;outline:none}
+select:focus,input:focus,textarea:focus{border-color:var(--accent2)}
+textarea{width:100%;resize:vertical;min-height:70px}
+input[type=range]{accent-color:var(--accent)}
+.btn{background:var(--panel2);border:1px solid var(--line);padding:8px 14px;border-radius:10px;cursor:pointer;font-weight:700;white-space:nowrap}
+.btn:hover{border-color:var(--accent2)}
+.btn.primary{background:linear-gradient(180deg,#ffd76a,#f0a91a);color:#2b1a00;border-color:#ffd76a}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.blue{background:linear-gradient(180deg,#5cc2ff,#2f86e0);border-color:#5cc2ff;color:#05213f}
+.btn.danger{color:var(--danger)}
+.btn.sm{padding:4px 9px;font-size:12px;border-radius:8px}
+.btn.big{padding:12px 20px;font-size:16px;width:100%}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.approve{margin-top:14px;padding-top:14px;border-top:1px dashed var(--line)}
+.approve input{flex:1;min-width:200px}
+.icons{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-top:12px}
+.iconCell{background:var(--checker);border-radius:14px;padding:10px;text-align:center;cursor:pointer;border:1px solid var(--line);transition:transform .15s}
+.iconCell:hover{transform:translateY(-3px);border-color:var(--accent)}
+.iconCell canvas{width:100%;max-width:150px;aspect-ratio:1}
+.iconCell b{display:block;margin-top:4px}
+.iconCell small{color:var(--muted);font-size:11px}
+.frames{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px;margin-top:12px}
+.frameCell{text-align:center}
+.frameCell .cv{background:var(--checker);border-radius:12px;border:1px solid var(--line);cursor:zoom-in;overflow:hidden}
+.frameCell canvas{width:100%;display:block;aspect-ratio:2/3}
+.gl{display:inline-block;font-family:Cinzel,serif;font-weight:900;padding:0 8px;border-radius:6px;color:#111;font-size:13px;line-height:20px}
+.list{display:flex;flex-direction:column;gap:8px}
+.item{display:flex;align-items:center;gap:12px;background:#0f1638;border:1px solid var(--line);border-radius:12px;padding:8px 12px;flex-wrap:wrap}
+.item.active{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+.item .thumbs{display:flex;gap:4px}.item .thumbs canvas{height:58px;border-radius:6px;background:var(--checker)}
+.item .nm{font-weight:700;flex:1;min-width:120px}.item .nm small{display:block;font-weight:400;color:var(--muted);font-size:12px}
+.empty{color:var(--muted);font-size:13px;padding:10px;border:1px dashed var(--line);border-radius:10px;text-align:center}
+.cta{display:flex;justify-content:flex-end;margin-top:8px}
+/* gen */
+.genGrid{display:grid;grid-template-columns:380px 1fr;gap:18px;align-items:start}
+@media(max-width:1000px){.genGrid{grid-template-columns:1fr}.icons,.frames{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{flex:1;min-width:52px;background:#0c1330;border:1px solid var(--line);border-radius:10px;padding:8px 6px;cursor:pointer;font-weight:900}
+.seg button.on{border-color:currentColor;box-shadow:0 0 12px -2px currentColor inset;background:#18224d}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:#0c1330;border-radius:999px;padding:6px 12px;cursor:pointer;font-weight:700;font-size:13px;display:inline-flex;align-items:center;gap:6px}
+.chip i{width:9px;height:9px;border-radius:50%;display:inline-block}
+.chip.on{background:#1d2a66;border-color:currentColor}
+.chip .ord{background:var(--accent);color:#2b1a00;border-radius:50%;width:18px;height:18px;font-size:11px;display:inline-grid;place-items:center;font-style:normal}
+.chip.ex{font-weight:500;color:var(--muted)}
+.field{margin-bottom:14px}.field>label{display:block;font-weight:700;margin-bottom:6px}
+.field>label small{color:var(--muted);font-weight:400}
+.skillDesc{color:var(--muted);font-size:12px;margin-top:6px;min-height:18px}
+details{background:#0c1330;border:1px solid var(--line);border-radius:10px;padding:8px 12px}
+details summary{cursor:pointer;font-weight:700;color:var(--muted)}
+details .grid2{display:grid;grid-template-columns:auto 1fr;gap:8px 10px;align-items:center;margin-top:10px}
+details .note{font-size:12px;color:var(--muted);margin-top:8px}
+pre.prompt{white-space:pre-wrap;font-size:12px;color:#c9d2ff;background:#080d24;padding:10px;border-radius:8px;max-height:200px;overflow:auto}
+.queue{display:flex;flex-direction:column;gap:14px}
+.req{background:#0f1638;border:1px solid var(--line);border-radius:14px;padding:12px;animation:pop .25s ease}
+@keyframes pop{from{transform:translateY(-6px);opacity:0}}
+.req .rh{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.req .rh .ttl{font-weight:900}
+.req .rh .meta{color:var(--muted);font-size:12px;flex:1;min-width:160px}
+.slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
+.slot{background:#0a1028;border:1px solid var(--line);border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
+.slot .img{aspect-ratio:2/3;position:relative;background:#070b1d;display:grid;place-items:center;cursor:zoom-in}
+.slot .img canvas,.slot .img img{width:100%;height:100%;object-fit:cover;display:block}
+.slot.pending .img{cursor:default;background:linear-gradient(110deg,#0a1028 30%,#1a2556 50%,#0a1028 70%);background-size:300% 100%;animation:shimmer 1.6s linear infinite}
+@keyframes shimmer{to{background-position:-150% 0}}
+.spinner{width:40px;height:40px;border-radius:50%;border:4px solid rgba(255,255,255,.15);border-top-color:var(--accent);animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.slot .pmsg{position:absolute;bottom:10px;left:0;right:0;text-align:center;color:var(--muted);font-size:12px}
+.slot .acts{display:flex;gap:4px;padding:6px;flex-wrap:wrap}
+.slot .acts .btn{flex:1;padding:6px 4px;font-size:12px}
+.slot .texRow{display:flex;align-items:center;gap:6px;padding:6px 6px 0;flex-wrap:wrap;min-height:34px}
+.slot .texSpot{position:absolute;top:8px;right:8px;z-index:2}
+.slot .texSpot .texDisc{width:54px;height:54px;flex-basis:54px}
+.texDisc{width:40px;height:40px;border-radius:50%;flex:0 0 40px;cursor:zoom-in;display:grid;place-items:center;background:var(--checker);box-shadow:0 2px 8px rgba(0,0,0,.5)}
+.spinner.sm{width:20px;height:20px;border-width:3px}
+.texErr{color:var(--danger);font-size:11px;cursor:help}
+.vcard .imgWrap{position:relative}
+.vcard .vtex{position:absolute;right:6px;top:6px;width:56px;height:56px;border-radius:50%;box-shadow:0 3px 10px rgba(0,0,0,.6);cursor:zoom-in}
+#lightbox canvas.sq,#lightbox img.sq{aspect-ratio:1;max-height:80vh}
+.slot .editRow{display:flex;padding:0 6px 6px}
+.slot .editRow[hidden]{display:none}
+.slot .editIn{flex:1;min-width:0;padding:7px 8px;font-size:12px;border-color:var(--accent2)}
+.slot .editTag{position:absolute;bottom:8px;left:8px;background:rgba(79,182,255,.9);color:#021;font-weight:900;font-size:11px;padding:2px 8px;border-radius:999px}
+.slot .editErr{max-height:110px;padding:6px 10px}
+.slot.editing .img canvas{opacity:.3;filter:blur(2px)}
+.slot .img .over{position:absolute;inset:0;display:grid;place-items:center;align-content:center;gap:10px;white-space:pre-wrap;text-align:center;padding:10px}
+.slot .saveRow{display:flex;gap:4px;padding:0 6px 6px}
+.slot .saveRow input{flex:1;min-width:0;padding:5px 8px;font-size:12px}
+.slot.saved{border-color:var(--ok)}
+.slot .savedTag{position:absolute;top:8px;left:8px;background:var(--ok);color:#022;font-weight:900;font-size:11px;padding:2px 8px;border-radius:999px}
+.slot.err .img{color:var(--danger);padding:12px;font-size:12px;text-align:left;cursor:default;display:block;overflow:auto;white-space:pre-wrap;word-break:break-word}
+.errMsg{white-space:pre-wrap;word-break:break-word;color:var(--danger);font-size:12px;text-align:left;padding:10px;overflow:auto;max-height:100%}
+.aiBox{margin-top:18px;padding:14px;border:1px solid #2f5aa8;border-radius:14px;background:linear-gradient(180deg,rgba(79,182,255,.08),rgba(79,182,255,.02))}
+.aiBox .ph h2{font-size:16px}.muted{color:var(--muted);font-size:12px}
+.engSeg button{min-width:110px;flex:0 0 auto}
+.aiCell{position:relative}
+.aiCell .cv,.aiCell .iconCell{position:relative}
+.aiCell .wait{position:absolute;inset:0;display:grid;place-items:center;background:rgba(7,11,29,.6)}
+.aiCell .cv .errMsg{position:absolute;inset:0;background:#0a1028}
+#proxyState{font-size:12px;margin-left:6px}
+/* vault */
+.vbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.vgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px}
+.vcard{background:#0f1638;border:1px solid var(--line);border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
+.vcard img{width:100%;aspect-ratio:2/3;object-fit:cover;display:block;cursor:zoom-in}
+.vcard .vb{padding:8px 10px;flex:1}
+.vcard .vn{font-weight:900;word-break:break-all}
+.vcard .vm{font-size:12px;color:var(--muted)}
+.vcard .acts{display:flex;gap:4px;padding:0 8px 8px;flex-wrap:wrap}.vcard .acts .btn{flex:1}
+/* combine */
+.cmbGrid{display:grid;grid-template-columns:360px 1fr;gap:18px;align-items:start}
+@media(max-width:1000px){.cmbGrid{grid-template-columns:1fr}}
+.preview{display:flex;justify-content:center;background:var(--checker);border-radius:16px;padding:20px;border:1px solid var(--line)}
+.preview .stage{position:relative;width:min(100%,440px);aspect-ratio:2/3}
+.preview .stage canvas{width:100%;height:100%;display:block;filter:drop-shadow(0 18px 30px rgba(0,0,0,.5))}
+#cOverlay{position:absolute;inset:0;outline:none;touch-action:none}
+#cOverlay .hov{position:absolute;border:1px dashed rgba(255,255,255,.35);pointer-events:none;border-radius:4px}
+#cOverlay .sel{position:absolute;border:2px solid #4fb6ff;box-shadow:0 0 0 1px rgba(0,0,0,.5);cursor:move;border-radius:3px}
+#cOverlay .sel .lbl{position:absolute;top:-22px;left:-2px;background:#4fb6ff;color:#021;font-size:11px;font-weight:900;padding:1px 6px;border-radius:4px;white-space:nowrap}
+#cOverlay .hd{position:absolute;width:12px;height:12px;background:#fff;border:2px solid #4fb6ff;border-radius:3px;margin:-7px 0 0 -7px}
+#cOverlay .hd.nw,#cOverlay .hd.se{cursor:nwse-resize}#cOverlay .hd.ne,#cOverlay .hd.sw{cursor:nesw-resize}
+.fontBox .sl{grid-template-columns:56px 1fr 44px;margin-top:6px}
+.fontBox input[type=color]{width:44px;height:28px;padding:0;border:1px solid var(--line);border-radius:6px;background:none}
+.artPick{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px}
+.artPick .ap{flex:0 0 auto;width:64px;border-radius:8px;overflow:hidden;border:2px solid transparent;cursor:pointer;background:#070b1d;position:relative}
+.artPick .ap img{width:100%;aspect-ratio:2/3;object-fit:cover;display:block}
+.artPick .ap.on{border-color:var(--accent)}
+.artPick .ap.none{display:grid;place-items:center;aspect-ratio:2/3;color:var(--muted);font-size:11px;text-align:center}
+.strip{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-top:14px}
+.strip canvas{width:100%;aspect-ratio:2/3;cursor:pointer;border-radius:8px;background:var(--checker)}
+.strip div{text-align:center;font-size:12px;color:var(--muted)}
+.sl{display:grid;grid-template-columns:70px 1fr 44px;gap:8px;align-items:center;font-size:13px;color:var(--muted)}
+/* misc */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;gap:8px;z-index:100;align-items:center}
+#toast div{background:#1d2a66;border:1px solid var(--accent2);padding:10px 18px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.4);animation:pop .2s}
+#lightbox{position:fixed;inset:0;background:rgba(3,6,18,.88);display:none;place-items:center;z-index:90;cursor:zoom-out;padding:20px}
+#lightbox.on{display:grid}
+#lightbox .lbw{background:var(--checker);border-radius:14px;padding:14px;max-height:94vh}
+#lightbox canvas,#lightbox img{max-height:calc(94vh - 28px);max-width:90vw;aspect-ratio:2/3;display:block}
+.howto{color:var(--muted);font-size:13px;margin:0 0 12px}
+.kbd{font-family:monospace;background:#0c1330;padding:1px 6px;border-radius:5px;border:1px solid var(--line)}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><span class="dots"><i></i><i></i></span>슈퍼알까기 <b>카드 스튜디오</b></div>
+  <nav id="tabs">
+    <button data-tab="frame" class="on">① 프레임 · 아이콘</button>
+    <button data-tab="gen">② 이미지 생성 <span class="badge" id="qBadge" hidden>0</span></button>
+    <button data-tab="vault">③ 보관함</button>
+    <button data-tab="combine">④ 조합하기</button>
+  </nav>
+  <div id="stepHint"></div>
+</header>
+
+<main>
+<!-- ============ ① 프레임 · 아이콘 ============ -->
+<section id="tab-frame" class="tab on">
+  <div class="panel">
+    <div class="ph"><h2>역할 아이콘 <small>카드 왼쪽 위 · 공격 / 방어 / 교란 / 지원 / 왕</small></h2><span class="tag" id="iconStatus"></span></div>
+    <p class="howto">마음에 들 때까지 <b>🎲 다른 제안</b>을 누르고, 아이콘을 클릭하면 그 역할의 모양만 바꿀 수 있습니다. 좋으면 이름을 붙여 <b>OK · 등록</b>하세요.</p>
+    <div class="row ctrl">
+      <label>스타일 <select id="icStyle"></select></label>
+      <label>테두리 <select id="icRim"><option value="gold">금</option><option value="silver">은</option></select></label>
+      <button id="icShuffle" class="btn">🎲 다른 제안</button>
+    </div>
+    <div id="iconPreview" class="icons"></div>
+    <div class="row approve"><input id="icName" placeholder="아이콘 세트 이름 (예: 기본 금메달)"><button id="icApprove" class="btn primary">✅ OK · 등록</button></div>
+    <div class="aiBox">
+      <div class="ph"><h2>🤖 AI로 아이콘 만들기</h2><small class="muted">위 제안 아이콘을 구도 가이드로 보내 5종을 같은 세트로 그립니다</small></div>
+      <div class="row ctrl">
+        <input id="aiIcStyle" style="flex:1;min-width:240px" placeholder="스타일 (예: 반짝이는 보석 세공, 귀여운 캐주얼 3D, 고대 석판 룬)">
+        <div class="seg engSeg" id="aiIcEngine"></div>
+        <label><input type="checkbox" id="aiIcChain" checked> 첫 아이콘을 참조해 통일감 높이기</label>
+        <button id="aiIcGo" class="btn blue">🤖 AI 아이콘 5종 생성</button>
+      </div>
+      <div id="aiIconPreview" class="icons"></div>
+      <div class="row approve" id="aiIcApproveRow" hidden><input id="aiIcName" placeholder="AI 아이콘 세트 이름"><button id="aiIcApprove" class="btn primary">✅ OK · AI 아이콘 세트 등록</button></div>
+    </div>
+    <h3>등록된 아이콘 세트</h3><div id="iconSets" class="list"></div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><h2>등급 프레임 C · B · A · S · SS <small>한 번에 5등급 · 창 안쪽은 투명</small></h2><span class="tag" id="frameStatus"></span></div>
+    <p class="howto">5등급 프레임이 한 세트로 제안됩니다. 등급이 높을수록 장식·광채·이펙트가 화려해집니다. 프레임을 클릭하면 크게 볼 수 있어요.</p>
+    <div class="row ctrl">
+      <label>모양 <select id="frShape"></select></label>
+      <label>띠 문양 <select id="frPattern"></select></label>
+      <label>모서리 장식 <select id="frCorner"></select></label>
+      <label>두께 <input type="range" id="frThick" min="18" max="34"></label>
+      <label>창 둥글기 <input type="range" id="frRadius" min="0" max="60"></label>
+      <button id="frShuffle" class="btn">🎲 다른 디자인 제안</button>
+      <label><input type="checkbox" id="frSample"> 예시 그림 넣어 보기</label>
+    </div>
+    <div id="framePreview" class="frames"></div>
+    <div class="row approve"><input id="frName" placeholder="프레임 그룹 이름 (예: 황금 판타지)"><button id="frApprove" class="btn primary">✅ OK · 프레임 그룹 등록</button></div>
+    <div class="aiBox">
+      <div class="ph"><h2>🤖 AI로 프레임 만들기</h2><small class="muted">위 제안 프레임(모양·두께·소켓·엠블럼·이름판 위치)을 레이아웃 가이드로 보내 5등급을 그립니다. 창·바깥은 초록으로 그리게 한 뒤 자동으로 투명 처리합니다.</small></div>
+      <div class="row ctrl">
+        <input id="aiFrStyle" style="flex:1;min-width:240px" placeholder="스타일 (예: 얼음 왕국의 은빛 크리스탈, 동양풍 금장 용 문양, 스팀펑크 황동)">
+        <div class="seg engSeg" id="aiFrEngine"></div>
+        <label><input type="checkbox" id="aiFrChain" checked> 아래 등급을 참조해 통일감 높이기 (순차 생성)</label>
+        <button id="aiFrGo" class="btn blue">🤖 AI 프레임 5등급 생성</button>
+      </div>
+      <div id="aiFramePreview" class="frames"></div>
+      <div class="row approve" id="aiFrApproveRow" hidden><input id="aiFrName" placeholder="AI 프레임 그룹 이름"><button id="aiFrApprove" class="btn primary">✅ OK · AI 프레임 그룹 등록</button></div>
+    </div>
+    <h3>등록된 프레임 그룹</h3><div id="frameGroups" class="list"></div>
+    <div class="cta"><button class="btn blue" data-goto="gen">다음 단계: 이미지 생성 →</button></div>
+  </div>
+</section>
+
+<!-- ============ ② 이미지 생성 ============ -->
+<section id="tab-gen" class="tab">
+  <div class="genGrid">
+    <div class="panel">
+      <div class="ph"><h2>카드 이미지 요청</h2></div>
+      <div class="field"><label>등급</label><div class="seg" id="gGrade"></div></div>
+      <div class="field"><label>스킬 <small>최대 3개 조합 · 누른 순서가 주 스킬</small></label><div class="chips" id="gSkills"></div><div class="skillDesc" id="gSkillDesc"></div></div>
+      <div class="field"><label>알 색</label><div class="seg" id="gStone"></div></div>
+      <div class="field"><label>컨셉 <small>자유 입력</small></label>
+        <textarea id="gConcept" placeholder="예: 고귀한 느낌의 얼음 / 올림푸스 신화 컨셉의 영웅적인 모습"></textarea>
+        <div class="chips" id="gExamples" style="margin-top:6px"></div>
+      </div>
+      <div class="field"><label>한 번에 만들 장수</label><div class="seg" id="gCount"></div></div>
+      <div class="field"><label>생성 엔진</label>
+        <div class="seg" id="gEngine"></div>
+        <div class="skillDesc" id="gEngineInfo"></div>
+        <details id="apiBox" style="margin-top:8px">
+          <summary>API 키 · 모델 설정 <span id="keyState"></span><span id="proxyState"></span></summary>
+          <div class="grid2">
+            <b style="grid-column:1/-1;color:#ffd76a">🍌 나노바나나 (Google)</b>
+            <span>API 키</span><input type="password" id="sGeminiKey" placeholder="AQ.… (Vertex) 또는 AIza… (AI Studio)">
+            <span>모델</span><input id="sGeminiModel" list="nanoModels">
+            <b style="grid-column:1/-1;color:#7fd6ff;margin-top:6px">🤖 GPT Image (OpenAI)</b>
+            <span>API 키</span><input type="password" id="sOpenaiKey" placeholder="sk-…">
+            <span>모델</span><input id="sOpenaiModel" list="gptModels">
+            <span>품질</span><select id="sOpenaiQuality"><option>low</option><option>medium</option><option>high</option></select>
+          </div>
+          <datalist id="nanoModels"><option value="gemini-2.5-flash-image">나노바나나</option><option value="gemini-3-pro-image-preview">나노바나나 Pro</option></datalist>
+          <datalist id="gptModels"><option value="gpt-image-2">최신</option><option value="gpt-image-1"></option><option value="gpt-image-1-mini"></option><option value="gpt-image-1.5"></option></datalist>
+          <div class="note">키는 이 브라우저(localStorage)에만 저장되고 해당 API로만 전송됩니다. 나노바나나 키가 <b>AQ.</b>로 시작하면 Vertex AI, <b>AIza</b>로 시작하면 AI Studio 주소로 자동 요청합니다. AI 생성은 <span class="kbd">start.bat</span>(로컬 서버)로 실행해야 브라우저 차단 없이 동작하고 실제 오류 내용이 보입니다.</div>
+        </details>
+        <details style="margin-top:8px"><summary>AI 프롬프트 미리보기</summary><pre class="prompt" id="gPrompt"></pre></details>
+      </div>
+      <label class="field" style="display:flex;gap:8px;align-items:flex-start;cursor:pointer"><input type="checkbox" id="gTexture" checked style="margin-top:4px"><span><b>⚪ 알 텍스처도 함께 만들기</b><br><small class="muted">카드 그림을 참조해 위에서 본 알 윗면(가운데 동그란 엠블럼)을 만듭니다. 등급이 높을수록 엠블럼 효과가 강해집니다.</small></span></label>
+      <button id="gSubmit" class="btn primary big">🚀 생성 요청</button>
+      <p class="howto" style="margin-top:8px">요청할 때마다 오른쪽에 대기 칸이 생기고, 완료되는 대로 채워집니다. 기다리는 동안 계속 요청해도 됩니다.</p>
+    </div>
+    <div class="panel">
+      <div class="ph"><h2>생성 대기열</h2><span class="tag" id="qStatus">비어 있음</span></div>
+      <div id="queue" class="queue"><div class="empty">아직 요청이 없습니다. 왼쪽에서 등급 · 스킬 · 컨셉을 고르고 생성 요청을 누르세요.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ③ 보관함 ============ -->
+<section id="tab-vault" class="tab">
+  <div class="panel">
+    <div class="ph"><h2>보관함 <small>저장한 카드 이미지 (프레임 없음)</small></h2><span class="tag" id="vCount"></span></div>
+    <div class="vbar">
+      <input id="vSearch" placeholder="이름 · 컨셉 검색" style="flex:1;min-width:180px">
+      <select id="vGrade"><option value="">모든 등급</option></select>
+      <select id="vSkill"><option value="">모든 스킬</option></select>
+    </div>
+    <div id="vault" class="vgrid"></div>
+  </div>
+</section>
+
+<!-- ============ ④ 조합하기 ============ -->
+<section id="tab-combine" class="tab">
+  <div class="cmbGrid">
+    <div class="panel">
+      <div class="ph"><h2>조합 설정</h2></div>
+      <div class="field"><label>프레임 그룹</label><select id="cFrame" style="width:100%"></select></div>
+      <div class="field"><label>프레임 등급</label><div class="seg" id="cGrade"></div></div>
+      <div class="field"><label>역할 아이콘</label><select id="cIconSet" style="width:100%;margin-bottom:6px"></select><div class="seg" id="cRole"></div></div>
+      <div class="field"><label>카드 이미지 <small>보관함에서 선택</small></label><div class="artPick" id="cArts"></div></div>
+      <div class="field"><label>카드 이름</label><input id="cName" style="width:100%" placeholder="예: 빙결의 수호자"></div>
+      <div class="field row"><label><input type="checkbox" id="cShowName" checked> 이름 표시</label><label><input type="checkbox" id="cShowSkills" checked> 스킬 표시</label></div>
+      <div class="field fontBox">
+        <label>이름 글자</label>
+        <div class="sl"><span>글꼴</span><select id="cFont" style="grid-column:2/4"></select></div>
+        <div class="sl"><span>크기</span><input type="range" id="cFontSize" min="10" max="160"><span id="cFontSizeV"></span></div>
+        <div class="sl"><span>글자 색</span><input type="color" id="cFontColor"><span></span></div>
+        <div class="sl"><span>외곽선</span><input type="range" id="cStrokeW" min="0" max="16"><input type="color" id="cStrokeColor"></div>
+        <button class="btn sm" id="cResetLayout" style="margin-top:6px">↺ 아이콘·글자 위치 초기화</button>
+      </div>
+      <div class="field">
+        <div class="sl"><span>확대</span><input type="range" id="cZoom" min="80" max="200" value="100"><span id="cZoomV">100%</span></div>
+        <div class="sl"><span>좌우</span><input type="range" id="cOx" min="-250" max="250" value="0"><span id="cOxV">0</span></div>
+        <div class="sl"><span>상하</span><input type="range" id="cOy" min="-350" max="350" value="0"><span id="cOyV">0</span></div>
+      </div>
+      <div class="row"><button id="cDownload" class="btn primary" style="flex:1">⬇ PNG 다운로드</button><button id="cDownloadAll" class="btn">5등급 모두</button></div>
+    </div>
+    <div class="panel">
+      <p class="howto" style="margin:0 0 8px">카드 위의 <b>역할 아이콘 · 이름 · 스킬</b>을 클릭하면 박스가 생깁니다. 가운데를 잡고 끌면 이동, 모서리 점을 끌면 크기 조절 (방향키로 1칸씩 이동, Shift+방향키는 10칸). 역할 아이콘 위치·크기는 프레임 등급마다 따로 저장됩니다..</p>
+      <div class="preview"><div class="stage" id="cStage"><canvas id="cCanvas" width="800" height="1200"></canvas><div id="cOverlay" tabindex="0"></div></div></div>
+      <h3>5등급 비교 <small style="font-weight:400">— 클릭하면 그 등급으로 전환</small></h3>
+      <div class="strip" id="cStrip"></div>
+    </div>
+  </div>
+</section>
+</main>
+
+<div id="lightbox"><div class="lbw" id="lbw"></div></div>
+<div id="toast"></div>
+
+<script src="render.js"></script>
+<script src="ai.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+{
+ "settings": {
+  "openaiModel": "gpt-image-1",
+  "openaiQuality": "medium",
+  "geminiModel": "gemini-2.5-flash-image"
+ }
+}
