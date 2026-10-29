@@ -217,7 +217,7 @@ function texturePrompt(req) {
     'Create the top-face TEXTURE of the round go-stone game piece from the attached card artwork, for use in a 3D game.',
     'Seen perfectly straight from above (orthographic top-down), one perfect circle, centered, filling the square canvas almost edge to edge.',
     `Material: ${stone} polished stone matching the stone in the reference image.`,
-    `In the center: a round emblem icon that represents this card${sk.length ? ` — its power: ${sk.map(s => s.en.split(' — ')[0]).join(' + ')}` : ''}${req.concept ? `, theme (Korean): "${req.concept}"` : ''}. Use the same colours, effects and art style as the reference image.`,
+    `In the center: a round emblem icon that represents this card${sk.length ? ` — its power: ${sk.map(s => s.en.split(' — ')[0]).join(' + ')}${sk.some(s => s.id === 'mark') ? ' (an ominous abstract curse brand of thorns and an eye-like spiral, never an X or a letter)' : ''}` : ''}${req.concept ? `, theme (Korean): "${req.concept}"` : ''}. Use the same colours, effects and art style as the reference image.`,
     `${TEX_TIER_PROMPT[t]}.`,
     'Everything outside the circle must be flat pure chroma green (#00FF00). No perspective, no side view, no shadow outside the disc, no text, no letters. Square 1:1.',
   ].join(' ');

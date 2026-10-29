@@ -30,7 +30,7 @@ const SKILLS = [
   { id: 'revive', ko: '부활', desc: '바깥에서 죽으면 근처에서 부활', color: '#ffb547', en: 'RESURRECTION — huge blazing phoenix wings unfold behind the stone, a pillar of rebirth light and a radiant halo above it' },
   { id: 'split', ko: '분열', desc: '공격 시 알이 둘로 나뉨', color: '#c77dff', en: 'SPLIT — the stone splits into two glowing mirror twins flanking it, connected by a bright dividing energy slash' },
   { id: 'magnet', ko: '자석', desc: '날아가는 알을 내 쪽으로 휘게 함', color: '#ff5a5a', en: 'MAGNETISM — an overwhelming magnetic vortex sucks everything toward the stone: glowing red and blue field lines spiral inward and converge into its centre, iron filings, metal shards, sparks, debris and smaller enemy stones are dragged toward it with motion streaks, the surrounding background visibly warps and bends inward like a gravity well, crackling electromagnetic arcs, a red N glow on one side and a blue S glow on the other' },
-  { id: 'mark', ko: '표식', desc: '상대 스킬을 봉인', color: '#ff4fd8', en: 'MARK / SEAL — a large glowing magic seal sigil with runes hovers around the stone, chains of light and a targeting reticle' },
+  { id: 'mark', ko: '표식', desc: '상대 스킬을 봉인', color: '#ff4fd8', en: 'CURSE MARK — the stone casts a dark curse on a smaller enemy stone nearby: a sinister glowing curse brand burns into the enemy stone (an abstract thorny occult symbol made only of curved shapes, thorns and an eye-like spiral — NOT an X, NOT a letter, NOT a number, NOT a crosshair), violet-black cursed smoke and shadowy tendrils and spectral chains link the stone to its victim, the victim stone cracks, darkens and is wrapped in withering purple miasma, an ominous hex circle of pure geometric lines beneath, eerie dark aura' },
   { id: 'cloak', ko: '클로킹', desc: '투명해져 보이지 않음', color: '#9ff5e6', en: 'CLOAKING — the stone is semi-transparent like clear ghostly glass: the background scenery is clearly visible THROUGH its body, slightly magnified and bent by refraction; a cloaking field spreads around it so the surrounding background also turns see-through, pale and faded, dissolving into translucent haze with heat-haze ripples; only a thin shimmering rim of light, glitching light fragments and faint distortion reveal where it is' },
   { id: 'support', ko: '지원', desc: '반경 내 아군 강화', color: '#5df08a', en: 'SUPPORT AURA — a warm radiant aura and glowing circle around the stone, rising plus-shaped sparks and blessing light' },
 ];
@@ -891,16 +891,37 @@ const SKFX = {
   },
   mark: {
     back(c, col) {
-      const { g, S, rnd } = c, ex = 220, ey = 330;
-      g.save(); g.globalCompositeOperation = 'lighter'; g.shadowColor = col; g.shadowBlur = c.glow; g.setLineDash([6, 10]); g.lineWidth = 3; g.strokeStyle = rgba(col, .8);
-      g.beginPath(); g.moveTo(S.x - 40, S.y - 40); g.quadraticCurveTo(300, 380, ex + 40, ey + 20); g.stroke(); g.restore();
-      seal(g, S.x, S.y + S.th + 34, 270, rgba(col, .55), rnd);
+      const { g, S, rnd, Q } = c, ex = 220, ey = 330, curse = mix(col, '#7a2cff', .5);
+      // 발밑의 저주 원 + 적 알까지 이어지는 어둠의 촉수
+      seal(g, S.x, S.y + S.th + 34, 270, rgba(curse, .5), rnd);
+      g.save(); g.lineCap = 'round';
+      for (let k = 0; k < 5; k++) {
+        const ox = (rnd() - .5) * 80, oy = (rnd() - .5) * 40;
+        g.strokeStyle = rgba('#14051f', .55); g.lineWidth = 16 - k * 2; g.beginPath(); g.moveTo(S.x - 30, S.y - 20);
+        g.bezierCurveTo(S.x - 120 + ox, S.y - 160 + oy, ex + 140 - ox, ey + 120 + oy, ex + 30, ey + 10); g.stroke();
+        g.globalCompositeOperation = 'lighter'; g.shadowColor = curse; g.shadowBlur = c.glow + 6; g.strokeStyle = rgba(lighten(curse, .2), .65); g.lineWidth = 4; g.stroke();
+        g.globalCompositeOperation = 'source-over'; g.shadowBlur = 0;
+      }
+      g.restore();
+      // 저주받은 적 알: 검보라 연기, 금, 낙인
+      g.save(); g.translate(ex, ey); g.scale(1, .65); radial(g, 0, 0, 190, '#1a0628', .85); g.restore();
       drawStone(g, ex, ey, 86, 51, 22, c.enemy, {});
-      seal(g, ex, ey, 140, col, rnd);
-      g.save(); g.globalCompositeOperation = 'lighter'; g.shadowColor = col; g.shadowBlur = 16; g.strokeStyle = col; g.lineWidth = 4;
-      for (let i = 0; i < 4; i++) { const a = i * Math.PI / 2; g.beginPath(); g.moveTo(ex + Math.cos(a) * 115, ey + Math.sin(a) * 75); g.lineTo(ex + Math.cos(a) * 160, ey + Math.sin(a) * 105); g.stroke(); }
-      const ly = ey - 120; g.lineWidth = 6; g.beginPath(); g.arc(ex, ly - 6, 18, Math.PI, 0); g.stroke(); g.fillStyle = rgba(col, .85); g.beginPath(); g.roundRect(ex - 28, ly - 6, 56, 42, 6); g.fill();
-      g.fillStyle = '#ffffff'; g.beginPath(); g.arc(ex, ly + 12, 6, 0, 7); g.fill(); g.fillRect(ex - 2.5, ly + 12, 5, 14);
+      g.save(); g.globalAlpha = .7; g.fillStyle = '#2a0838'; g.beginPath(); g.ellipse(ex, ey, 86, 51, 0, 0, 7); g.rect(ex - 86, ey, 172, 22); g.ellipse(ex, ey + 22, 86, 51, 0, 0, Math.PI); g.fill(); g.restore();
+      g.save(); g.strokeStyle = rgba(lighten(curse, .3), .9); g.shadowColor = curse; g.shadowBlur = 12; g.lineWidth = 2.5;
+      for (let i = 0; i < 7; i++) { let a = rnd() * Math.PI * 2, x = ex, y = ey; g.beginPath(); g.moveTo(x, y); for (let k = 0; k < 4; k++) { a += (rnd() - .5) * .9; x += Math.cos(a) * 20; y += Math.sin(a) * 12; g.lineTo(x, y); } g.stroke(); }
+      // 낙인: 가시 돋친 눈 모양 문양 (글자·X 아님)
+      g.translate(ex, ey); g.scale(1, .6); g.globalCompositeOperation = 'lighter'; g.strokeStyle = lighten(curse, .45); g.lineWidth = 4; g.shadowBlur = c.glow + 10;
+      g.beginPath(); g.moveTo(-46, 0); g.quadraticCurveTo(0, -38, 46, 0); g.quadraticCurveTo(0, 38, -46, 0); g.stroke();
+      g.beginPath(); g.arc(0, 0, 13, 0, 7); g.stroke(); g.fillStyle = lighten(curse, .5); g.beginPath(); g.arc(0, 0, 5, 0, 7); g.fill();
+      for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; g.beginPath(); g.moveTo(Math.cos(a) * 54, Math.sin(a) * 54); g.lineTo(Math.cos(a + .18) * 70, Math.sin(a + .18) * 70); g.lineTo(Math.cos(a + .34) * 54, Math.sin(a + .34) * 54); g.stroke(); }
+      g.restore();
+      // 피어오르는 저주 연기
+      for (let i = 0; i < 18 * Q + 6; i++) { const x = ex + (rnd() - .5) * 170, y = ey - rnd() * 230, r = 18 + rnd() * 34; radial(g, x, y, r, rnd() < .5 ? '#3a0a52' : curse, .18 + rnd() * .2, rnd() < .6 ? 'source-over' : 'lighter'); }
+    },
+    front(c, col) {
+      const { g, S, rnd } = c, curse = mix(col, '#7a2cff', .5);
+      g.save(); g.globalCompositeOperation = 'lighter';
+      for (let i = 0; i < 14; i++) { const a = rnd() * Math.PI * 2, d = S.rx * (1 + rnd() * .5), x = S.x + Math.cos(a) * d, y = S.y + S.th / 2 + Math.sin(a) * d * .55; radial(g, x, y - rnd() * 40, 14 + rnd() * 20, curse, .25, 'lighter'); }
       g.restore();
     },
   },
