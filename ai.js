@@ -205,7 +205,7 @@ async function aiIconOne(guideSet, role, style, engine, prevRaw) {
 const TEX_TIER_PROMPT = [
   'COMMON grade: a simple clean emblem, flat colours, plain thin rim, no glow',
   'UNCOMMON grade: a clear emblem with a soft glow and a simple metallic rim',
-  'RARE grade: a detailed glowing emblem, a ring of engraved runes around it, a polished silver rim',
+  'RARE grade: a detailed glowing emblem, a ring of engraved geometric lines and dots around it (no runes, no letters), a polished silver rim',
   'EPIC grade: an intensely glowing emblem with energy swirling inside the disc, an ornate gold filigree rim, sparkles',
   'LEGENDARY grade: a spectacular radiant emblem bursting with light, iridescent rainbow highlights, an extremely ornate jewelled rim, light rays and particles inside the disc, masterpiece',
 ];
