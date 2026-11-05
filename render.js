@@ -32,6 +32,7 @@ const SKILLS = [
   { id: 'magnet', ko: '자석', desc: '날아가는 알을 내 쪽으로 휘게 함', color: '#ff5a5a', en: 'MAGNETISM — an overwhelming magnetic vortex sucks everything toward the stone: glowing red and blue field lines spiral inward and converge into its centre, iron filings, metal shards, sparks, debris and smaller enemy stones are dragged toward it with motion streaks, the surrounding background visibly warps and bends inward like a gravity well, crackling electromagnetic arcs, a red N glow on one side and a blue S glow on the other' },
   { id: 'mark', ko: '표식', desc: '상대 스킬을 봉인', color: '#ff4fd8', en: 'CURSE MARK — the stone casts a dark curse on a smaller enemy stone nearby: a sinister glowing curse brand burns into the enemy stone (an abstract thorny occult symbol made only of curved shapes, thorns and an eye-like spiral — NOT an X, NOT a letter, NOT a number, NOT a crosshair), violet-black cursed smoke and shadowy tendrils and spectral chains link the stone to its victim, the victim stone cracks, darkens and is wrapped in withering purple miasma, an ominous hex circle of pure geometric lines beneath, eerie dark aura' },
   { id: 'cloak', ko: '클로킹', desc: '투명해져 보이지 않음', color: '#9ff5e6', en: 'CLOAKING — the stone is semi-transparent like clear ghostly glass: the background scenery is clearly visible THROUGH its body, slightly magnified and bent by refraction; a cloaking field spreads around it so the surrounding background also turns see-through, pale and faded, dissolving into translucent haze with heat-haze ripples; only a thin shimmering rim of light, glitching light fragments and faint distortion reveal where it is' },
+  { id: 'scout', ko: '정찰', desc: '상대 알의 스킬을 파악', color: '#8fa8ff', en: 'SCOUTING / ALL-SEEING EYE — a huge glowing clairvoyant eye opens on the top face of the stone like a mystic third eye, its iris made of swirling starlight; a wide cone of revealing light and scanning beams sweep out from the eye across the field, exposing ghostly translucent silhouettes of distant enemy stones with their hidden skill auras glowing, floating concentric scan rings and radar ripples, an omniscient watchful mood (the eye is pure light and shapes, no text, no letters)' },
   { id: 'support', ko: '지원', desc: '반경 내 아군 강화', color: '#5df08a', en: 'SUPPORT AURA — a warm radiant aura and glowing circle around the stone, rising plus-shaped sparks and blessing light' },
 ];
 
@@ -930,6 +931,49 @@ const SKFX = {
       const { g, S, rnd, Q } = c; g.save(); g.globalCompositeOperation = 'lighter';
       for (let k = 0; k < 3; k++) { g.beginPath(); g.ellipse(S.x, S.y + S.th / 2, S.rx * (1.15 + k * .18), S.ry * (1.2 + k * .2), 0, 0, 7); g.strokeStyle = rgba('#ffffff', .18 - k * .05); g.lineWidth = 2; g.stroke(); }
       for (let i = 0; i < 60 * Q; i++) { const x = S.x + S.rx * .4 + rnd() * 300, y = S.y - 120 + rnd() * 280, s = 3 + rnd() * 9; g.fillStyle = rgba(rnd() < .5 ? col : '#ffffff', .2 + rnd() * .5 * (1 - (x - S.x) / 500)); g.fillRect(x, y, s, s); }
+      g.restore();
+    },
+  },
+  scout: {
+    back(c, col) {
+      const { g, S, rnd } = c, ex = S.x, ey = S.y - 6;
+      // 눈에서 퍼지는 탐색 빛 원뿔 + 드러나는 적 알 실루엣
+      const tg = [[180, 300], [610, 260], [660, 470]];
+      g.save(); g.globalCompositeOperation = 'lighter';
+      for (const [x, y] of tg) {
+        const a = Math.atan2(y - ey, x - ex), d = Math.hypot(x - ex, y - ey) + 90, sp = .2;
+        const gr = g.createRadialGradient(ex, ey, 20, ex, ey, d); gr.addColorStop(0, rgba(col, .45)); gr.addColorStop(1, rgba(col, 0));
+        g.fillStyle = gr; g.beginPath(); g.moveTo(ex, ey); g.arc(ex, ey, d, a - sp, a + sp); g.closePath(); g.fill();
+      }
+      g.restore();
+      for (const [x, y] of tg) {
+        g.save(); g.globalAlpha = .45; drawStone(g, x, y, 54, 32, 14, c.enemy, {}); g.restore();
+        g.save(); g.globalCompositeOperation = 'lighter'; g.shadowColor = col; g.shadowBlur = 12; g.strokeStyle = rgba(lighten(col, .3), .9); g.lineWidth = 2; g.setLineDash([8, 6]);
+        g.beginPath(); g.ellipse(x, y + 7, 70, 44, 0, 0, 7); g.stroke(); g.setLineDash([]);
+        for (const k of [0, 1]) { g.beginPath(); g.moveTo(x - 82 + k * 164, y - 40); g.lineTo(x - 82 + k * 164, y - 54); g.lineTo(x - 68 + k * 136, y - 54); g.stroke(); }
+        radial(g, x, y - 52, 26, mix(col, '#ffffff', .2), .5, 'lighter'); g.restore();
+      }
+      // 레이더 물결
+      g.save(); g.globalCompositeOperation = 'lighter'; g.strokeStyle = rgba(col, .35); g.lineWidth = 2;
+      for (let k = 1; k <= 4; k++) { g.beginPath(); g.ellipse(S.x, S.y + S.th, S.rx * (1.2 + k * .45), S.ry * (1.2 + k * .45), 0, 0, 7); g.globalAlpha = 1 - k * .2; g.stroke(); }
+      g.restore();
+    },
+    front(c, col) {
+      const { g, S, t } = c, x = S.x, y = S.y, w = S.rx * .62, h = S.ry * .5;
+      // 알 윗면의 천리안 눈
+      g.save(); g.globalCompositeOperation = 'lighter'; radial(g, x, y, S.rx * .9, col, .35 + t * .05, 'lighter'); g.restore();
+      g.save(); g.beginPath(); g.moveTo(x - w, y); g.quadraticCurveTo(x, y - h * 1.9, x + w, y); g.quadraticCurveTo(x, y + h * 1.9, x - w, y); g.closePath();
+      g.fillStyle = '#0a0d24'; g.shadowColor = col; g.shadowBlur = c.glow + 14; g.fill(); g.clip();
+      const ir = g.createRadialGradient(x, y, 2, x, y, h * 1.05); ir.addColorStop(0, '#ffffff'); ir.addColorStop(.25, lighten(col, .5)); ir.addColorStop(.7, col); ir.addColorStop(1, darken(col, .5));
+      g.fillStyle = ir; g.beginPath(); g.ellipse(x, y, h * 1.05, h * .95, 0, 0, 7); g.fill();
+      g.strokeStyle = rgba('#ffffff', .5); g.lineWidth = 1.2;
+      for (let i = 0; i < 18; i++) { const a = i / 18 * Math.PI * 2; g.beginPath(); g.moveTo(x + Math.cos(a) * h * .35, y + Math.sin(a) * h * .32); g.lineTo(x + Math.cos(a) * h * .95, y + Math.sin(a) * h * .86); g.stroke(); }
+      g.fillStyle = '#05060f'; g.beginPath(); g.ellipse(x, y, h * .22, h * .5, 0, 0, 7); g.fill();
+      g.fillStyle = '#ffffff'; g.beginPath(); g.arc(x - h * .3, y - h * .3, h * .14, 0, 7); g.fill();
+      g.restore();
+      g.save(); g.globalCompositeOperation = 'lighter'; g.strokeStyle = lighten(col, .4); g.lineWidth = 3; g.shadowColor = col; g.shadowBlur = c.glow + 10;
+      g.beginPath(); g.moveTo(x - w, y); g.quadraticCurveTo(x, y - h * 1.9, x + w, y); g.quadraticCurveTo(x, y + h * 1.9, x - w, y); g.stroke();
+      for (let i = -3; i <= 3; i++) { const a = -Math.PI / 2 + i * .32; g.beginPath(); g.moveTo(x + Math.cos(a) * w * .95, y - h * .2 + Math.sin(a) * h * 1.6); g.lineTo(x + Math.cos(a) * w * 1.18, y - h * .2 + Math.sin(a) * h * 2.1); g.stroke(); }
       g.restore();
     },
   },
