@@ -534,13 +534,13 @@ function drawGlyph(g, id, v, fg, bg) {
 const THEMES = [
   { id: 'ice', ko: '얼음', kw: ['얼음', '빙', '서리', '겨울', '냉기', '크리스탈', '수정', '눈송', '설원', 'ice', 'frost', 'snow'], sky: ['#06142c', '#1d5a88', '#a9e8ff'], floor: ['#cdeeff', '#4b88b3'], grid: 'rgba(255,255,255,.4)', accent: '#c9f6ff', part: 'snow', env: 'crystals', ai: 'BACKGROUND RULE: NO mountains, NO houses, NO buildings, NO village, NO landscape scenery. Instead a noble ICE CRYSTAL CAVE as a stylized 2.5D background: walls made of patterned faceted ice crystals, crystal clusters and prism shards arranged in an elegant repeating geometric pattern, layered depth like a 2.5D game backdrop, cool blue, cyan and white with a soft inner glow, regal and pristine. Effects sparkle with frost crystals and fine ice dust.' },
   { id: 'fire', ko: '불꽃', kw: ['불', '화염', '용암', '타오', '태양', '마그마', '지옥', 'fire', 'flame', 'lava'], sky: ['#160402', '#6e1206', '#ff7a1a'], floor: ['#5a200b', '#170502'], grid: 'rgba(255,140,40,.3)', accent: '#ffb347', part: 'ember', env: 'flames', ai: 'BACKGROUND RULE: NO mountains, NO volcano landscape, NO scenery. The stone is INSIDE a raging inferno, completely engulfed — roaring walls of fire fill the entire background, flames everywhere around it, as if standing in the heart of a blaze. EFFECTS: every skill effect is wrapped in intense violent fire VFX — huge flame tongues, fire swirls, blazing embers, sparks and heat distortion, extremely fiery and powerful.' },
-  { id: 'nature', ko: '자연', kw: ['자연', '숲', '치유', '나무', '꽃', '풀', '생명', '정령', '대지', 'nature', 'forest', 'heal'], sky: ['#06200f', '#1f6b3a', '#c6f7a8'], floor: ['#6b9a43', '#20401a'], grid: 'rgba(20,50,10,.35)', accent: '#c4ff9e', part: 'leaf', env: 'leaves', ai: 'BACKGROUND RULE: NO mountains, NO rocky cliffs, NO dense dark forest. Instead a vast open lush GREEN MEADOW / grassland plain spreading to a low gentle horizon, one colossal ancient green tree with an enormous leafy canopy, and decorative patterns of fresh green leaves filling the scene, soft warm healing sunlight, floating glowing leaves and light motes, peaceful and restorative. Effects are woven with swirling green leaves and gentle healing light.' },
+  { id: 'nature', ko: '자연', kw: ['자연', '숲', '치유', '나무', '꽃', '풀', '생명', '정령', '대지', 'nature', 'forest', 'heal'], sky: ['#06200f', '#1f6b3a', '#c6f7a8'], floor: ['#6b9a43', '#20401a'], grid: 'rgba(20,50,10,.35)', accent: '#c4ff9e', part: 'leaf', env: 'leaves', ai: 'BACKGROUND RULE: NO mountains, NO rocky cliffs, NO forest, NO giant tree, NO big trees, NO tree trunks. Instead a vast open lush GREEN MEADOW / grassland plain spreading to a low gentle horizon, and decorative patterns of fresh green leaves filling the scene, soft warm healing sunlight, floating glowing leaves and light motes, peaceful and restorative. Effects are woven with swirling green leaves and gentle healing light.' },
   { id: 'divine', ko: '신화', kw: ['올림푸스', '신화', '천상', '신성', '영웅', '천사', '성스', '제우스', '빛의', 'olymp', 'divine', 'holy', 'hero'], sky: ['#1e1406', '#7a5518', '#e9c66f'], floor: ['#cdbd98', '#6b5a3e'], grid: 'rgba(90,60,20,.4)', accent: '#ffd98a', part: 'mote', env: 'columns', bright: true },
-  { id: 'dark', ko: '어둠', kw: ['어둠', '암흑', '그림자', '악마', '저주', '공허', '죽음', '해골', 'dark', 'shadow', 'demon'], sky: ['#040108', '#2a0f45', '#6b2fa0'], floor: ['#1d1228', '#060309'], grid: 'rgba(190,120,255,.22)', accent: '#c58bff', part: 'smoke', env: 'smoke' },
+  { id: 'dark', ko: '어둠', kw: ['어둠', '암흑', '그림자', '악마', '저주', '공허', '죽음', '해골', 'dark', 'shadow', 'demon'], sky: ['#040108', '#2a0f45', '#6b2fa0'], floor: ['#1d1228', '#060309'], grid: 'rgba(190,120,255,.22)', accent: '#c58bff', part: 'smoke', env: 'smoke', ai: 'BACKGROUND RULE: deep darkness from which grotesque, twisted, organic shapes reach out — writhing thorny tendrils, warped vein-like branching patterns and eerie biomechanical forms emerging from the shadows, NO landscape, NO buildings. LIGHTING: uncanny, sinister lighting — sickly violet and toxic green under-lighting, harsh rim lights cutting through black fog, glowing cracks. EFFECTS: premium high-end dark VFX — volumetric shadow smoke, dark energy wisps, distortion and glowing particles, unsettling and elegant.' },
   { id: 'storm', ko: '번개', kw: ['번개', '전기', '폭풍', '뇌', '천둥', 'thunder', 'lightning', 'storm'], sky: ['#040918', '#1b2f6b', '#6fa8ff'], floor: ['#1d2848', '#0a0f1f'], grid: 'rgba(140,190,255,.3)', accent: '#cfe6ff', part: 'spark', env: 'bolts' },
   { id: 'deep', ko: '심해', kw: ['심해', '깊은 바다', '해저', 'abyss', 'deep sea'], sky: ['#000510', '#021a33', '#06486b'], floor: ['#04263a', '#00060c'], grid: 'rgba(90,200,255,.16)', accent: '#5fe8ff', part: 'bubble', env: 'abyss', ai: 'BACKGROUND RULE: the DEEP SEA abyss — dark, deep navy and blue darkness, mysterious and silent, faint shafts of light falling from far above, bioluminescent glows and drifting particles in the depths, NO beach, NO sky, NO surface waves. EFFECTS: every skill effect is shaped with streams of rising air bubbles, swirling underwater currents and flowing ribbons of water around the stone.' },
   { id: 'sea', ko: '바다', kw: ['바다', '물', '파도', '해양', '인어', 'sea', 'ocean', 'water'], sky: ['#021a24', '#0b5a6e', '#59e0d6'], floor: ['#0f5566', '#04202a'], grid: 'rgba(160,255,240,.25)', accent: '#9ffcf0', part: 'bubble', env: 'waves' },
-  { id: 'cosmic', ko: '우주', kw: ['우주', '별', '은하', '성운', '행성', '달', 'cosmic', 'galaxy', 'space', 'star'], sky: ['#03020c', '#1d0f4a', '#7b3fd0'], floor: ['#1a1040', '#05030f'], grid: 'rgba(200,160,255,.3)', accent: '#ffd6ff', part: 'star', env: 'nebula', ai: 'BACKGROUND RULE: deep outer space filled with several vivid galaxy clusters, spiral galaxies and colourful nebulae, and an intense BLACK HOLE with a blazing bright accretion disk and gravitational lensing ring. EFFECTS: many radiant light bursts, starburst flares and beams of light spreading outward, glowing cosmic energy.' },
+  { id: 'cosmic', ko: '우주', kw: ['우주', '별', '은하', '성운', '행성', '달', 'cosmic', 'galaxy', 'space', 'star'], sky: ['#03020c', '#1d0f4a', '#7b3fd0'], floor: ['#1a1040', '#05030f'], grid: 'rgba(200,160,255,.3)', accent: '#ffd6ff', part: 'star', env: 'nebula', ai: 'BACKGROUND RULE: behind the stone, ONE single colossal SPIRAL GALAXY fills most of the background, its swirling arms intricately mixed with cosmic dust, dark dust lanes and colourful nebula clouds, forming a rich, complex, highly detailed swirling pattern; no planets, no black hole, no landscape. EFFECTS: many varied light effects — radiant light bursts, starburst flares, anamorphic lens streaks, glowing light beams from the galactic core and shimmering stardust.' },
   { id: 'arcane', ko: '알까기판', kw: [], sky: ['#0a0c1e', '#23306b', '#6b86e0'], floor: ['#d7a45a', '#7a4f22'], grid: 'rgba(80,40,0,.45)', accent: '#ffd88a', part: 'mote', env: 'arcane' },
 ];
 function pickThemes(concept) {
@@ -629,6 +629,21 @@ function column(g, x, top, bot, w, a) {
   for (let i = 1; i < 5; i++) { const xx = x - w / 2 + i * w / 5; g.beginPath(); g.moveTo(xx, top + 30); g.lineTo(xx, bot - 18); g.stroke(); }
   g.restore();
 }
+// 어둠에서 뻗는 뒤틀린 촉수 (가시 + 갈라짐 + 보랏빛 테두리)
+function tendril(g, rnd, x, y, a, w, depth, col) {
+  const pts = [[x, y]], n = 9; let L = 24 + w * 2;
+  for (let i = 0; i < n; i++) { a += (rnd() - .5) * .9 + Math.sin(i * 1.3) * .15; x += Math.cos(a) * L; y += Math.sin(a) * L; pts.push([x, y]); L *= .93; }
+  g.save(); g.lineCap = 'round'; g.lineJoin = 'round';
+  g.strokeStyle = '#050008'; g.shadowColor = col; g.shadowBlur = 16;
+  for (let pass = 0; pass < 2; pass++) for (let i = 1; i < pts.length; i++) { if (pass) g.shadowBlur = 0; g.lineWidth = w * (1 - i / pts.length) + 1; g.beginPath(); g.moveTo(...pts[i - 1]); g.lineTo(...pts[i]); g.stroke(); }
+  for (let i = 1; i < pts.length; i++) {
+    const ww = w * (1 - i / pts.length) + 1;
+    if (i % 2 && ww > 5) { const [px, py] = pts[i], ta = Math.atan2(py - pts[i - 1][1], px - pts[i - 1][0]) + (rnd() < .5 ? 1.4 : -1.4); g.lineWidth = 2; g.beginPath(); g.moveTo(px, py); g.lineTo(px + Math.cos(ta) * ww * 1.6, py + Math.sin(ta) * ww * 1.6); g.stroke(); }
+  }
+  g.globalCompositeOperation = 'lighter'; g.shadowBlur = 8; g.strokeStyle = rgba(col, .35); g.lineWidth = 1.5; g.beginPath(); g.moveTo(...pts[0]); for (const p of pts) g.lineTo(p[0] - 2, p[1] - 2); g.stroke();
+  g.restore();
+  if (depth > 1) for (let k = 0; k < 2; k++) { const p = pts[2 + Math.floor(rnd() * 5)]; tendril(g, rnd, p[0], p[1], a + (rnd() - .5) * 2.2, w * .5, depth - 2, col); }
+}
 function drawEnv(c, layer) {
   const { g, th, rnd, Q, t } = c, env = th.env;
   if (env === 'crystals') {
@@ -669,11 +684,8 @@ function drawEnv(c, layer) {
       for (let i = 0; i < 4 + t; i++) { const x = 60 + rnd() * 680; g.fillStyle = rgba('#fff6c0', .06); g.beginPath(); g.moveTo(x - 30, 0); g.lineTo(x + 40, 0); g.lineTo(x + 200, HZ); g.lineTo(x + 40, HZ); g.closePath(); g.fill(); }
       g.restore();
       for (let k = 0; k < 3; k++) { g.beginPath(); g.moveTo(0, HZ + 10); for (let x = 0; x <= W; x += 20) g.lineTo(x, HZ - 40 + k * 22 - Math.sin(x / 210 + k * 1.7) * 14); g.lineTo(W, HZ + 10); g.closePath(); g.fillStyle = ['#7fc65a', '#5aa845', '#3f8a35'][k]; g.fill(); }
-      const tx = 400, ty = HZ - 30;
-      const tg = g.createLinearGradient(tx - 60, 0, tx + 60, 0); tg.addColorStop(0, '#3b2a17'); tg.addColorStop(.5, '#6b4d2c'); tg.addColorStop(1, '#2e2011');
-      g.fillStyle = tg; g.beginPath(); g.moveTo(tx - 75, ty); g.quadraticCurveTo(tx - 40, ty - 160, tx - 45, 330); g.lineTo(tx + 45, 330); g.quadraticCurveTo(tx + 40, ty - 160, tx + 75, ty); g.closePath(); g.fill();
-      for (let i = 0; i < 60; i++) { const a = rnd() * Math.PI * 2, d = rnd() * 330, x = tx + Math.cos(a) * d * 1.25, y = 250 + Math.sin(a) * d * .55; radial(g, x, y, 70 + rnd() * 70, ['#1f6b2e', '#2f8a3a', '#46a845', '#0f4a20'][i % 4], .8); }
-      for (let i = 0; i < 70; i++) leafShape(g, tx + (rnd() - .5) * 820, 250 + (rnd() - .5) * 340, 14 + rnd() * 18, rnd() * 6, i % 3 ? '#5cbc4a' : '#9ae06a');
+      // 위쪽 가장자리를 두르는 푸른 잎 패턴
+      for (let i = 0; i < 90; i++) { const x = rnd() * W, y = Math.pow(rnd(), 2) * 260 * (Math.abs(x - 400) / 400 + .4); leafShape(g, x, y, 16 + rnd() * 20, rnd() * 6, ['#3f8f3a', '#5cbc4a', '#2c6e2a', '#9ae06a'][i % 4]); }
     } else {
       // 앞쪽 풀잎 + 모서리 잎 패턴
       g.save(); g.lineCap = 'round';
@@ -691,8 +703,22 @@ function drawEnv(c, layer) {
       for (let i = 0; i < 40; i++) radial(g, rnd() * W, HZ + 10 + rnd() * 50, 50 + rnd() * 50, '#ffffff', .5);
     } else for (let i = 0; i < 10; i++) radial(g, rnd() < .5 ? rnd() * 200 : W - rnd() * 200, H - rnd() * 120, 60 + rnd() * 50, '#ffffff', .55);
   } else if (env === 'smoke') {
-    if (layer === 'back') for (let i = 0; i < 12; i++) radial(g, rnd() * W, 200 + rnd() * 500, 120 + rnd() * 140, i % 3 ? '#000000' : th.accent, i % 3 ? .45 : .15);
-    else for (let i = 0; i < 8; i++) radial(g, rnd() * W, H - rnd() * 140, 120 + rnd() * 80, '#000000', .55);
+    if (layer === 'back') {
+      for (let i = 0; i < 12; i++) radial(g, rnd() * W, 200 + rnd() * 500, 120 + rnd() * 140, i % 3 ? '#000000' : th.accent, i % 3 ? .45 : .15);
+      // 기괴한 조명: 아래에서 올라오는 독성 녹색·보라 빛
+      radial(g, 400, HZ + 40, 420, '#5bff9a', .12 + t * .03, 'lighter'); radial(g, 180, 300, 260, '#a020ff', .2, 'lighter'); radial(g, 640, 220, 220, '#ff2a6a', .12, 'lighter');
+      // 어둠 속에서 뻗어 나오는 뒤틀린 촉수·가지
+      for (let i = 0; i < 4 + Math.ceil(t / 2); i++) { const sd = i % 2 ? 1 : -1; tendril(g, rnd, sd < 0 ? -20 : W + 20, 60 + rnd() * (HZ - 120), sd < 0 ? -.3 + rnd() * .6 : Math.PI - .3 + rnd() * .6, 34 + rnd() * 16, 3, th.accent); }
+      for (let i = 0; i < 2; i++) tendril(g, rnd, 150 + rnd() * 500, -20, Math.PI / 2 + (rnd() - .5) * .8, 26 + rnd() * 10, 3, th.accent);
+      // 어둠 속 빛나는 균열 무늬
+      g.save(); g.globalCompositeOperation = 'lighter'; g.strokeStyle = rgba('#d58bff', .35); g.shadowColor = '#b040ff'; g.shadowBlur = 10; g.lineWidth = 1.5;
+      for (let i = 0; i < 10; i++) { let x = rnd() * W, y = rnd() * HZ, a = rnd() * 7; g.beginPath(); g.moveTo(x, y); for (let k = 0; k < 6; k++) { a += (rnd() - .5) * 1.4; x += Math.cos(a) * 22; y += Math.sin(a) * 22; g.lineTo(x, y); } g.stroke(); }
+      g.restore();
+    } else {
+      for (let i = 0; i < 8; i++) radial(g, rnd() * W, H - rnd() * 140, 120 + rnd() * 80, '#000000', .55);
+      for (const sd of [-1, 1]) tendril(g, rnd, sd < 0 ? -10 : W + 10, H + 20, sd < 0 ? -1.3 : -Math.PI + 1.3, 40, 1, th.accent);
+      radial(g, c.S.x, c.S.y + c.S.th + 40, 240, '#5bff9a', .1, 'lighter');
+    }
   } else if (env === 'bolts') {
     if (layer === 'back') for (let b = 0; b < 2 + t; b++) {
       let x = 80 + rnd() * 640, y = 0; g.save(); g.globalCompositeOperation = 'lighter'; g.shadowColor = th.accent; g.shadowBlur = 20; g.strokeStyle = '#ffffff'; g.lineWidth = 3; g.beginPath(); g.moveTo(x, y);
@@ -724,29 +750,29 @@ function drawEnv(c, layer) {
       const cols = [th.accent, th.sky[2], '#ff6ad5', '#6ad5ff'];
       for (let i = 0; i < 7; i++) radial(g, rnd() * W, rnd() * HZ, 180 + rnd() * 180, cols[i % 4], .22, 'lighter');
       for (let i = 0; i < 220 * Q; i++) { g.fillStyle = `rgba(255,255,255,${rnd() * .8 + .2})`; g.fillRect(rnd() * W, rnd() * HZ, 1.5, 1.5); }
-      // 나선 은하들
+      // 알 뒤의 거대한 나선 은하 하나 (우주 먼지·먼지띠·성운이 섞인 복잡한 패턴)
+      const gx = 400, gy = 330, R = 760, tilt = .55, rot = -.35, sp = d => Math.log(1 + d / 60) * 1.7;
+      const P = (d, a) => { const x = Math.cos(a) * d, y = Math.sin(a) * d * tilt; return [gx + x * Math.cos(rot) - y * Math.sin(rot), gy + x * Math.sin(rot) + y * Math.cos(rot)]; };
       g.save(); g.globalCompositeOperation = 'lighter';
-      for (const [gx, gy, gs, gc] of [[150, 170, 1, '#9fd0ff'], [690, 470, .7, '#ffb0e6'], [120, 560, .55, '#d0b0ff']]) {
-        radial(g, gx, gy, 60 * gs, '#ffffff', .6, 'lighter');
-        for (let i = 0; i < 260 * gs; i++) { const arm = i % 2, d = rnd() * 130 * gs, a = d / (30 * gs) + arm * Math.PI + (rnd() - .5) * .5; g.fillStyle = rgba(rnd() < .6 ? gc : '#ffffff', .3 + rnd() * .5); g.fillRect(gx + Math.cos(a) * d, gy + Math.sin(a) * d * .45, 1.8, 1.8); }
-      }
+      for (let i = 0; i < 110; i++) { const d = rnd() * R, arm = i % 3, a = sp(d) + arm * Math.PI * 2 / 3 + (rnd() - .5) * .6, [x, y] = P(d, a); radial(g, x, y, 60 + rnd() * 120, ['#7b5cff', '#ff6ad5', '#5fd0ff', '#ffb070'][i % 4], .1 + rnd() * .08, 'lighter'); }
+      for (let i = 0; i < 4200 * Q; i++) { const d = Math.pow(rnd(), .9) * R, arm = i % 3, a = sp(d) + arm * Math.PI * 2 / 3 + (rnd() - .5) * (.35 + d / R * .4), [x, y] = P(d, a); g.fillStyle = rgba(rnd() < .55 ? '#ffffff' : rnd() < .5 ? '#bcd8ff' : '#ffd0f0', .35 + rnd() * .6); const sz = rnd() < .06 ? 3 : 1.8; g.fillRect(x, y, sz, sz); }
+      radial(g, gx, gy, 200, '#fff2d8', .35, 'lighter'); radial(g, gx, gy, 60, '#ffffff', .55, 'lighter');
       g.restore();
-      // 블랙홀
-      const bx = 560, by = 230, br = 62;
-      g.save(); g.globalCompositeOperation = 'lighter'; radial(g, bx, by, 260, '#ff9a4a', .35, 'lighter');
-      g.translate(bx, by); g.rotate(-.18);
-      for (let k = 0; k < 6; k++) { g.strokeStyle = rgba(['#ffffff', '#ffd27a', '#ff8a3a', '#ff5a8a', '#ffc070', '#fff0d0'][k], .5 - k * .05); g.lineWidth = 10 - k; g.beginPath(); g.ellipse(0, 0, br * (1.6 + k * .28), br * (.32 + k * .05), 0, 0, 7); g.stroke(); }
-      g.strokeStyle = rgba('#fff2d8', .75); g.lineWidth = 5; g.beginPath(); g.arc(0, 0, br * 1.12, 0, 7); g.stroke();
+      // 어두운 먼지띠 (팔 안쪽을 따라 부드럽게)
+      for (let arm = 0; arm < 3; arm++) for (let d = 110; d < R; d += 7) { const [x, y] = P(d, sp(d) + arm * Math.PI * 2 / 3 + .3 + (rnd() - .5) * .14); radial(g, x, y, 22 + d * .07 + rnd() * 14, '#12081e', .1 + rnd() * .08); }
+      // 은하 중심에서 뻗는 빛줄기
+      g.save(); g.globalCompositeOperation = 'lighter';
+      for (let i = 0; i < 10; i++) { const a = rnd() * Math.PI * 2, L = 300 + rnd() * 400; const lg = g.createLinearGradient(gx, gy, gx + Math.cos(a) * L, gy + Math.sin(a) * L); lg.addColorStop(0, rgba('#fff4e0', .22)); lg.addColorStop(1, rgba(th.accent, 0)); g.fillStyle = lg; g.beginPath(); g.moveTo(gx, gy); g.lineTo(gx + Math.cos(a - .03) * L, gy + Math.sin(a - .03) * L); g.lineTo(gx + Math.cos(a + .03) * L, gy + Math.sin(a + .03) * L); g.closePath(); g.fill(); }
       g.restore();
-      g.save(); g.fillStyle = '#000000'; g.shadowColor = '#000'; g.shadowBlur = 20; g.beginPath(); g.arc(bx, by, br, 0, 7); g.fill(); g.restore();
-      g.save(); g.globalCompositeOperation = 'lighter'; g.translate(bx, by); g.rotate(-.18); g.strokeStyle = rgba('#ffe0a0', .8); g.lineWidth = 6; g.beginPath(); g.ellipse(0, 0, br * 1.7, br * .35, 0, 0, Math.PI); g.stroke(); g.restore();
     } else {
       // 빛이 퍼지는 섬광들
       g.save(); g.globalCompositeOperation = 'lighter';
+      for (let i = 0; i < 40 * Q; i++) sparkle(g, rnd() * W, rnd() * H, 3 + rnd() * 6, rnd() < .5 ? th.accent : '#bfe0ff', .7);
       const n = 3 + t * 2;
       for (let i = 0; i < n; i++) {
         const x = rnd() * W, y = rnd() * H * .9, R = 60 + rnd() * 140, col = rnd() < .5 ? th.accent : '#bfe0ff';
         radial(g, x, y, R * .6, col, .5, 'lighter');
+        const hl = g.createLinearGradient(x - R * 2.5, 0, x + R * 2.5, 0); hl.addColorStop(0, rgba(col, 0)); hl.addColorStop(.5, rgba('#ffffff', .45)); hl.addColorStop(1, rgba(col, 0)); g.fillStyle = hl; g.fillRect(x - R * 2.5, y - 1.5, R * 5, 3);
         for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2 + rnd() * .2, L = R * (k % 2 ? .6 : 1.6); const lg = g.createLinearGradient(x, y, x + Math.cos(a) * L, y + Math.sin(a) * L); lg.addColorStop(0, rgba('#ffffff', .7)); lg.addColorStop(1, rgba(col, 0)); g.strokeStyle = lg; g.lineWidth = k % 2 ? 1.5 : 3; g.beginPath(); g.moveTo(x, y); g.lineTo(x + Math.cos(a) * L, y + Math.sin(a) * L); g.stroke(); }
       }
       g.restore();
