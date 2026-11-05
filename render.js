@@ -532,14 +532,15 @@ function drawGlyph(g, id, v, fg, bg) {
    3) 절차적 카드 일러스트 엔진 (API 키 없이 동작)
    ================================================================= */
 const THEMES = [
-  { id: 'ice', ko: '얼음', kw: ['얼음', '빙', '서리', '겨울', '냉기', '크리스탈', '수정', '눈송', '설원', 'ice', 'frost', 'snow'], sky: ['#06142c', '#1d5a88', '#a9e8ff'], floor: ['#cdeeff', '#4b88b3'], grid: 'rgba(255,255,255,.4)', accent: '#c9f6ff', part: 'snow', env: 'crystals' },
-  { id: 'fire', ko: '불꽃', kw: ['불', '화염', '용암', '타오', '태양', '마그마', '지옥', 'fire', 'flame', 'lava'], sky: ['#160402', '#6e1206', '#ff7a1a'], floor: ['#5a200b', '#170502'], grid: 'rgba(255,140,40,.3)', accent: '#ffb347', part: 'ember', env: 'flames' },
-  { id: 'nature', ko: '자연', kw: ['자연', '숲', '치유', '나무', '꽃', '풀', '생명', '정령', '대지', 'nature', 'forest', 'heal'], sky: ['#06200f', '#1f6b3a', '#c6f7a8'], floor: ['#6b9a43', '#20401a'], grid: 'rgba(20,50,10,.35)', accent: '#c4ff9e', part: 'leaf', env: 'leaves' },
+  { id: 'ice', ko: '얼음', kw: ['얼음', '빙', '서리', '겨울', '냉기', '크리스탈', '수정', '눈송', '설원', 'ice', 'frost', 'snow'], sky: ['#06142c', '#1d5a88', '#a9e8ff'], floor: ['#cdeeff', '#4b88b3'], grid: 'rgba(255,255,255,.4)', accent: '#c9f6ff', part: 'snow', env: 'crystals', ai: 'BACKGROUND RULE: NO mountains, NO houses, NO buildings, NO village, NO landscape scenery. Instead a noble ICE CRYSTAL CAVE as a stylized 2.5D background: walls made of patterned faceted ice crystals, crystal clusters and prism shards arranged in an elegant repeating geometric pattern, layered depth like a 2.5D game backdrop, cool blue, cyan and white with a soft inner glow, regal and pristine. Effects sparkle with frost crystals and fine ice dust.' },
+  { id: 'fire', ko: '불꽃', kw: ['불', '화염', '용암', '타오', '태양', '마그마', '지옥', 'fire', 'flame', 'lava'], sky: ['#160402', '#6e1206', '#ff7a1a'], floor: ['#5a200b', '#170502'], grid: 'rgba(255,140,40,.3)', accent: '#ffb347', part: 'ember', env: 'flames', ai: 'BACKGROUND RULE: NO mountains, NO volcano landscape, NO scenery. The stone is INSIDE a raging inferno, completely engulfed — roaring walls of fire fill the entire background, flames everywhere around it, as if standing in the heart of a blaze. EFFECTS: every skill effect is wrapped in intense violent fire VFX — huge flame tongues, fire swirls, blazing embers, sparks and heat distortion, extremely fiery and powerful.' },
+  { id: 'nature', ko: '자연', kw: ['자연', '숲', '치유', '나무', '꽃', '풀', '생명', '정령', '대지', 'nature', 'forest', 'heal'], sky: ['#06200f', '#1f6b3a', '#c6f7a8'], floor: ['#6b9a43', '#20401a'], grid: 'rgba(20,50,10,.35)', accent: '#c4ff9e', part: 'leaf', env: 'leaves', ai: 'BACKGROUND RULE: NO mountains, NO rocky cliffs, NO dense dark forest. Instead a vast open lush GREEN MEADOW / grassland plain spreading to a low gentle horizon, one colossal ancient green tree with an enormous leafy canopy, and decorative patterns of fresh green leaves filling the scene, soft warm healing sunlight, floating glowing leaves and light motes, peaceful and restorative. Effects are woven with swirling green leaves and gentle healing light.' },
   { id: 'divine', ko: '신화', kw: ['올림푸스', '신화', '천상', '신성', '영웅', '천사', '성스', '제우스', '빛의', 'olymp', 'divine', 'holy', 'hero'], sky: ['#1e1406', '#7a5518', '#e9c66f'], floor: ['#cdbd98', '#6b5a3e'], grid: 'rgba(90,60,20,.4)', accent: '#ffd98a', part: 'mote', env: 'columns', bright: true },
   { id: 'dark', ko: '어둠', kw: ['어둠', '암흑', '그림자', '악마', '저주', '공허', '죽음', '해골', 'dark', 'shadow', 'demon'], sky: ['#040108', '#2a0f45', '#6b2fa0'], floor: ['#1d1228', '#060309'], grid: 'rgba(190,120,255,.22)', accent: '#c58bff', part: 'smoke', env: 'smoke' },
   { id: 'storm', ko: '번개', kw: ['번개', '전기', '폭풍', '뇌', '천둥', 'thunder', 'lightning', 'storm'], sky: ['#040918', '#1b2f6b', '#6fa8ff'], floor: ['#1d2848', '#0a0f1f'], grid: 'rgba(140,190,255,.3)', accent: '#cfe6ff', part: 'spark', env: 'bolts' },
-  { id: 'sea', ko: '바다', kw: ['바다', '물', '파도', '심해', '해양', '인어', 'sea', 'ocean', 'water'], sky: ['#021a24', '#0b5a6e', '#59e0d6'], floor: ['#0f5566', '#04202a'], grid: 'rgba(160,255,240,.25)', accent: '#9ffcf0', part: 'bubble', env: 'waves' },
-  { id: 'cosmic', ko: '우주', kw: ['우주', '별', '은하', '성운', '행성', '달', 'cosmic', 'galaxy', 'space', 'star'], sky: ['#03020c', '#1d0f4a', '#7b3fd0'], floor: ['#1a1040', '#05030f'], grid: 'rgba(200,160,255,.3)', accent: '#ffd6ff', part: 'star', env: 'nebula' },
+  { id: 'deep', ko: '심해', kw: ['심해', '깊은 바다', '해저', 'abyss', 'deep sea'], sky: ['#000510', '#021a33', '#06486b'], floor: ['#04263a', '#00060c'], grid: 'rgba(90,200,255,.16)', accent: '#5fe8ff', part: 'bubble', env: 'abyss', ai: 'BACKGROUND RULE: the DEEP SEA abyss — dark, deep navy and blue darkness, mysterious and silent, faint shafts of light falling from far above, bioluminescent glows and drifting particles in the depths, NO beach, NO sky, NO surface waves. EFFECTS: every skill effect is shaped with streams of rising air bubbles, swirling underwater currents and flowing ribbons of water around the stone.' },
+  { id: 'sea', ko: '바다', kw: ['바다', '물', '파도', '해양', '인어', 'sea', 'ocean', 'water'], sky: ['#021a24', '#0b5a6e', '#59e0d6'], floor: ['#0f5566', '#04202a'], grid: 'rgba(160,255,240,.25)', accent: '#9ffcf0', part: 'bubble', env: 'waves' },
+  { id: 'cosmic', ko: '우주', kw: ['우주', '별', '은하', '성운', '행성', '달', 'cosmic', 'galaxy', 'space', 'star'], sky: ['#03020c', '#1d0f4a', '#7b3fd0'], floor: ['#1a1040', '#05030f'], grid: 'rgba(200,160,255,.3)', accent: '#ffd6ff', part: 'star', env: 'nebula', ai: 'BACKGROUND RULE: deep outer space filled with several vivid galaxy clusters, spiral galaxies and colourful nebulae, and an intense BLACK HOLE with a blazing bright accretion disk and gravitational lensing ring. EFFECTS: many radiant light bursts, starburst flares and beams of light spreading outward, glowing cosmic energy.' },
   { id: 'arcane', ko: '알까기판', kw: [], sky: ['#0a0c1e', '#23306b', '#6b86e0'], floor: ['#d7a45a', '#7a4f22'], grid: 'rgba(80,40,0,.45)', accent: '#ffd88a', part: 'mote', env: 'arcane' },
 ];
 function pickThemes(concept) {
@@ -612,9 +613,9 @@ function shard(g, x, y, w, h, lean, col, a) {
   g.strokeStyle = 'rgba(255,255,255,.75)'; g.lineWidth = 1.5; g.stroke();
   g.beginPath(); g.moveTo(x, y); g.lineTo(tx, y - h); g.strokeStyle = 'rgba(255,255,255,.4)'; g.stroke(); g.restore();
 }
-function flame(g, x, y, w, h, sway, a) {
+function flame(g, x, y, w, h, sway, a, soft) {
   g.save(); g.globalCompositeOperation = 'lighter'; g.globalAlpha = a;
-  const gr = g.createLinearGradient(0, y, 0, y - h); gr.addColorStop(0, 'rgba(255,236,150,.95)'); gr.addColorStop(.35, 'rgba(255,120,30,.8)'); gr.addColorStop(1, 'rgba(200,20,0,0)');
+  const gr = g.createLinearGradient(0, y, 0, y - h); if (soft) { gr.addColorStop(0, 'rgba(255,150,40,0)'); gr.addColorStop(.18, 'rgba(255,236,150,.9)'); } else gr.addColorStop(0, 'rgba(255,236,150,.95)'); gr.addColorStop(.35, 'rgba(255,120,30,.8)'); gr.addColorStop(1, 'rgba(200,20,0,0)');
   g.fillStyle = gr; g.beginPath(); g.moveTo(x - w / 2, y);
   g.bezierCurveTo(x - w * .55, y - h * .45, x + sway - w * .2, y - h * .7, x + sway, y - h);
   g.bezierCurveTo(x + sway + w * .15, y - h * .65, x + w * .6, y - h * .4, x + w / 2, y); g.closePath(); g.fill(); g.restore();
@@ -631,18 +632,55 @@ function column(g, x, top, bot, w, a) {
 function drawEnv(c, layer) {
   const { g, th, rnd, Q, t } = c, env = th.env;
   if (env === 'crystals') {
-    if (layer === 'back') for (let i = 0; i < Math.round(9 * Q) + 2; i++) shard(g, rnd() * W, HZ + 10, 30 + rnd() * 50, 150 + rnd() * 320, (rnd() - .5) * .4, th.accent, .25 + rnd() * .3);
-    else { shard(g, 60, H + 20, 110, 420, .22, th.accent, .8); shard(g, W - 70, H + 20, 120, 460, -.22, th.accent, .8); if (t >= 2) { shard(g, 160, H + 20, 70, 260, .08, th.accent, .7); shard(g, W - 170, H + 20, 70, 250, -.05, th.accent, .7); } }
+    if (layer === 'back') {
+      // 2.5D 얼음 동굴: 깎인 결정면 패턴 + 양옆 결정 벽 + 결정 무리
+      const cs = 70, rows = Math.ceil(HZ / (cs * .866)) + 1;
+      g.save();
+      for (let r = 0; r < rows; r++) for (let q = -1; q < W / cs + 1; q++) for (const up of [0, 1]) {
+        const x0 = q * cs + (r % 2) * cs / 2, y0 = r * cs * .866, edge = Math.min(1, Math.abs(x0 + cs / 2 - 400) / 420 + (1 - y0 / HZ) * .35);
+        g.beginPath();
+        if (up) { g.moveTo(x0, y0 + cs * .866); g.lineTo(x0 + cs / 2, y0); g.lineTo(x0 + cs, y0 + cs * .866); }
+        else { g.moveTo(x0 + cs / 2, y0); g.lineTo(x0 + cs * 1.5, y0); g.lineTo(x0 + cs, y0 + cs * .866); }
+        g.closePath(); const v = rnd();
+        g.fillStyle = v < .5 ? rgba('#ffffff', (.04 + v * .14) * edge) : rgba('#04122a', (.1 + (v - .5) * .4) * edge); g.fill();
+        g.strokeStyle = rgba('#d8f6ff', .12 + .2 * edge); g.lineWidth = 1; g.stroke();
+      }
+      g.restore();
+      for (const sd of [-1, 1]) for (let i = 0; i < 7; i++) { const x = 400 + sd * (300 + rnd() * 140), y = 120 + i * 95; shard(g, x, y + 140, 50 + rnd() * 50, 160 + rnd() * 140, sd * -(.35 + rnd() * .3), th.accent, .55 + rnd() * .25); }
+      for (let i = 0; i < Math.round(9 * Q) + 3; i++) shard(g, 60 + rnd() * 680, HZ + 10, 30 + rnd() * 50, 120 + rnd() * 240, (rnd() - .5) * .5, th.accent, .3 + rnd() * .35);
+      g.save(); g.globalCompositeOperation = 'lighter'; radial(g, 400, 330, 340, '#bff2ff', .25 + t * .04, 'lighter'); g.restore();
+    } else { shard(g, 60, H + 20, 110, 420, .22, th.accent, .8); shard(g, W - 70, H + 20, 120, 460, -.22, th.accent, .8); if (t >= 2) { shard(g, 160, H + 20, 70, 260, .08, th.accent, .7); shard(g, W - 170, H + 20, 70, 250, -.05, th.accent, .7); } }
   } else if (env === 'flames') {
-    if (layer === 'back') for (let i = 0; i < Math.round(14 * Q) + 3; i++) flame(g, rnd() * W, HZ + 30, 60 + rnd() * 80, 140 + rnd() * 260, (rnd() - .5) * 60, .55);
-    else for (let i = 0; i < Math.round(8 * Q) + 2; i++) { const x = rnd() < .5 ? rnd() * 220 : W - rnd() * 220; flame(g, x, H + 10, 70 + rnd() * 80, 160 + rnd() * 260, (rnd() - .5) * 70, .85); }
+    if (layer === 'back') {
+      // 화염 속: 화면 전체를 겹겹이 채우는 불길
+      radial(g, 400, 500, 620, '#ff5a10', .35, 'lighter');
+      for (let row = 0; row < 4; row++) { const yb = HZ + 40 - row * 170; for (let i = 0; i < Math.round(9 * Q) + 5; i++) flame(g, rnd() * W, yb + rnd() * 120, 90 + rnd() * 110, 220 + rnd() * 300, (rnd() - .5) * 90, .38 + row * .06, row > 0); }
+      for (let i = 0; i < 10; i++) flame(g, rnd() < .5 ? rnd() * 160 : W - rnd() * 160, HZ + 60, 120, 500 + rnd() * 300, (rnd() - .5) * 80, .6);
+    } else {
+      for (let i = 0; i < Math.round(10 * Q) + 4; i++) { const x = rnd() < .5 ? rnd() * 240 : W - rnd() * 240; flame(g, x, H + 10, 80 + rnd() * 90, 220 + rnd() * 340, (rnd() - .5) * 70, .9); }
+      for (let i = 0; i < Math.round(8 * Q) + 4; i++) flame(g, rnd() * W, H + 30, 70 + rnd() * 70, 100 + rnd() * 160, (rnd() - .5) * 50, .7);
+      // 알을 감싸는 불길
+      const S = c.S; for (let i = 0; i < Math.round(6 * Q) + 4; i++) { const sd = i % 2 ? 1 : -1, x = S.x + sd * S.rx * (.85 + rnd() * .3); flame(g, x, S.y + S.th + S.ry * (.1 + rnd() * .3), 40 + rnd() * 40, 80 + rnd() * 110 * Q, sd * (10 + rnd() * 40), .5 + rnd() * .25, true); }
+    }
   } else if (env === 'leaves') {
     if (layer === 'back') {
-      for (let i = 0; i < 26; i++) { const x = rnd() < .5 ? rnd() * 260 : W - rnd() * 260, y = rnd() * 300; radial(g, x, y, 80 + rnd() * 90, i % 2 ? '#0d3a18' : '#1e5a2a', .75); }
+      // 펼쳐진 초원 + 거대한 녹색 나무 + 잎 패턴
       g.save(); g.globalCompositeOperation = 'lighter';
-      for (let i = 0; i < 3 + t; i++) { const x = 120 + rnd() * 560; g.fillStyle = rgba(th.accent, .07); g.beginPath(); g.moveTo(x - 30, 0); g.lineTo(x + 40, 0); g.lineTo(x + 180, HZ); g.lineTo(x + 40, HZ); g.closePath(); g.fill(); }
+      for (let i = 0; i < 4 + t; i++) { const x = 60 + rnd() * 680; g.fillStyle = rgba('#fff6c0', .06); g.beginPath(); g.moveTo(x - 30, 0); g.lineTo(x + 40, 0); g.lineTo(x + 200, HZ); g.lineTo(x + 40, HZ); g.closePath(); g.fill(); }
       g.restore();
-    } else for (let i = 0; i < Math.round(12 * Q) + 3; i++) leafShape(g, rnd() < .5 ? rnd() * 180 : W - rnd() * 180, H - rnd() * 260, 18 + rnd() * 26, rnd() * 6, i % 2 ? '#3f8f3a' : '#6cc04a');
+      for (let k = 0; k < 3; k++) { g.beginPath(); g.moveTo(0, HZ + 10); for (let x = 0; x <= W; x += 20) g.lineTo(x, HZ - 40 + k * 22 - Math.sin(x / 210 + k * 1.7) * 14); g.lineTo(W, HZ + 10); g.closePath(); g.fillStyle = ['#7fc65a', '#5aa845', '#3f8a35'][k]; g.fill(); }
+      const tx = 400, ty = HZ - 30;
+      const tg = g.createLinearGradient(tx - 60, 0, tx + 60, 0); tg.addColorStop(0, '#3b2a17'); tg.addColorStop(.5, '#6b4d2c'); tg.addColorStop(1, '#2e2011');
+      g.fillStyle = tg; g.beginPath(); g.moveTo(tx - 75, ty); g.quadraticCurveTo(tx - 40, ty - 160, tx - 45, 330); g.lineTo(tx + 45, 330); g.quadraticCurveTo(tx + 40, ty - 160, tx + 75, ty); g.closePath(); g.fill();
+      for (let i = 0; i < 60; i++) { const a = rnd() * Math.PI * 2, d = rnd() * 330, x = tx + Math.cos(a) * d * 1.25, y = 250 + Math.sin(a) * d * .55; radial(g, x, y, 70 + rnd() * 70, ['#1f6b2e', '#2f8a3a', '#46a845', '#0f4a20'][i % 4], .8); }
+      for (let i = 0; i < 70; i++) leafShape(g, tx + (rnd() - .5) * 820, 250 + (rnd() - .5) * 340, 14 + rnd() * 18, rnd() * 6, i % 3 ? '#5cbc4a' : '#9ae06a');
+    } else {
+      // 앞쪽 풀잎 + 모서리 잎 패턴
+      g.save(); g.lineCap = 'round';
+      for (let i = 0; i < 160 * Q + 60; i++) { const x = rnd() * W, y = H - rnd() * 90, h = 30 + rnd() * 70; g.strokeStyle = ['#3f8f3a', '#6cc04a', '#2c6e2a', '#9ae06a'][i % 4]; g.lineWidth = 2 + rnd() * 3; g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + (rnd() - .5) * 20, y - h * .6, x + (rnd() - .5) * 40, y - h); g.stroke(); }
+      g.restore();
+      for (const [cx, cy, sd] of [[0, 0, 1], [W, 0, -1], [0, H, 1], [W, H, -1]]) for (let i = 0; i < 14; i++) { const r = 40 + rnd() * 140, a = rnd() * Math.PI / 2; leafShape(g, cx + sd * Math.cos(a) * r, cy + (cy ? -1 : 1) * Math.sin(a) * r, 22 + rnd() * 22, rnd() * 6, i % 2 ? '#3f8f3a' : '#6cc04a'); }
+    }
   } else if (env === 'columns') {
     if (layer === 'back') {
       g.save(); g.globalCompositeOperation = 'lighter';
@@ -664,12 +702,54 @@ function drawEnv(c, layer) {
   } else if (env === 'waves') {
     if (layer === 'back') for (let k = 0; k < 3; k++) { g.beginPath(); g.moveTo(0, H); for (let x = 0; x <= W; x += 10) g.lineTo(x, HZ - 30 + k * 26 + Math.sin(x / 60 + k * 2) * 12); g.lineTo(W, H); g.closePath(); g.fillStyle = rgba(th.accent, .12); g.fill(); }
     else for (let i = 0; i < 30 * Q; i++) { const x = rnd() < .5 ? rnd() * 220 : W - rnd() * 220; g.beginPath(); g.arc(x, H - rnd() * 240, 2 + rnd() * 7, 0, 7); g.fillStyle = rgba('#e0fffb', .5 + rnd() * .4); g.fill(); }
+  } else if (env === 'abyss') {
+    if (layer === 'back') {
+      // 심해: 위에서 희미하게 떨어지는 빛줄기, 발광 생물, 물 흐름
+      g.save(); g.globalCompositeOperation = 'lighter';
+      for (let i = 0; i < 5; i++) { const x = 100 + rnd() * 600, w = 40 + rnd() * 70; const lg = g.createLinearGradient(0, 0, 0, HZ); lg.addColorStop(0, rgba('#8fe6ff', .16)); lg.addColorStop(1, rgba('#8fe6ff', 0)); g.fillStyle = lg; g.beginPath(); g.moveTo(x, 0); g.lineTo(x + w, 0); g.lineTo(x + w * 2.4 + 80, HZ); g.lineTo(x - w * .6 + 80, HZ); g.closePath(); g.fill(); }
+      g.lineCap = 'round';
+      for (let k = 0; k < 7; k++) { const y0 = 150 + rnd() * 520; g.strokeStyle = rgba(th.accent, .12 + rnd() * .14); g.lineWidth = 2 + rnd() * 6; g.beginPath(); g.moveTo(-20, y0); for (let x = 0; x <= W + 20; x += 20) g.lineTo(x, y0 + Math.sin(x / 90 + k) * 26); g.stroke(); }
+      for (let i = 0; i < 40 * Q + 10; i++) radial(g, rnd() * W, rnd() * HZ, 3 + rnd() * 10, rnd() < .7 ? th.accent : '#7affc8', .5 + rnd() * .4, 'lighter');
+      g.restore();
+      g.save(); g.globalCompositeOperation = 'multiply'; const vg = g.createRadialGradient(400, 560, 200, 400, 560, 760); vg.addColorStop(0, '#ffffff'); vg.addColorStop(1, '#203040'); g.fillStyle = vg; g.fillRect(0, 0, W, H); g.restore();
+    } else {
+      // 거품 기둥 + 알을 감싸는 물 흐름
+      const S = c.S; g.save(); g.globalCompositeOperation = 'lighter'; g.lineCap = 'round';
+      for (let k = 0; k < 4 + t; k++) { const a0 = rnd() * 6; g.strokeStyle = rgba(k % 2 ? '#bff6ff' : th.accent, .35 + rnd() * .3); g.lineWidth = 2 + rnd() * 4; g.beginPath(); for (let i = 0; i <= 40; i++) { const a = a0 + i / 40 * Math.PI * 1.6, rr = 1.15 + i / 40 * .45, x = S.x + Math.cos(a) * S.rx * rr, y = S.y + S.th / 2 + Math.sin(a) * S.ry * rr * .8 - i * 3; i ? g.lineTo(x, y) : g.moveTo(x, y); } g.stroke(); }
+      g.restore();
+      for (let col = 0; col < 5 + t; col++) { let x = rnd() * W, y = H - rnd() * 100; for (let i = 0; i < 14; i++) { x += (rnd() - .5) * 14; y -= 20 + rnd() * 40; const r = 2 + rnd() * 9; g.strokeStyle = rgba('#e0fffb', .55); g.lineWidth = 1.5; g.beginPath(); g.arc(x, y, r, 0, 7); g.stroke(); g.fillStyle = rgba('#ffffff', .5); g.beginPath(); g.arc(x - r * .35, y - r * .35, r * .25, 0, 7); g.fill(); } }
+    }
   } else if (env === 'nebula') {
     if (layer === 'back') {
       const cols = [th.accent, th.sky[2], '#ff6ad5', '#6ad5ff'];
       for (let i = 0; i < 7; i++) radial(g, rnd() * W, rnd() * HZ, 180 + rnd() * 180, cols[i % 4], .22, 'lighter');
-      for (let i = 0; i < 160 * Q; i++) { g.fillStyle = `rgba(255,255,255,${rnd() * .8 + .2})`; g.fillRect(rnd() * W, rnd() * HZ, 1.5, 1.5); }
-      g.save(); g.beginPath(); g.arc(640, 210, 70, 0, 7); const pg = g.createRadialGradient(615, 185, 5, 640, 210, 70); pg.addColorStop(0, '#ffd6ff'); pg.addColorStop(1, '#4b2a8a'); g.fillStyle = pg; g.globalAlpha = .7; g.fill(); g.restore();
+      for (let i = 0; i < 220 * Q; i++) { g.fillStyle = `rgba(255,255,255,${rnd() * .8 + .2})`; g.fillRect(rnd() * W, rnd() * HZ, 1.5, 1.5); }
+      // 나선 은하들
+      g.save(); g.globalCompositeOperation = 'lighter';
+      for (const [gx, gy, gs, gc] of [[150, 170, 1, '#9fd0ff'], [690, 470, .7, '#ffb0e6'], [120, 560, .55, '#d0b0ff']]) {
+        radial(g, gx, gy, 60 * gs, '#ffffff', .6, 'lighter');
+        for (let i = 0; i < 260 * gs; i++) { const arm = i % 2, d = rnd() * 130 * gs, a = d / (30 * gs) + arm * Math.PI + (rnd() - .5) * .5; g.fillStyle = rgba(rnd() < .6 ? gc : '#ffffff', .3 + rnd() * .5); g.fillRect(gx + Math.cos(a) * d, gy + Math.sin(a) * d * .45, 1.8, 1.8); }
+      }
+      g.restore();
+      // 블랙홀
+      const bx = 560, by = 230, br = 62;
+      g.save(); g.globalCompositeOperation = 'lighter'; radial(g, bx, by, 260, '#ff9a4a', .35, 'lighter');
+      g.translate(bx, by); g.rotate(-.18);
+      for (let k = 0; k < 6; k++) { g.strokeStyle = rgba(['#ffffff', '#ffd27a', '#ff8a3a', '#ff5a8a', '#ffc070', '#fff0d0'][k], .5 - k * .05); g.lineWidth = 10 - k; g.beginPath(); g.ellipse(0, 0, br * (1.6 + k * .28), br * (.32 + k * .05), 0, 0, 7); g.stroke(); }
+      g.strokeStyle = rgba('#fff2d8', .75); g.lineWidth = 5; g.beginPath(); g.arc(0, 0, br * 1.12, 0, 7); g.stroke();
+      g.restore();
+      g.save(); g.fillStyle = '#000000'; g.shadowColor = '#000'; g.shadowBlur = 20; g.beginPath(); g.arc(bx, by, br, 0, 7); g.fill(); g.restore();
+      g.save(); g.globalCompositeOperation = 'lighter'; g.translate(bx, by); g.rotate(-.18); g.strokeStyle = rgba('#ffe0a0', .8); g.lineWidth = 6; g.beginPath(); g.ellipse(0, 0, br * 1.7, br * .35, 0, 0, Math.PI); g.stroke(); g.restore();
+    } else {
+      // 빛이 퍼지는 섬광들
+      g.save(); g.globalCompositeOperation = 'lighter';
+      const n = 3 + t * 2;
+      for (let i = 0; i < n; i++) {
+        const x = rnd() * W, y = rnd() * H * .9, R = 60 + rnd() * 140, col = rnd() < .5 ? th.accent : '#bfe0ff';
+        radial(g, x, y, R * .6, col, .5, 'lighter');
+        for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2 + rnd() * .2, L = R * (k % 2 ? .6 : 1.6); const lg = g.createLinearGradient(x, y, x + Math.cos(a) * L, y + Math.sin(a) * L); lg.addColorStop(0, rgba('#ffffff', .7)); lg.addColorStop(1, rgba(col, 0)); g.strokeStyle = lg; g.lineWidth = k % 2 ? 1.5 : 3; g.beginPath(); g.moveTo(x, y); g.lineTo(x + Math.cos(a) * L, y + Math.sin(a) * L); g.stroke(); }
+      }
+      g.restore();
     }
   } else if (env === 'arcane') {
     if (layer === 'back') {
@@ -1139,6 +1219,7 @@ function buildPrompt(req) {
     sk.length ? `Its power${sk.length > 1 ? 's (fused into one combined effect) radiate' : ' radiates'} around it: ${sk.map(s => s.en).join('; ')}.` : '',
     req.concept ? `Theme, world and colour mood of the background and effects (Korean): "${req.concept}".` : '',
     'Background: an atmospheric, painterly environment that matches the theme, with depth and bokeh — not a game board diagram, not a top-down view, no tutorial or explanation style.',
+    req.concept ? pickThemes(req.concept).slice(0, 2).map(th => th.ai).filter(Boolean).join(' ') : '',
     `${TIER_PROMPT[t]}.`,
     'Style: high-end fantasy card game splash art, painterly digital illustration, rich colours, glowing VFX, high contrast.',
     'Vertical 2:3, full-bleed edge to edge (no white margin, no border, no frame). Keep the very top-left corner, top-center and bottom-center slightly calmer because a card frame will be overlaid.',
