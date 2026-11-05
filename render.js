@@ -22,18 +22,18 @@ const ROLES = [
   { id: 'king', ko: '왕', color: '#e9a800' },
 ];
 const SKILLS = [
-  { id: 'pierce', ko: '관통', desc: '앞의 알을 통과해서 공격', color: '#ffe08a', en: 'PIERCE — the stone is wrapped in a razor-sharp drill/lance of light pointing forward, spiralling light streaks and piercing energy trailing behind it' },
-  { id: 'accel', ko: '가속', desc: '빠르게 날아감', color: '#5ee7ff', en: 'ACCELERATION — the stone is flying fast in ONE clear direction (diagonally forward and up), dramatic straight wind effect: dense parallel straight wind lines and razor-thin speed streaks all running in the same single direction, streaming past and trailing far behind the stone, a sharp wind-cutting wedge of air at its leading edge, glowing afterimages trailing behind along the same line, the background slightly motion-blurred along that direction' },
-  { id: 'explode', ko: '폭발', desc: '주위 알들을 바깥으로 날림', color: '#ff8a3d', en: 'EXPLOSION — the stone is the core of a massive radiant blast, shockwave rings and fiery debris erupting outward all around it' },
-  { id: 'shield', ko: '쉴드', desc: '밀려나는 힘 40~70% 감소', color: '#6fb7ff', en: 'SHIELD — the stone is guarded by a glowing translucent hexagonal energy barrier dome with bright shimmering edges' },
-  { id: 'thorns', ko: '가시', desc: '나를 친 알을 세게 튕겨냄', color: '#ff4d6d', en: 'THORNS — sharp glowing crystal spikes burst out from the rim of the stone like armor, crackling with retaliating energy' },
-  { id: 'revive', ko: '부활', desc: '바깥에서 죽으면 근처에서 부활', color: '#ffb547', en: 'RESURRECTION — huge blazing phoenix wings unfold behind the stone, a pillar of rebirth light and a radiant halo above it' },
-  { id: 'split', ko: '분열', desc: '공격 시 알이 둘로 나뉨', color: '#c77dff', en: 'SPLIT — the stone splits into two glowing mirror twins flanking it, connected by a bright dividing energy slash' },
-  { id: 'magnet', ko: '자석', desc: '날아가는 알을 내 쪽으로 휘게 함', color: '#ff5a5a', en: 'MAGNETISM — an overwhelming magnetic vortex sucks everything toward the stone: glowing red and blue field lines spiral inward and converge into its centre, iron filings, metal shards, sparks, debris and smaller enemy stones are dragged toward it with motion streaks, the surrounding background visibly warps and bends inward like a gravity well, crackling electromagnetic arcs, a red N glow on one side and a blue S glow on the other' },
-  { id: 'mark', ko: '표식', desc: '상대 스킬을 봉인', color: '#ff4fd8', en: 'CURSE MARK — the stone casts a dark curse on a smaller enemy stone nearby: a sinister glowing curse brand burns into the enemy stone (an abstract thorny occult symbol made only of curved shapes, thorns and an eye-like spiral — NOT an X, NOT a letter, NOT a number, NOT a crosshair), violet-black cursed smoke and shadowy tendrils and spectral chains link the stone to its victim, the victim stone cracks, darkens and is wrapped in withering purple miasma, an ominous hex circle of pure geometric lines beneath, eerie dark aura' },
-  { id: 'cloak', ko: '클로킹', desc: '투명해져 보이지 않음', color: '#9ff5e6', en: 'CLOAKING — the stone is semi-transparent like clear ghostly glass: the background scenery is clearly visible THROUGH its body, slightly magnified and bent by refraction; a cloaking field spreads around it so the surrounding background also turns see-through, pale and faded, dissolving into translucent haze with heat-haze ripples; only a thin shimmering rim of light, glitching light fragments and faint distortion reveal where it is' },
-  { id: 'scout', ko: '정찰', desc: '상대 알의 스킬을 파악', color: '#8fa8ff', en: 'SCOUTING / ALL-SEEING EYE — a huge glowing clairvoyant eye opens on the top face of the stone like a mystic third eye, its iris made of swirling starlight; a wide cone of revealing light and scanning beams sweep out from the eye across the field, exposing ghostly translucent silhouettes of distant enemy stones with their hidden skill auras glowing, floating concentric scan rings and radar ripples, an omniscient watchful mood (the eye is pure light and shapes, no text, no letters)' },
-  { id: 'support', ko: '지원', desc: '반경 내 아군 강화', color: '#5df08a', en: 'SUPPORT AURA — a warm radiant aura and glowing circle around the stone, rising plus-shaped sparks and blessing light' },
+  { id: 'pierce', ko: '관통', desc: '앞의 알을 통과해서 공격', color: '#ffe08a', eng: 'a sharp spear-head arrow driving straight through a cracked ring', en: 'PIERCE — the stone is wrapped in a razor-sharp drill/lance of light pointing forward, spiralling light streaks and piercing energy trailing behind it' },
+  { id: 'accel', ko: '가속', desc: '빠르게 날아감', color: '#5ee7ff', eng: 'three forward-pointing chevron arrows with trailing speed lines (a fast-forward symbol)', en: 'ACCELERATION — the stone is flying fast in ONE clear direction (diagonally forward and up), dramatic straight wind effect: dense parallel straight wind lines and razor-thin speed streaks all running in the same single direction, streaming past and trailing far behind the stone, a sharp wind-cutting wedge of air at its leading edge, glowing afterimages trailing behind along the same line, the background slightly motion-blurred along that direction' },
+  { id: 'explode', ko: '폭발', desc: '주위 알들을 바깥으로 날림', color: '#ff8a3d', eng: 'a bursting explosion starburst with jagged rays and flying shards', en: 'EXPLOSION — the stone is the core of a massive radiant blast, shockwave rings and fiery debris erupting outward all around it' },
+  { id: 'shield', ko: '쉴드', desc: '밀려나는 힘 40~70% 감소', color: '#6fb7ff', eng: 'a heraldic shield outline with a hexagonal barrier pattern inside', en: 'SHIELD — the stone is guarded by a glowing translucent hexagonal energy barrier dome with bright shimmering edges' },
+  { id: 'thorns', ko: '가시', desc: '나를 친 알을 세게 튕겨냄', color: '#ff4d6d', eng: 'a ring of sharp outward thorns and spikes around a core', en: 'THORNS — sharp glowing crystal spikes burst out from the rim of the stone like armor, crackling with retaliating energy' },
+  { id: 'revive', ko: '부활', desc: '바깥에서 죽으면 근처에서 부활', color: '#ffb547', eng: 'a rising phoenix with spread wings inside a circular rebirth arrow', en: 'RESURRECTION — huge blazing phoenix wings unfold behind the stone, a pillar of rebirth light and a radiant halo above it' },
+  { id: 'split', ko: '분열', desc: '공격 시 알이 둘로 나뉨', color: '#c77dff', eng: 'one circle cracking and dividing into two circles', en: 'SPLIT — the stone splits into two glowing mirror twins flanking it, connected by a bright dividing energy slash' },
+  { id: 'magnet', ko: '자석', desc: '날아가는 알을 내 쪽으로 휘게 함', color: '#ff5a5a', eng: 'a horseshoe magnet with curved field lines pulling inward', en: 'MAGNETISM — an overwhelming magnetic vortex sucks everything toward the stone: glowing red and blue field lines spiral inward and converge into its centre, iron filings, metal shards, sparks, debris and smaller enemy stones are dragged toward it with motion streaks, the surrounding background visibly warps and bends inward like a gravity well, crackling electromagnetic arcs, a red N glow on one side and a blue S glow on the other' },
+  { id: 'mark', ko: '표식', desc: '상대 스킬을 봉인', color: '#ff4fd8', eng: 'an occult sealing brand: a thorny eye locked inside a ring of chain links (not an X, not a letter)', en: 'CURSE MARK — the stone casts a dark curse on a smaller enemy stone nearby: a sinister glowing curse brand burns into the enemy stone (an abstract thorny occult symbol made only of curved shapes, thorns and an eye-like spiral — NOT an X, NOT a letter, NOT a number, NOT a crosshair), violet-black cursed smoke and shadowy tendrils and spectral chains link the stone to its victim, the victim stone cracks, darkens and is wrapped in withering purple miasma, an ominous hex circle of pure geometric lines beneath, eerie dark aura' },
+  { id: 'cloak', ko: '클로킹', desc: '투명해져 보이지 않음', color: '#9ff5e6', eng: 'a fading eye-shaped veil drawn with broken dotted lines, half vanishing', en: 'CLOAKING — the stone is semi-transparent like clear ghostly glass: the background scenery is clearly visible THROUGH its body, slightly magnified and bent by refraction; a cloaking field spreads around it so the surrounding background also turns see-through, pale and faded, dissolving into translucent haze with heat-haze ripples; only a thin shimmering rim of light, glitching light fragments and faint distortion reveal where it is' },
+  { id: 'scout', ko: '정찰', desc: '상대 알의 스킬을 파악', color: '#8fa8ff', eng: 'an all-seeing open eye with radar scan arcs', en: 'SCOUTING / ALL-SEEING EYE — a huge glowing clairvoyant eye opens on the top face of the stone like a mystic third eye, its iris made of swirling starlight; a wide cone of revealing light and scanning beams sweep out from the eye across the field, exposing ghostly translucent silhouettes of distant enemy stones with their hidden skill auras glowing, floating concentric scan rings and radar ripples, an omniscient watchful mood (the eye is pure light and shapes, no text, no letters)' },
+  { id: 'support', ko: '지원', desc: '반경 내 아군 강화', color: '#5df08a', eng: 'a radiant cross inside a circle with upward boost arrows around it', en: 'SUPPORT AURA — a warm radiant aura and glowing circle around the stone, rising plus-shaped sparks and blessing light' },
 ];
 
 /* ---------------- utils ---------------- */
@@ -536,11 +536,11 @@ const THEMES = [
   { id: 'fire', ko: '불꽃', kw: ['불', '화염', '용암', '타오', '태양', '마그마', '지옥', 'fire', 'flame', 'lava'], sky: ['#160402', '#6e1206', '#ff7a1a'], floor: ['#5a200b', '#170502'], grid: 'rgba(255,140,40,.3)', accent: '#ffb347', part: 'ember', env: 'flames', ai: 'BACKGROUND RULE: NO mountains, NO volcano landscape, NO scenery. The stone is INSIDE a raging inferno, completely engulfed — roaring walls of fire fill the entire background, flames everywhere around it, as if standing in the heart of a blaze. EFFECTS: every skill effect is wrapped in intense violent fire VFX — huge flame tongues, fire swirls, blazing embers, sparks and heat distortion, extremely fiery and powerful.' },
   { id: 'nature', ko: '자연', kw: ['자연', '숲', '치유', '나무', '꽃', '풀', '생명', '정령', '대지', 'nature', 'forest', 'heal'], sky: ['#06200f', '#1f6b3a', '#c6f7a8'], floor: ['#6b9a43', '#20401a'], grid: 'rgba(20,50,10,.35)', accent: '#c4ff9e', part: 'leaf', env: 'leaves', ai: 'BACKGROUND RULE: NO mountains, NO rocky cliffs, NO forest, NO giant tree, NO big trees, NO tree trunks. Instead a vast open lush GREEN MEADOW / grassland plain spreading to a low gentle horizon, and decorative patterns of fresh green leaves filling the scene, soft warm healing sunlight, floating glowing leaves and light motes, peaceful and restorative. Effects are woven with swirling green leaves and gentle healing light.' },
   { id: 'divine', ko: '신화', kw: ['올림푸스', '신화', '천상', '신성', '영웅', '천사', '성스', '제우스', '빛의', 'olymp', 'divine', 'holy', 'hero'], sky: ['#1e1406', '#7a5518', '#e9c66f'], floor: ['#cdbd98', '#6b5a3e'], grid: 'rgba(90,60,20,.4)', accent: '#ffd98a', part: 'mote', env: 'columns', bright: true },
-  { id: 'dark', ko: '어둠', kw: ['어둠', '암흑', '그림자', '악마', '저주', '공허', '죽음', '해골', 'dark', 'shadow', 'demon'], sky: ['#040108', '#2a0f45', '#6b2fa0'], floor: ['#1d1228', '#060309'], grid: 'rgba(190,120,255,.22)', accent: '#c58bff', part: 'smoke', env: 'smoke', ai: 'BACKGROUND RULE: deep darkness from which grotesque, twisted, organic shapes reach out — writhing thorny tendrils, warped vein-like branching patterns and eerie biomechanical forms emerging from the shadows, NO landscape, NO buildings. LIGHTING: uncanny, sinister lighting — sickly violet and toxic green under-lighting, harsh rim lights cutting through black fog, glowing cracks. EFFECTS: premium high-end dark VFX — streams of dark energy and black shadowy wisps spreading out in every direction from the stone, volumetric shadow smoke, distortion and glowing particles, unsettling and elegant. STONE ENGRAVING: the top face of the go stone is ENGRAVED with an intricate glowing ornamental design pattern that symbolizes its skill (abstract geometric motif and rune-like ring made of lines and shapes only, no letters, no numbers).' },
+  { id: 'dark', ko: '어둠', kw: ['어둠', '암흑', '그림자', '악마', '저주', '공허', '죽음', '해골', 'dark', 'shadow', 'demon'], sky: ['#040108', '#2a0f45', '#6b2fa0'], floor: ['#1d1228', '#060309'], grid: 'rgba(190,120,255,.22)', accent: '#c58bff', part: 'smoke', env: 'smoke', ai: 'BACKGROUND RULE: deep darkness from which grotesque, twisted, organic shapes reach out — writhing thorny tendrils, warped vein-like branching patterns and eerie biomechanical forms emerging from the shadows, NO landscape, NO buildings. LIGHTING: uncanny, sinister lighting — sickly violet and toxic green under-lighting, harsh rim lights cutting through black fog, glowing cracks. EFFECTS: premium high-end dark VFX — streams of dark energy and black shadowy wisps spreading out in every direction from the stone, volumetric shadow smoke, distortion and glowing particles, unsettling and elegant.' },
   { id: 'storm', ko: '번개', kw: ['번개', '전기', '폭풍', '뇌', '천둥', 'thunder', 'lightning', 'storm'], sky: ['#040918', '#1b2f6b', '#6fa8ff'], floor: ['#1d2848', '#0a0f1f'], grid: 'rgba(140,190,255,.3)', accent: '#cfe6ff', part: 'spark', env: 'bolts' },
   { id: 'deep', ko: '심해', kw: ['심해', '깊은 바다', '해저', 'abyss', 'deep sea'], sky: ['#000510', '#021a33', '#06486b'], floor: ['#04263a', '#00060c'], grid: 'rgba(90,200,255,.16)', accent: '#5fe8ff', part: 'bubble', env: 'abyss', ai: 'BACKGROUND RULE: the DEEP SEA abyss — dark, deep navy and blue darkness, mysterious and silent, faint shafts of light falling from far above, bioluminescent glows and drifting particles in the depths, NO beach, NO sky, NO surface waves. EFFECTS: every skill effect is shaped with streams of rising air bubbles, swirling underwater currents and flowing ribbons of water around the stone.' },
   { id: 'sea', ko: '바다', kw: ['바다', '물', '파도', '해양', '인어', 'sea', 'ocean', 'water'], sky: ['#021a24', '#0b5a6e', '#59e0d6'], floor: ['#0f5566', '#04202a'], grid: 'rgba(160,255,240,.25)', accent: '#9ffcf0', part: 'bubble', env: 'waves' },
-  { id: 'cosmic', ko: '우주', kw: ['우주', '별', '은하', '성운', '행성', '달', 'cosmic', 'galaxy', 'space', 'star'], sky: ['#03020c', '#1d0f4a', '#7b3fd0'], floor: ['#1a1040', '#05030f'], grid: 'rgba(200,160,255,.3)', accent: '#ffd6ff', part: 'star', env: 'nebula', ai: 'BACKGROUND RULE: deep space with MANY DIFFERENT galaxies of various kinds — spiral, barred spiral, elliptical, edge-on and irregular galaxies of different sizes and colours scattered across the background — intermingled with diverse cosmic dust: colourful nebula clouds, dark dust lanes, glowing gas filaments and drifting stardust, a rich and complex layered pattern; no planets, no black hole, no landscape. STONE ENGRAVING: the top face of the go stone is ENGRAVED with an intricate glowing ornamental design pattern that symbolizes its skill (abstract geometric motif and rune-like ring made of lines and shapes only, no letters, no numbers). EFFECTS: many varied light effects — radiant light bursts, starburst flares, anamorphic lens streaks, glowing light beams from the galactic core and shimmering stardust.' },
+  { id: 'cosmic', ko: '우주', kw: ['우주', '별', '은하', '성운', '행성', '달', 'cosmic', 'galaxy', 'space', 'star'], sky: ['#03020c', '#1d0f4a', '#7b3fd0'], floor: ['#1a1040', '#05030f'], grid: 'rgba(200,160,255,.3)', accent: '#ffd6ff', part: 'star', env: 'nebula', ai: 'BACKGROUND RULE: deep space with MANY DIFFERENT galaxies of various kinds — spiral, barred spiral, elliptical, edge-on and irregular galaxies of different sizes and colours scattered across the background — intermingled with diverse cosmic dust: colourful nebula clouds, dark dust lanes, glowing gas filaments and drifting stardust, a rich and complex layered pattern; no planets, no black hole, no landscape. EFFECTS: many varied light effects — radiant light bursts, starburst flares, anamorphic lens streaks, glowing light beams from the galactic core and shimmering stardust.' },
   { id: 'arcane', ko: '알까기판', kw: [], sky: ['#0a0c1e', '#23306b', '#6b86e0'], floor: ['#d7a45a', '#7a4f22'], grid: 'rgba(80,40,0,.45)', accent: '#ffd88a', part: 'mote', env: 'arcane' },
 ];
 function pickThemes(concept) {
@@ -648,38 +648,53 @@ function tendril(g, rnd, x, y, a, w, depth, col) {
 function galaxy(g, rnd, type, gx, gy, R, col, Q) {
   const tilt = type === 'edge' ? .12 : .35 + rnd() * .35, rot = rnd() * Math.PI, arms = type === 'barred' ? 2 : 2 + Math.floor(rnd() * 2);
   const P = (d, a) => { const x = Math.cos(a) * d, y = Math.sin(a) * d * tilt; return [gx + x * Math.cos(rot) - y * Math.sin(rot), gy + x * Math.sin(rot) + y * Math.cos(rot)]; };
-  const n = Math.round(R * 7 * Q) + 60;
+  const n = Math.round(R * (R > 300 ? 14 : 7) * Q) + 60;
   g.save(); g.globalCompositeOperation = 'lighter';
-  radial(g, ...P(0, 0), R * 1.2, col, .12, 'lighter');
+  radial(g, ...P(0, 0), R * 1.2, col, R > 300 ? .2 : .12, 'lighter');
   for (let i = 0; i < n; i++) {
     let d, a;
     if (type === 'elliptical') { d = Math.pow(rnd(), 1.8) * R; a = rnd() * 7; }
     else if (type === 'irregular') { d = rnd() * R; a = rnd() * 7 + Math.sin(d / R * 5) ; }
     else if (type === 'edge') { d = (rnd() * 2 - 1) * R; a = rnd() < .5 ? 0 : Math.PI; d = Math.abs(d); }
+    else if (type === 'ring') { d = rnd() < .25 ? Math.pow(rnd(), 2) * R * .3 : R * (.72 + (rnd() - .5) * .18); a = rnd() * 7; }
     else { d = Math.pow(rnd(), .9) * R; const bar = type === 'barred' ? .28 : 0; const k = Math.max(0, d / R - bar); a = (i % arms) * Math.PI * 2 / arms + (k > 0 ? Math.log(1 + k * 6) * 2.2 : 0) + (rnd() - .5) * (.3 + d / R * .5); }
     let [x, y] = P(d, a); if (type === 'edge') y += (rnd() - .5) * R * .08 * (1 - d / R); if (type === 'irregular') { x += (rnd() - .5) * R * .3; y += (rnd() - .5) * R * .3; }
-    g.fillStyle = rgba(rnd() < .6 ? '#ffffff' : col, .3 + rnd() * .55); const sz = rnd() < .05 ? 2.4 : 1.4; g.fillRect(x, y, sz, sz);
+    g.fillStyle = rgba(rnd() < .6 ? '#ffffff' : col, .3 + rnd() * .55); const sz = (rnd() < .05 ? 2.4 : 1.4) * (R > 300 ? 1.3 : 1); g.fillRect(x, y, sz, sz);
   }
   if (type !== 'irregular') { radial(g, ...P(0, 0), R * (type === 'elliptical' ? .7 : .32), '#fff2d8', .55, 'lighter'); radial(g, ...P(0, 0), R * .1, '#ffffff', .8, 'lighter'); }
-  if (type === 'barred') { g.strokeStyle = rgba('#fff2d8', .35); g.lineWidth = R * .1; g.lineCap = 'round'; g.beginPath(); g.moveTo(...P(R * .3, 0)); g.lineTo(...P(R * .3, Math.PI)); g.stroke(); }
+  if (type === 'barred') for (let k = -6; k <= 6; k++) radial(g, ...P(Math.abs(k) / 6 * R * .3, k < 0 ? Math.PI : 0), R * .07, '#fff2d8', .25, 'lighter');
   g.restore();
   if (type === 'edge') { g.save(); g.strokeStyle = 'rgba(10,4,20,.55)'; g.lineWidth = R * .05; g.beginPath(); g.moveTo(...P(R * .9, 0)); g.lineTo(...P(R * .9, Math.PI)); g.stroke(); g.restore(); }
 }
 // 스킬 각인: 알 윗면에 스킬을 상징하는 문양 (홈 + 빛나는 선)
 const ENGRAVE = {
-  pierce: () => [[[0, .85], [0, -.85]], [[-.35, -.45], [0, -.85], [.35, -.45]], [[-.25, .85], [0, .6], [.25, .85]]],
-  accel: () => [0, 1, 2].map(k => [[-.6 + k * .42, -.6], [-.2 + k * .42, 0], [-.6 + k * .42, .6]]),
-  explode: () => [circ(0, 0, .25), ...Array.from({ length: 8 }, (_, i) => { const a = i / 8 * Math.PI * 2; return [[Math.cos(a) * .35, Math.sin(a) * .35], [Math.cos(a) * (i % 2 ? .65 : .9), Math.sin(a) * (i % 2 ? .65 : .9)]]; })],
-  shield: () => [poly(0, 0, .8, 6), poly(0, 0, .45, 6)],
-  thorns: () => [circ(0, 0, .45), Array.from({ length: 21 }, (_, i) => { const a = i / 20 * Math.PI * 2, r = i % 2 ? .9 : .55; return [Math.cos(a) * r, Math.sin(a) * r]; })],
-  revive: () => { const p = []; for (let i = 0; i <= 28; i++) { const a = .5 + i / 28 * Math.PI * 1.6; p.push([Math.cos(a) * .7, Math.sin(a) * .7]); } const e = p[p.length - 1]; return [p, [[e[0] - .25, e[1] - .1], e, [e[0] + .05, e[1] + .28]], [[0, .35], [0, -.35]], [[-.3, 0], [.3, 0]]]; },
-  split: () => [0, 1, 2].map(k => { const a = -Math.PI / 2 + k * Math.PI * 2 / 3; return circ(Math.cos(a) * .45, Math.sin(a) * .45, .3); }),
-  magnet: () => [Array.from({ length: 60 }, (_, i) => { const a = i / 60 * Math.PI * 6, r = .9 - i / 60 * .8; return [Math.cos(a) * r, Math.sin(a) * r]; })],
-  mark: () => [[[-.8, 0], [-.4, -.35], [0, -.45], [.4, -.35], [.8, 0], [.4, .35], [0, .45], [-.4, .35], [-.8, 0]], circ(0, 0, .18), ...[0, 1, 2, 3].map(k => { const a = k * Math.PI / 2 + Math.PI / 4; return [[Math.cos(a) * .55, Math.sin(a) * .55], [Math.cos(a + .2) * .85, Math.sin(a + .2) * .85]]; })],
-  cloak: () => [circ(0, 0, .8, 1), circ(0, 0, .5, 1), circ(0, 0, .2)],
-  scout: () => [[[-.8, 0], [-.4, -.4], [0, -.5], [.4, -.4], [.8, 0], [.4, .4], [0, .5], [-.4, .4], [-.8, 0]], circ(0, 0, .25)],
-  support: () => [circ(0, 0, .75), [[0, -.5], [0, .5]], [[-.5, 0], [.5, 0]]],
+  // 관통: 금 간 고리를 꿰뚫는 창끝 화살
+  pierce: () => [arc(0, 0, .55, .25, 1.35), arc(0, 0, .55, 1.8, 2.9), arc(0, 0, .55, 3.4, 4.45), arc(0, 0, .55, 4.95, 6.05), [[0, .95], [0, -.75]], [[-.3, -.45], [0, -.95], [.3, -.45], [0, -.6], [-.3, -.45]], [[-.18, .95], [0, .75], [.18, .95]], [[.5, -.2], [.62, -.05]], [[-.5, .2], [-.64, .08]]],
+  // 가속: 앞으로 향한 겹 화살표 + 속도선
+  accel: () => [...[0, 1, 2].map(k => [[-.35 + k * .32, -.5], [-.05 + k * .32, 0], [-.35 + k * .32, .5]]), [[-.95, -.25], [-.5, -.25]], [[-1, 0], [-.45, 0]], [[-.95, .25], [-.5, .25]]],
+  // 폭발: 들쭉날쭉한 폭발 별 + 파편
+  explode: () => [Array.from({ length: 17 }, (_, i) => { const a = i / 16 * Math.PI * 2, r = i % 2 ? .38 : .9 - (i % 4) * .08; return [Math.cos(a) * r, Math.sin(a) * r]; }), circ(0, 0, .18), ...[.4, 2.2, 4.1].map(a => [[Math.cos(a) * 1.02, Math.sin(a) * 1.02], [Math.cos(a + .08) * 1.12, Math.sin(a + .08) * 1.12], [Math.cos(a - .06) * 1.14, Math.sin(a - .06) * 1.14], [Math.cos(a) * 1.02, Math.sin(a) * 1.02]])],
+  // 쉴드: 방패 모양 + 육각 결계
+  shield: () => [[[-.6, -.75], [0, -.9], [.6, -.75], [.6, -.05], [0, .9], [-.6, -.05], [-.6, -.75]], poly(0, -.05, .32, 6), [[0, -.37], [0, -.62]], [[0, .27], [0, .55]]],
+  // 가시: 바깥으로 돋은 가시 고리
+  thorns: () => [circ(0, 0, .35), Array.from({ length: 25 }, (_, i) => { const a = i / 24 * Math.PI * 2, r = i % 2 ? .95 : .52; return [Math.cos(a) * r, Math.sin(a) * r]; })],
+  // 부활: 원형 화살표 안의 날개 편 불사조
+  revive: () => { const p = arc(0, 0, .85, 2.1, 2.1 + Math.PI * 1.7), e = p[p.length - 1]; return [p, [[e[0] - .22, e[1] - .12], e, [e[0] + .02, e[1] + .26]], [[-.62, -.35], [-.38, -.55], [-.15, -.25], [0, -.05], [.15, -.25], [.38, -.55], [.62, -.35]], [[-.45, -.15], [-.2, -.05]], [[.45, -.15], [.2, -.05]], [[0, -.3], [0, .35]], [[-.2, .6], [0, .35], [.2, .6]], [[0, .35], [0, .65]], circ(0, -.38, .08)]; },
+  // 분열: 원 하나가 금 가며 둘로 갈라짐
+  split: () => [circ(0, -.45, .32), [[-.08, -.77], [.06, -.55], [-.06, -.4], [.08, -.13]], [[-.15, -.15], [-.45, .25]], [[.15, -.15], [.45, .25]], circ(-.5, .5, .27), circ(.5, .5, .27)],
+  // 자석: 말굽자석 + 안으로 끌어당기는 자기력선
+  magnet: () => [[[-.55, -.8], [-.55, .05], ...arc(0, .05, .55, Math.PI, 0, true).slice(1), [.55, -.8], [.25, -.8], [.25, .05], ...arc(0, .05, .25, 0, Math.PI).slice(1), [-.25, -.8], [-.55, -.8]], [[-.55, -.55], [-.25, -.55]], [[.25, -.55], [.55, -.55]], arc(0, -.8, .2, Math.PI, 2 * Math.PI), arc(0, -.8, .42, Math.PI * 1.1, Math.PI * 1.9), [[-.9, -.95], [-.7, -.75]], [[.9, -.95], [.7, -.75]]],
+  // 표식(봉인): 사슬 고리 안에 갇힌 가시 눈
+  mark: () => [[[-.6, 0], [-.3, -.28], [0, -.35], [.3, -.28], [.6, 0], [.3, .28], [0, .35], [-.3, .28], [-.6, 0]], circ(0, 0, .14), ...Array.from({ length: 12 }, (_, i) => { const a = i / 12 * Math.PI * 2; return circ(Math.cos(a) * .78, Math.sin(a) * .78, .1); }), ...[0, 1, 2, 3].map(k => { const a = k * Math.PI / 2 + Math.PI / 4; return [[Math.cos(a) * .4, Math.sin(a) * .4], [Math.cos(a + .25) * .58, Math.sin(a + .25) * .58]]; })],
+  // 클로킹: 점선으로 사라져 가는 눈과 장막
+  cloak: () => [dashed([[-.75, 0], [-.38, -.35], [0, -.45], [.38, -.35], [.75, 0], [.38, .35], [0, .45], [-.38, .35], [-.75, 0]]), circ(0, 0, .16, 1), circ(0, 0, .85, 1)],
+  // 정찰: 뜬 눈 + 레이더 호
+  scout: () => [[[-.7, .1], [-.35, -.25], [0, -.35], [.35, -.25], [.7, .1], [.35, .42], [0, .5], [-.35, .42], [-.7, .1]], circ(0, .08, .22), circ(0, .08, .07), arc(0, .1, .9, Math.PI * 1.15, Math.PI * 1.85), arc(0, .1, 1.05, Math.PI * 1.25, Math.PI * 1.75)],
+  // 지원: 원 안의 십자 + 위로 향한 강화 화살표
+  support: () => [circ(0, 0, .55), [[0, -.35], [0, .35]], [[-.35, 0], [.35, 0]], ...[0, 1, 2, 3].map(k => { const a = k * Math.PI / 2 - Math.PI / 4, x = Math.cos(a) * .82, y = Math.sin(a) * .82; return [[x - .12, y + .08], [x, y - .08], [x + .12, y + .08]]; })],
 };
+function arc(x, y, r, a0, a1, rev) { const p = [], n = 24; for (let i = 0; i <= n; i++) { const a = rev ? a0 + (a1 - a0) * i / n : a0 + (a1 - a0) * i / n; p.push([x + Math.cos(a) * r, y + Math.sin(a) * r]); } return p; }
+function dashed(pts) { const out = []; pts.forEach((q, i) => { out.push(q); if (i % 2) out.push(null); }); return out; }
 function circ(x, y, r, dash) { const p = []; for (let i = 0; i <= 36; i++) { if (dash && i % 4 === 3) { p.push(null); continue; } const a = i / 36 * Math.PI * 2; p.push([x + Math.cos(a) * r, y + Math.sin(a) * r]); } return p; }
 function poly(x, y, r, n) { return Array.from({ length: n + 1 }, (_, i) => { const a = -Math.PI / 2 + i / n * Math.PI * 2; return [x + Math.cos(a) * r, y + Math.sin(a) * r]; }); }
 function engraveSkills(c, skills, colFor) {
@@ -698,8 +713,8 @@ function engraveSkills(c, skills, colFor) {
   for (let i = 0; i < 24; i++) { const a = i / 24 * Math.PI * 2, r2 = i % 3 ? .84 : .87; ring.push([[Math.cos(a) * .79, Math.sin(a) * .79], [Math.cos(a) * r2, Math.sin(a) * r2]]); }
   stroke(ring, 0, 0, 1, main);
   // 가운데: 첫 스킬 문양, 나머지 스킬은 고리 위 작은 문양
-  stroke((ENGRAVE[skills[0].id] || (() => [circ(0, 0, .6)]))(), 0, 0, .5, main);
-  skills.slice(1).forEach((s, i) => { const a = Math.PI * (.5 + (i + 1) * .5); stroke((ENGRAVE[s.id] || (() => [circ(0, 0, .6)]))(), Math.cos(a) * .84, Math.sin(a) * .84, .16, colFor(s)); });
+  stroke((ENGRAVE[skills[0].id] || (() => [circ(0, 0, .6)]))(), 0, 0, .6, main);
+  skills.slice(1).forEach((s, i) => { const a = Math.PI * (.5 + (i + 1) * .5); stroke((ENGRAVE[s.id] || (() => [circ(0, 0, .6)]))(), Math.cos(a) * .84, Math.sin(a) * .84, .2, colFor(s)); });
 }
 // 여기저기 뻗어 나가는 암흑 기운
 function darkWisps(c, col) {
@@ -830,8 +845,10 @@ function drawEnv(c, layer) {
       g.save(); g.globalCompositeOperation = 'lighter'; g.lineCap = 'round';
       for (let i = 0; i < 6; i++) { let x = rnd() * W, y = rnd() * HZ, a = rnd() * 7; g.strokeStyle = rgba(dustCols[(i + 2) % 6], .12); g.lineWidth = 6 + rnd() * 10; g.beginPath(); g.moveTo(x, y); for (let k = 0; k < 10; k++) { a += (rnd() - .5) * .7; x += Math.cos(a) * 40; y += Math.sin(a) * 26; g.lineTo(x, y); } g.stroke(); }
       g.restore();
-      const gals = [['spiral', 610, 200, 190, '#bcd0ff'], ['barred', 170, 150, 130, '#ffc8f0'], ['elliptical', 120, 470, 80, '#ffe0b0'], ['edge', 560, 470, 120, '#d0e8ff'], ['irregular', 330, 90, 90, '#c8b0ff'], ['spiral', 700, 610, 70, '#ffd0e0'], ['elliptical', 380, 300, 40, '#fff0d0']];
-      for (const [type, x, y, r, col] of gals) galaxy(g, rnd, type, x, y, r, col, Q);
+      const types = ['spiral', 'barred', 'elliptical', 'edge', 'ring', 'irregular', 'spiral', 'barred'];
+      galaxy(g, rnd, types[Math.floor(rnd() * types.length)], 400, 300, 470, ['#bcd0ff', '#ffc8f0', '#d0b8ff', '#bff0ff'][Math.floor(rnd() * 4)], Q);
+      // 은하 앞을 지나가는 우주 먼지 (은하와 뒤섞임)
+      for (let i = 0; i < 8; i++) { let x = 400 + (rnd() - .5) * 700, y = 330 + (rnd() - .5) * 420; const col = dustCols[i % 6]; for (let k = 0; k < 5; k++) { x += (rnd() - .5) * 90; y += (rnd() - .5) * 50; radial(g, x, y, 30 + rnd() * 70, i % 3 ? col : '#0a0414', i % 3 ? .07 : .16, i % 3 ? 'lighter' : 'source-over'); } }
     } else {
       // 빛이 퍼지는 섬광들
       g.save(); g.globalCompositeOperation = 'lighter';
@@ -1315,6 +1332,7 @@ function buildPrompt(req) {
     req.concept ? `Theme, world and colour mood of the background and effects (Korean): "${req.concept}".` : '',
     'Background: an atmospheric, painterly environment that matches the theme, with depth and bokeh — not a game board diagram, not a top-down view, no tutorial or explanation style.',
     req.concept ? pickThemes(req.concept).slice(0, 2).map(th => th.ai).filter(Boolean).join(' ') : '',
+    sk.length && pickThemes(req.concept).slice(0, 2).some(th => th.id === 'cosmic' || th.id === 'dark') ? `STONE ENGRAVING: the top face of the go stone is deeply ENGRAVED with a glowing emblem that clearly depicts its skill — ${sk.map(s => `${s.ko}/${s.id}: ${s.eng}`).join('; combined with ')} — framed by a thin ring of rune-like lines. The engraving must obviously represent this skill. No letters, no numbers.` : '',
     `${TIER_PROMPT[t]}.`,
     'Style: high-end fantasy card game splash art, painterly digital illustration, rich colours, glowing VFX, high contrast.',
     'Vertical 2:3, full-bleed edge to edge (no white margin, no border, no frame). Keep the very top-left corner, top-center and bottom-center slightly calmer because a card frame will be overlaid.',
