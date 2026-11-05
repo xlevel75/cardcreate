@@ -23,7 +23,7 @@ const ROLES = [
 ];
 const SKILLS = [
   { id: 'pierce', ko: '관통', desc: '앞의 알을 통과해서 공격', color: '#ffe08a', en: 'PIERCE — the stone is wrapped in a razor-sharp drill/lance of light pointing forward, spiralling light streaks and piercing energy trailing behind it' },
-  { id: 'accel', ko: '가속', desc: '빠르게 날아감', color: '#5ee7ff', en: 'ACCELERATION — the stone surges forward at blazing speed, wrapped in wind vortices, bright speed streaks and glowing afterimages' },
+  { id: 'accel', ko: '가속', desc: '빠르게 날아감', color: '#5ee7ff', en: 'ACCELERATION — the stone is flying fast in ONE clear direction (diagonally forward and up), dramatic straight wind effect: dense parallel straight wind lines and razor-thin speed streaks all running in the same single direction, streaming past and trailing far behind the stone, a sharp wind-cutting wedge of air at its leading edge, glowing afterimages trailing behind along the same line, the background slightly motion-blurred along that direction' },
   { id: 'explode', ko: '폭발', desc: '주위 알들을 바깥으로 날림', color: '#ff8a3d', en: 'EXPLOSION — the stone is the core of a massive radiant blast, shockwave rings and fiery debris erupting outward all around it' },
   { id: 'shield', ko: '쉴드', desc: '밀려나는 힘 40~70% 감소', color: '#6fb7ff', en: 'SHIELD — the stone is guarded by a glowing translucent hexagonal energy barrier dome with bright shimmering edges' },
   { id: 'thorns', ko: '가시', desc: '나를 친 알을 세게 튕겨냄', color: '#ff4d6d', en: 'THORNS — sharp glowing crystal spikes burst out from the rim of the stone like armor, crackling with retaliating energy' },
@@ -745,7 +745,27 @@ const SKFX = {
       for (let k = 3; k >= 1; k--) drawStone(g, S.x + dx * k * 85, S.y + dy * k * 85, S.rx * (1 - k * .04), S.ry * (1 - k * .04), S.th, c.stone, { alpha: .42 - k * .1, tint: col, tintA: .55 });
     },
     front(c, col) {
-      const { g, S } = c; g.save(); g.globalCompositeOperation = 'lighter'; g.shadowColor = col; g.shadowBlur = c.glow;
+      const { g, S, rnd, Q } = c, dx = -.78, dy = .62, px = -dy, py = dx;
+      // 한 방향 직선 바람: 알 몸통을 스치고 뒤로 길게 뻗는 평행선
+      g.save(); g.globalCompositeOperation = 'lighter'; g.lineCap = 'round';
+      for (let i = 0; i < Math.round(22 * Q) + 10; i++) {
+        const o = (rnd() * 2 - 1) * (S.rx + 40), sx = S.x + px * o - dx * (S.rx * .5 + rnd() * 60), sy = S.y + S.th / 2 + py * o * .7 - dy * (S.ry * .3 + rnd() * 40);
+        const L = 160 + rnd() * 380, ex = sx + dx * L, ey = sy + dy * L;
+        const gr = g.createLinearGradient(sx, sy, ex, ey); gr.addColorStop(0, rgba(i % 6 ? lighten(col, .2) : '#ffffff', (c.stone === 'white' ? .25 : .4) + rnd() * .35)); gr.addColorStop(1, rgba(col, 0));
+        g.strokeStyle = gr; g.lineWidth = .8 + rnd() * 3; g.beginPath(); g.moveTo(sx, sy); g.lineTo(ex, ey); g.stroke();
+      }
+      // 화면을 가로지르는 긴 바람선
+      for (let i = 0; i < 6 + 4 * Q; i++) {
+        const sx = 80 + rnd() * 760, sy = rnd() * H * .7, L = 500 + rnd() * 500;
+        const gr = g.createLinearGradient(sx, sy, sx + dx * L, sy + dy * L); gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(.4, rgba('#ffffff', .55)); gr.addColorStop(1, 'rgba(255,255,255,0)');
+        g.strokeStyle = gr; g.lineWidth = 1.5 + rnd() * 1.5; g.beginPath(); g.moveTo(sx, sy); g.lineTo(sx + dx * L, sy + dy * L); g.stroke();
+      }
+      // 앞쪽 공기를 가르는 쐐기
+      const fx = S.x - dx * (S.rx * .95), fy = S.y + S.th * .3 - dy * (S.ry * .95);
+      g.shadowColor = col; g.shadowBlur = c.glow + 8; g.strokeStyle = rgba('#ffffff', .8); g.lineWidth = 3;
+      for (const sgn of [-1, 1]) { g.beginPath(); g.moveTo(fx - dx * 30, fy - dy * 30); g.lineTo(fx + dx * 60 + px * sgn * (S.rx * .9), fy + dy * 60 + py * sgn * (S.ry * 1.1)); g.stroke(); }
+      g.restore();
+      g.save(); g.globalCompositeOperation = 'lighter'; g.shadowColor = col; g.shadowBlur = c.glow;
       for (let k = 0; k < 3; k++) { g.beginPath(); g.ellipse(S.x + 30 + k * 18, S.y - 10 - k * 14, S.rx * 1.15 + k * 28, S.ry * 1.25 + k * 20, -.55, -2.2, -.4); g.strokeStyle = rgba(k ? col : '#ffffff', .75 - k * .2); g.lineWidth = 5 - k; g.stroke(); }
       g.restore();
     },
