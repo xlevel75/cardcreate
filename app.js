@@ -391,6 +391,7 @@ function initGenForm() {
   initGptModel(renderEngine);
   if (!ENGINES[G.engine]) G.engine = 'gemini';
   renderEngine();
+  $('#gEngrave').checked = !!G.engrave; $('#gEngrave').onchange = e => { G.engrave = e.target.checked; saveGen(); };
   $('#gTexture').checked = G.texture !== false; $('#gTexture').onchange = e => { G.texture = e.target.checked; saveGen(); };
   $('#gSubmit').onclick = submitRequest;
   updatePrompt();
@@ -443,14 +444,14 @@ function submitRequest() {
   if (!G.skills.length && !G.concept.trim()) { toast('스킬이나 컨셉 중 하나는 입력해 주세요'); return; }
   const eng = ENGINES[G.engine];
   if (eng.key && !state.settings[eng.key]) { $('#apiBox').open = true; toast(`${eng.label} API 키를 설정에 입력해 주세요`); return; }
-  const req = { id: ++state.reqSeq, grade: G.grade, skills: [...G.skills], stone: G.stone, concept: G.concept.trim(), count: G.count, engine: G.engine, texture: G.texture !== false, created: Date.now() };
+  const req = { id: ++state.reqSeq, grade: G.grade, skills: [...G.skills], stone: G.stone, concept: G.concept.trim(), count: G.count, engine: G.engine, texture: G.texture !== false, engrave: !!G.engrave, created: Date.now() };
   $('#queue .empty')?.remove();
   const skillTxt = req.skills.map(id => SKILLS.find(s => s.id === id).ko).join(' + ') || '스킬 없음';
   const timer = el('span', { class: 'tag' }, '0초');
   const slots = el('div', { class: 'slots' });
   const block = el('div', { class: 'req' },
     el('div', { class: 'rh' }, el('span', { class: 'ttl' }, `요청 #${req.id}`), gradeTag(req.grade),
-      el('span', { class: 'meta' }, `${skillTxt} · ${req.concept ? '“' + req.concept + '”' : '컨셉 없음'} · ${ENGINES[req.engine].label}${ENGINES[req.engine].model ? ' · ' + state.settings[ENGINES[req.engine].model] : ''}`),
+      el('span', { class: 'meta' }, `${skillTxt}${req.engrave && req.skills.length ? ' · 🔱각인' : ''} · ${req.concept ? '“' + req.concept + '”' : '컨셉 없음'} · ${ENGINES[req.engine].label}${ENGINES[req.engine].model ? ' · ' + state.settings[ENGINES[req.engine].model] : ''}`),
       timer,
       el('button', { class: 'btn sm', onclick: () => $$('.slot.done:not(.saved)', block).forEach(s => s._save()) }, '모두 저장'),
       el('button', { class: 'btn sm danger', onclick: () => { $$('.slot:not(.pending)', block).forEach(s => s._discard(true)); } }, '모두 버리기')),

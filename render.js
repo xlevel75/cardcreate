@@ -1303,7 +1303,7 @@ function renderArt(req, seed) {
   if (t >= 3) { radial(g, 400, 620, 360, mainCol, (th.bright ? .22 : .42) * (cloaked ? .3 : 1), 'lighter'); if (isNoble(req.concept)) radial(g, 400, 560, 300, '#ffd76a', th.bright ? .15 : .3, 'lighter'); }
   for (const s of skills) SKFX[s.id].back?.(ctx, colFor(s));
   drawMainStone(ctx, skills.map(s => s.id), mainCol);
-  if (skills.length && !cloaked && [th, th2].some(x => x && (x.id === 'cosmic' || x.id === 'dark'))) engraveSkills(ctx, skills, colFor);
+  if (req.engrave && skills.length && !cloaked) engraveSkills(ctx, skills, colFor);
   for (const s of skills) SKFX[s.id].front?.(ctx, colFor(s));
   drawEnv(ctx, 'front');
   drawParticles(ctx);
@@ -1336,7 +1336,7 @@ function buildPrompt(req) {
     req.concept ? `Theme, world and colour mood of the background and effects (Korean): "${req.concept}".` : '',
     'Background: an atmospheric, painterly environment that matches the theme, with depth and bokeh — not a game board diagram, not a top-down view, no tutorial or explanation style.',
     req.concept ? pickThemes(req.concept).slice(0, 2).map(th => th.ai).filter(Boolean).join(' ') : '',
-    sk.length && pickThemes(req.concept).slice(0, 2).some(th => th.id === 'cosmic' || th.id === 'dark') ? `STONE ENGRAVING: the top face of the go stone is deeply ENGRAVED with a glowing emblem that clearly depicts its skill — ${sk.map(s => `${s.ko}/${s.id}: ${s.eng}`).join('; combined with ')} — framed by a simple thin ring made only of plain lines and dots. The engraving must obviously represent this skill. NO runes, NO letters, NO numbers, NO glyphs or symbols that look like writing anywhere on the stone.` : '',
+    req.engrave && sk.length ? `STONE ENGRAVING: the top face of the go stone is deeply ENGRAVED with a glowing emblem that clearly depicts its skill — ${sk.map(s => `${s.ko}/${s.id}: ${s.eng}`).join('; combined with ')} — framed by a simple thin ring made only of plain lines and dots. The engraving must obviously represent this skill. NO runes, NO letters, NO numbers, NO glyphs or symbols that look like writing anywhere on the stone.` : '',
     `${TIER_PROMPT[t]}.`,
     'Style: high-end fantasy card game splash art, painterly digital illustration, rich colours, glowing VFX, high contrast.',
     'Vertical 2:3, full-bleed edge to edge (no white margin, no border, no frame). Keep the very top-left corner, top-center and bottom-center slightly calmer because a card frame will be overlaid.',
