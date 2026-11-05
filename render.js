@@ -540,7 +540,7 @@ const THEMES = [
   { id: 'storm', ko: '번개', kw: ['번개', '전기', '폭풍', '뇌', '천둥', 'thunder', 'lightning', 'storm'], sky: ['#040918', '#1b2f6b', '#6fa8ff'], floor: ['#1d2848', '#0a0f1f'], grid: 'rgba(140,190,255,.3)', accent: '#cfe6ff', part: 'spark', env: 'bolts' },
   { id: 'deep', ko: '심해', kw: ['심해', '깊은 바다', '해저', 'abyss', 'deep sea'], sky: ['#000510', '#021a33', '#06486b'], floor: ['#04263a', '#00060c'], grid: 'rgba(90,200,255,.16)', accent: '#5fe8ff', part: 'bubble', env: 'abyss', ai: 'BACKGROUND RULE: the DEEP SEA abyss — dark, deep navy and blue darkness, mysterious and silent, faint shafts of light falling from far above, bioluminescent glows and drifting particles in the depths, NO beach, NO sky, NO surface waves. EFFECTS: every skill effect is shaped with streams of rising air bubbles, swirling underwater currents and flowing ribbons of water around the stone.' },
   { id: 'sea', ko: '바다', kw: ['바다', '물', '파도', '해양', '인어', 'sea', 'ocean', 'water'], sky: ['#021a24', '#0b5a6e', '#59e0d6'], floor: ['#0f5566', '#04202a'], grid: 'rgba(160,255,240,.25)', accent: '#9ffcf0', part: 'bubble', env: 'waves' },
-  { id: 'cosmic', ko: '우주', kw: ['우주', '별', '은하', '성운', '행성', '달', 'cosmic', 'galaxy', 'space', 'star'], sky: ['#03020c', '#1d0f4a', '#7b3fd0'], floor: ['#1a1040', '#05030f'], grid: 'rgba(200,160,255,.3)', accent: '#ffd6ff', part: 'star', env: 'nebula', ai: 'BACKGROUND RULE (very important): exactly ONE single gigantic galaxy dominates the background behind the stone and fills most of the frame — this time it is {GALAXY}. There must be NO other galaxies anywhere in the image: no small galaxies, no distant galaxies, no scattered galaxies, only that one giant galaxy. It is intermingled with diverse cosmic dust of many forms — colourful nebula clouds, dark dust lanes crossing it, glowing gas filaments, wisps and drifting stardust — forming a rich, complex layered pattern; no planets, no black hole, no landscape. EFFECTS: many varied light effects — radiant light bursts, starburst flares, anamorphic lens streaks, glowing light beams from the galactic core and shimmering stardust.' },
+  { id: 'cosmic', ko: '우주', kw: ['우주', '별', '은하', '성운', '행성', '달', 'cosmic', 'galaxy', 'space', 'star'], sky: ['#03020c', '#1d0f4a', '#7b3fd0'], floor: ['#1a1040', '#05030f'], grid: 'rgba(200,160,255,.3)', accent: '#ffd6ff', part: 'star', env: 'nebula', ai: 'BACKGROUND RULE (very important): deep space WITHOUT any galaxies — NO galaxies, NO spiral shapes, NO planets, NO black hole, NO landscape. Instead the space is filled with thick, TANGLED COSMIC DUST: swirling, intertwined clouds and ribbons of colourful nebula gas and dark dust lanes twisting through each other in a rich chaotic pattern, with a field of ASTEROIDS — rugged rocky asteroids of many sizes floating and tumbling around the stone, some near and big, some far and small, lit by rim light. EFFECTS: INTENSE LIGHT everywhere — blinding light bursts, brilliant starburst flares, lens flares and beams of light piercing through the dust, glowing hot edges on the asteroids.' },
   { id: 'arcane', ko: '알까기판', kw: [], sky: ['#0a0c1e', '#23306b', '#6b86e0'], floor: ['#d7a45a', '#7a4f22'], grid: 'rgba(80,40,0,.45)', accent: '#ffd88a', part: 'mote', env: 'arcane' },
 ];
 function pickThemes(concept) {
@@ -644,27 +644,16 @@ function tendril(g, rnd, x, y, a, w, depth, col) {
   g.restore();
   if (depth > 1) for (let k = 0; k < 2; k++) { const p = pts[2 + Math.floor(rnd() * 5)]; tendril(g, rnd, p[0], p[1], a + (rnd() - .5) * 2.2, w * .5, depth - 2, col); }
 }
-// 은하 한 개: spiral · barred · elliptical · edge(옆모습) · irregular
-function galaxy(g, rnd, type, gx, gy, R, col, Q) {
-  const tilt = type === 'edge' ? .12 : .35 + rnd() * .35, rot = rnd() * Math.PI, arms = type === 'barred' ? 2 : 2 + Math.floor(rnd() * 2);
-  const P = (d, a) => { const x = Math.cos(a) * d, y = Math.sin(a) * d * tilt; return [gx + x * Math.cos(rot) - y * Math.sin(rot), gy + x * Math.sin(rot) + y * Math.cos(rot)]; };
-  const n = Math.round(R * (R > 300 ? 14 : 7) * Q) + 60;
-  g.save(); g.globalCompositeOperation = 'lighter';
-  radial(g, ...P(0, 0), R * 1.2, col, R > 300 ? .2 : .12, 'lighter');
-  for (let i = 0; i < n; i++) {
-    let d, a;
-    if (type === 'elliptical') { d = Math.pow(rnd(), 1.8) * R; a = rnd() * 7; }
-    else if (type === 'irregular') { d = rnd() * R; a = rnd() * 7 + Math.sin(d / R * 5) ; }
-    else if (type === 'edge') { d = (rnd() * 2 - 1) * R; a = rnd() < .5 ? 0 : Math.PI; d = Math.abs(d); }
-    else if (type === 'ring') { d = rnd() < .25 ? Math.pow(rnd(), 2) * R * .3 : R * (.72 + (rnd() - .5) * .18); a = rnd() * 7; }
-    else { d = Math.pow(rnd(), .9) * R; const bar = type === 'barred' ? .28 : 0; const k = Math.max(0, d / R - bar); a = (i % arms) * Math.PI * 2 / arms + (k > 0 ? Math.log(1 + k * 6) * 2.2 : 0) + (rnd() - .5) * (.3 + d / R * .5); }
-    let [x, y] = P(d, a); if (type === 'edge') y += (rnd() - .5) * R * .08 * (1 - d / R); if (type === 'irregular') { x += (rnd() - .5) * R * .3; y += (rnd() - .5) * R * .3; }
-    g.fillStyle = rgba(rnd() < .6 ? '#ffffff' : col, .3 + rnd() * .55); const sz = (rnd() < .05 ? 2.4 : 1.4) * (R > 300 ? 1.3 : 1); g.fillRect(x, y, sz, sz);
-  }
-  if (type !== 'irregular') { radial(g, ...P(0, 0), R * (type === 'elliptical' ? .7 : .32), '#fff2d8', .55, 'lighter'); radial(g, ...P(0, 0), R * .1, '#ffffff', .8, 'lighter'); }
-  if (type === 'barred') for (let k = -6; k <= 6; k++) radial(g, ...P(Math.abs(k) / 6 * R * .3, k < 0 ? Math.PI : 0), R * .07, '#fff2d8', .25, 'lighter');
+// 소행성: 울퉁불퉁한 바위 + 분화구 + 빛 받는 테두리
+function asteroid(g, rnd, x, y, r, col) {
+  const n = 11, pts = Array.from({ length: n }, (_, i) => { const a = i / n * Math.PI * 2, rr = r * (.72 + rnd() * .4); return [x + Math.cos(a) * rr, y + Math.sin(a) * rr * .85]; });
+  g.save(); g.beginPath(); pts.forEach(([px, py], i) => i ? g.lineTo(px, py) : g.moveTo(px, py)); g.closePath();
+  const gr = g.createRadialGradient(x - r * .4, y - r * .45, r * .1, x, y, r * 1.2); gr.addColorStop(0, '#8a7f8c'); gr.addColorStop(.5, '#3d3540'); gr.addColorStop(1, '#120e16');
+  g.fillStyle = gr; g.fill(); g.clip();
+  for (let k = 0; k < 3 + Math.floor(r / 12); k++) { const cx = x + (rnd() - .5) * r * 1.2, cy = y + (rnd() - .5) * r, cr = r * (.08 + rnd() * .16); g.fillStyle = 'rgba(10,6,14,.45)'; g.beginPath(); g.arc(cx, cy, cr, 0, 7); g.fill(); g.strokeStyle = 'rgba(200,190,210,.25)'; g.lineWidth = 1; g.beginPath(); g.arc(cx - cr * .15, cy - cr * .15, cr, Math.PI, Math.PI * 1.6); g.stroke(); }
   g.restore();
-  if (type === 'edge') { g.save(); g.strokeStyle = 'rgba(10,4,20,.55)'; g.lineWidth = R * .05; g.beginPath(); g.moveTo(...P(R * .9, 0)); g.lineTo(...P(R * .9, Math.PI)); g.stroke(); g.restore(); }
+  g.save(); g.globalCompositeOperation = 'lighter'; g.shadowColor = col; g.shadowBlur = r * .4; g.strokeStyle = rgba(lighten(col, .4), .7); g.lineWidth = Math.max(1, r * .06);
+  g.beginPath(); for (let i = 0; i <= 5; i++) { const [px, py] = pts[i]; i ? g.lineTo(px, py) : g.moveTo(px, py); } g.stroke(); g.restore();
 }
 // 스킬 각인: 알 윗면에 스킬을 상징하는 문양 (홈 + 빛나는 선)
 const ENGRAVE = {
@@ -845,11 +834,26 @@ function drawEnv(c, layer) {
       g.save(); g.globalCompositeOperation = 'lighter'; g.lineCap = 'round';
       for (let i = 0; i < 6; i++) { let x = rnd() * W, y = rnd() * HZ, a = rnd() * 7; g.strokeStyle = rgba(dustCols[(i + 2) % 6], .12); g.lineWidth = 6 + rnd() * 10; g.beginPath(); g.moveTo(x, y); for (let k = 0; k < 10; k++) { a += (rnd() - .5) * .7; x += Math.cos(a) * 40; y += Math.sin(a) * 26; g.lineTo(x, y); } g.stroke(); }
       g.restore();
-      const types = ['spiral', 'barred', 'elliptical', 'edge', 'ring', 'irregular', 'spiral', 'barred'];
-      galaxy(g, rnd, types[Math.floor(rnd() * types.length)], 400, 300, 470, ['#bcd0ff', '#ffc8f0', '#d0b8ff', '#bff0ff'][Math.floor(rnd() * 4)], Q);
-      // 은하 앞을 지나가는 우주 먼지 (은하와 뒤섞임)
-      for (let i = 0; i < 8; i++) { let x = 400 + (rnd() - .5) * 700, y = 330 + (rnd() - .5) * 420; const col = dustCols[i % 6]; for (let k = 0; k < 5; k++) { x += (rnd() - .5) * 90; y += (rnd() - .5) * 50; radial(g, x, y, 30 + rnd() * 70, i % 3 ? col : '#0a0414', i % 3 ? .07 : .16, i % 3 ? 'lighter' : 'source-over'); } }
+      // 뒤엉킨 우주 먼지 리본 (서로 꼬이며 지나감)
+      g.save(); g.lineCap = 'round';
+      for (let i = 0; i < 10; i++) {
+        let x = rnd() * W, y = rnd() * HZ, a = rnd() * 7; const col = dustCols[i % 6], pts = [];
+        for (let k = 0; k < 30; k++) { a += (rnd() - .5) * .5 + Math.sin(k * .4 + i) * .12; x += Math.cos(a) * 26; y += Math.sin(a) * 18; pts.push([x, y]); }
+        for (const [px, py] of pts) radial(g, px, py, 30 + rnd() * 40, i % 3 === 2 ? '#0a0414' : col, i % 3 === 2 ? .14 : .09, i % 3 === 2 ? 'source-over' : 'lighter');
+        g.globalCompositeOperation = 'lighter'; g.strokeStyle = rgba(lighten(col, .3), .18); g.lineWidth = 2 + rnd() * 3; g.beginPath(); pts.forEach(([px, py], k) => k ? g.lineTo(px, py) : g.moveTo(px, py)); g.stroke(); g.globalCompositeOperation = 'source-over';
+      }
+      g.restore();
+      // 멀리 떠 있는 소행성들
+      for (let i = 0; i < 16; i++) { const x = rnd() * W, y = rnd() * (HZ - 40); if (Math.abs(x - 400) < 190 && y > 420) continue; asteroid(g, rnd, x, y, 6 + rnd() * 26, th.accent); }
     } else {
+      // 가까이 떠 있는 큰 소행성 (가장자리)
+      for (let i = 0; i < 3 + Math.ceil(t / 2); i++) { const sd = i % 2 ? 1 : -1; asteroid(g, rnd, 400 + sd * (300 + rnd() * 120), 120 + rnd() * 900, 40 + rnd() * 50, th.accent); }
+      // 먼지를 뚫는 강렬한 빛줄기
+      g.save(); g.globalCompositeOperation = 'lighter';
+      const lx = 120 + rnd() * 560, ly = 60 + rnd() * 200;
+      radial(g, lx, ly, 260, '#fff2e0', .45, 'lighter'); radial(g, lx, ly, 70, '#ffffff', .9, 'lighter');
+      for (let i = 0; i < 14; i++) { const a = rnd() * Math.PI * 2, L = 500 + rnd() * 600, w = .015 + rnd() * .03; const lg = g.createLinearGradient(lx, ly, lx + Math.cos(a) * L, ly + Math.sin(a) * L); lg.addColorStop(0, rgba('#fff4e0', .4)); lg.addColorStop(1, rgba(th.accent, 0)); g.fillStyle = lg; g.beginPath(); g.moveTo(lx, ly); g.lineTo(lx + Math.cos(a - w) * L, ly + Math.sin(a - w) * L); g.lineTo(lx + Math.cos(a + w) * L, ly + Math.sin(a + w) * L); g.closePath(); g.fill(); }
+      g.restore();
       // 빛이 퍼지는 섬광들
       g.save(); g.globalCompositeOperation = 'lighter';
       for (let i = 0; i < 40 * Q; i++) sparkle(g, rnd() * W, rnd() * H, 3 + rnd() * 6, rnd() < .5 ? th.accent : '#bfe0ff', .7);
@@ -1320,8 +1324,6 @@ const TIER_PROMPT = [
   'EPIC hero grade: explosive dramatic skill effects filling the scene, intense cinematic lighting and light rays, energy swirling around the stone, epic background',
   'LEGENDARY grade: the most spectacular version — overwhelming radiant aura, god rays, iridescent highlights, vortex of particles and magic, breathtaking epic background, masterpiece splash-art quality',
 ];
-// 우주 컨셉: 거대한 은하 하나의 모양 (생성할 때마다 하나를 고름)
-const GALAXY_FORMS = ['a grand spiral galaxy with sweeping luminous arms', 'a barred spiral galaxy with a bright central bar', 'a giant glowing elliptical galaxy', 'a huge edge-on disc galaxy seen from the side with a dark dust lane through it', 'a ring galaxy with a glowing ring of stars around its core', 'a vast irregular galaxy of tangled glowing clouds of stars'];
 function buildPrompt(req) {
   const t = Math.max(0, GRADES.indexOf(req.grade));
   const sk = (req.skills || []).map(id => SKILLS.find(s => s.id === id)).filter(Boolean);
@@ -1333,7 +1335,7 @@ function buildPrompt(req) {
     sk.length ? `Its power${sk.length > 1 ? 's (fused into one combined effect) radiate' : ' radiates'} around it: ${sk.map(s => s.en).join('; ')}.` : '',
     req.concept ? `Theme, world and colour mood of the background and effects (Korean): "${req.concept}".` : '',
     'Background: an atmospheric, painterly environment that matches the theme, with depth and bokeh — not a game board diagram, not a top-down view, no tutorial or explanation style.',
-    req.concept ? pickThemes(req.concept).slice(0, 2).map(th => th.ai).filter(Boolean).join(' ').replace('{GALAXY}', GALAXY_FORMS[Math.floor(Math.random() * GALAXY_FORMS.length)]) : '',
+    req.concept ? pickThemes(req.concept).slice(0, 2).map(th => th.ai).filter(Boolean).join(' ') : '',
     sk.length && pickThemes(req.concept).slice(0, 2).some(th => th.id === 'cosmic' || th.id === 'dark') ? `STONE ENGRAVING: the top face of the go stone is deeply ENGRAVED with a glowing emblem that clearly depicts its skill — ${sk.map(s => `${s.ko}/${s.id}: ${s.eng}`).join('; combined with ')} — framed by a simple thin ring made only of plain lines and dots. The engraving must obviously represent this skill. NO runes, NO letters, NO numbers, NO glyphs or symbols that look like writing anywhere on the stone.` : '',
     `${TIER_PROMPT[t]}.`,
     'Style: high-end fantasy card game splash art, painterly digital illustration, rich colours, glowing VFX, high contrast.',
