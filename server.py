@@ -15,6 +15,8 @@ import re
 import shutil
 import socketserver
 import ssl
+import subprocess
+import threading
 import sys
 import urllib.error
 import urllib.request
@@ -130,6 +132,12 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                     with open(self._settings_path(), "w", encoding="utf-8") as f:
                         json.dump(data, f, ensure_ascii=False, indent=1)
                     return self._json(200, {"ok": True})
+                if parts[2:3] == ["save-file"]:
+                    return self._save_file(json.loads(self._body() or b"{}"))
+                if parts[2:3] == ["open-folder"]:
+                    return self._open_folder(json.loads(self._body() or b"{}"))
+                if parts[2:3] == ["pick-folder"]:
+                    return self._pick_folder(json.loads(self._body() or b"{}"))
                 if len(parts) == 5 and parts[2] in ("db", "db-delete") and parts[3] in STORES and SAFE.match(parts[4]):
                     if parts[2] == "db":
                         return self._store_put(parts[3], parts[4])
@@ -138,6 +146,47 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 return self._json(500, {"error": {"message": f"저장 실패: {type(e).__name__}: {e}"}})
             return self._json(404, {"error": {"message": "unknown api path"}})
         return self._proxy(parts)
+
+    # ---------- 폴더 저장 / 탐색기 ----------
+    def _save_file(self, d):
+        folder = os.path.abspath(os.path.expanduser((d.get("folder") or "").strip()))
+        name = re.sub(r'[\\/:*?"<>|\x00-\x1f]+', "_", (d.get("name") or "card").strip()).strip(". ")[:150] or "card"
+        if not (d.get("folder") or "").strip():
+            return self._json(400, {"error": {"message": "저장 폴더를 정해 주세요"}})
+        os.makedirs(folder, exist_ok=True)
+        path, n = os.path.join(folder, name + ".png"), 2
+        while os.path.exists(path) and not d.get("overwrite"):
+            path = os.path.join(folder, f"{name} ({n}).png"); n += 1
+        with open(path, "wb") as f:
+            f.write(base64.b64decode(d.get("data", "")))
+        return self._json(200, {"ok": True, "path": path, "folder": folder})
+
+    def _open_folder(self, d):
+        folder = os.path.abspath(os.path.expanduser((d.get("folder") or "").strip()))
+        if not (d.get("folder") or "").strip() or not os.path.isdir(folder):
+            return self._json(404, {"error": {"message": "폴더가 없습니다: " + folder}})
+        if sys.platform.startswith("win"):
+            os.startfile(folder)
+        else:
+            subprocess.Popen(["open" if sys.platform == "darwin" else "xdg-open", folder])
+        return self._json(200, {"ok": True})
+
+    def _pick_folder(self, d):
+        result = {}
+        def run():
+            try:
+                import tkinter
+                from tkinter import filedialog
+                root = tkinter.Tk(); root.withdraw(); root.attributes("-topmost", True)
+                start = (d.get("start") or "").strip()
+                result["folder"] = filedialog.askdirectory(parent=root, title="저장 폴더 고르기", initialdir=start if os.path.isdir(start) else None) or ""
+                root.destroy()
+            except Exception as e:
+                result["error"] = f"{type(e).__name__}: {e}"
+        t = threading.Thread(target=run); t.start(); t.join()
+        if "error" in result:
+            return self._json(500, {"error": {"message": "폴더 고르기 창을 열 수 없습니다: " + result["error"]}})
+        return self._json(200, {"folder": os.path.normpath(result["folder"]) if result["folder"] else ""})
 
     # ---------- API 프록시 ----------
     def _proxy(self, _):

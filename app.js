@@ -695,13 +695,55 @@ function renderCombine() {
   $('#cDownload').onclick = async () => { const cv = composeCard({ ...cmbOptions(), art: await currentArt() }); downloadCanvas(cv, `card_${safeName(C.name || 'card')}_${GRADES[C.t]}.png`); };
   $('#cDownloadAll').onclick = async () => { const art = await currentArt(); for (let t = 0; t < 5; t++) { downloadCanvas(composeCard({ ...cmbOptions(t), art }), `card_${safeName(C.name || 'card')}_${GRADES[t]}.png`); await sleep(350); } };
   initFontControls();
+  initSaveBox();
   drawCombine();
+}
+/* ---- 폴더에 저장: 등급_역할_컨셉_스킬_이름(+덧붙인 이름) ---- */
+function cmbFileName() {
+  const C = state.cmb, art = C.artId === '__temp' ? C.temp : state.arts.find(a => a.id === C.artId);
+  const role = ROLES.find(r => r.id === C.role)?.ko, concept = (art?.concept || '').trim().slice(0, 24);
+  const skills = (C.skills || []).map(id => SKILLS.find(s => s.id === id)?.ko).filter(Boolean).join('+');
+  return [GRADES[C.t], role, concept, skills, C.name.trim(), ...(C.saveExtras || []).map(x => x.trim())].filter(Boolean).map(x => x.replace(/[\\/:*?"<>|]+/g, '').replace(/\s+/g, '_')).filter(Boolean).join('_');
+}
+function initSaveBox() {
+  const C = state.cmb; C.saveExtras ??= [];
+  let recent = LS.get('saveFolders', []);
+  const showName = () => { $('#svName').textContent = cmbFileName() + '.png'; };
+  const renderExtras = () => {
+    const box = $('#svExtras'); box.innerHTML = '';
+    C.saveExtras.forEach((v, i) => {
+      const inp = el('input', { value: v, placeholder: `추가 이름 ${i + 1}` }); inp.oninput = e => { C.saveExtras[i] = e.target.value; showName(); };
+      box.append(el('div', { class: 'extra' }, inp, el('button', { class: 'btn sm', type: 'button', title: '빼기', onclick: () => { C.saveExtras.splice(i, 1); renderExtras(); } }, '✕')));
+    });
+    $('#svAddExtra').hidden = C.saveExtras.length >= 3; showName();
+  };
+  const renderRecent = () => {
+    const sel = $('#svRecent'); sel.innerHTML = '';
+    sel.append(el('option', { value: '' }, recent.length ? `최근 저장 폴더 (${recent.length})` : '최근 저장 폴더 없음'));
+    recent.forEach(f => sel.append(el('option', { value: f }, f)));
+    sel.value = '';
+  };
+  const remember = f => { recent = [f, ...recent.filter(x => x.toLowerCase() !== f.toLowerCase())].slice(0, 5); LS.set('saveFolders', recent); renderRecent(); };
+  $('#svAddExtra').onclick = () => { if (C.saveExtras.length < 3) { C.saveExtras.push(''); renderExtras(); $('#svExtras').lastChild?.querySelector('input').focus(); } };
+  $('#svFolder').value ||= recent[0] || '';
+  $('#svRecent').onchange = e => { if (e.target.value) $('#svFolder').value = e.target.value; renderRecent(); };
+  const api = async (path, body) => { const r = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error?.message || r.status); return j; };
+  $('#svPick').onclick = async () => { try { const j = await api('/api/pick-folder', { start: $('#svFolder').value }); if (j.folder) $('#svFolder').value = j.folder; } catch (e) { toast('⚠ ' + e.message); } };
+  $('#svOpen').onclick = async () => { const f = $('#svFolder').value.trim(); if (!f) return toast('저장 폴더를 먼저 정해 주세요'); try { await api('/api/open-folder', { folder: f }); } catch (e) { toast('⚠ ' + e.message); } };
+  $('#svSave').onclick = async () => {
+    const f = $('#svFolder').value.trim(); if (!f) return toast('저장 폴더를 먼저 정해 주세요');
+    const cv = composeCard({ ...cmbOptions(), art: await currentArt() });
+    const data = cv.toDataURL('image/png').split(',')[1];
+    try { const j = await api('/api/save-file', { folder: f, name: cmbFileName(), data }); $('#svFolder').value = j.folder; remember(j.folder); toast('💾 저장했습니다: ' + j.path); }
+    catch (e) { toast('⚠ 저장 실패: ' + e.message); }
+  };
+  renderExtras(); renderRecent();
 }
 let _drawTok = 0;
 async function drawCombine(fast) {
   const tok = ++_drawTok, art = await currentArt(); if (tok !== _drawTok) return;
   const boxes = {}, cv = composeCard({ ...cmbOptions(), art, boxes });
-  state.cmb.boxes = boxes; renderOverlay();
+  state.cmb.boxes = boxes; renderOverlay(); if ($('#svName')) $('#svName').textContent = cmbFileName() + '.png';
   const g = $('#cCanvas').getContext('2d'); g.clearRect(0, 0, W, H); g.drawImage(cv, 0, 0);
   $$('#cGrade button').forEach((b, i) => b.classList.toggle('on', i === state.cmb.t));
   if (fast) { clearTimeout(drawCombine._t); drawCombine._t = setTimeout(() => drawStrip(art), 250); } else drawStrip(art);
