@@ -35,6 +35,7 @@ h3{font-size:14px;color:var(--muted);margin:16px 0 8px;font-weight:700}
 .tag.ok{border-color:var(--ok);color:var(--ok)}
 [hidden]{display:none!important}
 .saveBox .saveName{font:12px/1.4 monospace;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.12);border-radius:6px;padding:6px 8px;word-break:break-all;margin-bottom:6px}
+.saveBox .btn.on{background:var(--accent);color:#000}
 .saveBox .extra{display:flex;gap:6px;margin-bottom:6px}.saveBox .extra input{flex:1;min-width:0}
 .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .ctrl label{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:13px}
@@ -162,7 +163,7 @@ pre.prompt{white-space:pre-wrap;font-size:12px;color:#c9d2ff;background:#080d24;
 #cOverlay .hd.nw,#cOverlay .hd.se{cursor:nwse-resize}#cOverlay .hd.ne,#cOverlay .hd.sw{cursor:nesw-resize}
 .fontBox .sl{grid-template-columns:56px 1fr 44px;margin-top:6px}
 .fontBox input[type=color]{width:44px;height:28px;padding:0;border:1px solid var(--line);border-radius:6px;background:none}
-.artPick{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px}
+.artPick{display:grid;grid-auto-flow:column;grid-template-rows:repeat(2,auto);grid-auto-columns:64px;gap:8px;overflow-x:auto;padding-bottom:6px}
 .artPick .ap{flex:0 0 auto;width:64px;border-radius:8px;overflow:hidden;border:2px solid transparent;cursor:pointer;background:#070b1d;position:relative}
 .artPick .ap img{width:100%;aspect-ratio:2/3;object-fit:cover;display:block}
 .artPick .ap.on{border-color:var(--accent)}
@@ -331,12 +332,11 @@ pre.prompt{white-space:pre-wrap;font-size:12px;color:#c9d2ff;background:#080d24;
         <div class="sl"><span>좌우</span><input type="range" id="cOx" min="-250" max="250" value="0"><span id="cOxV">0</span></div>
         <div class="sl"><span>상하</span><input type="range" id="cOy" min="-350" max="350" value="0"><span id="cOyV">0</span></div>
       </div>
-      <div class="row"><button id="cDownload" class="btn primary" style="flex:1">⬇ PNG 다운로드</button><button id="cDownloadAll" class="btn">5등급 모두</button></div>
       <div class="field saveBox">
         <label>💾 폴더에 저장 <small>등급_역할_컨셉_스킬_이름</small></label>
         <div class="saveName" id="svName"></div>
         <div id="svExtras"></div>
-        <button class="btn sm" id="svAddExtra" type="button">＋ 이름 덧붙이기</button>
+        <div class="row" style="gap:6px;flex-wrap:wrap"><button class="btn sm" id="svAddExtra" type="button">＋ 이름 덧붙이기</button><button class="btn sm" id="svPlus" type="button" title="이름 맨 뒤에 _plus 를 붙이거나 뗍니다">plus 덧붙이기</button><button class="btn sm" id="svNum" type="button" title="누를 때마다 숫자가 1씩 올라갑니다">숫자 덧붙이기</button><button class="btn sm" id="svNumReset" type="button" title="숫자 빼기" hidden>✕ 숫자</button></div>
         <div class="row" style="margin-top:8px;gap:6px"><input id="svFolder" placeholder="저장 폴더 (예: D:\cards)" style="flex:1;min-width:0"><button class="btn sm" id="svPick" type="button" title="폴더 고르기 창 열기">📂 고르기</button></div>
         <select id="svRecent" style="width:100%;margin-top:6px"></select>
         <div class="row" style="margin-top:8px;gap:6px"><button id="svSave" class="btn primary" style="flex:1" type="button">💾 저장</button><button id="svOpen" class="btn" type="button" title="저장 폴더를 탐색기로 열기">📁 탐색기</button></div>

@@ -692,8 +692,6 @@ function renderCombine() {
     $('#' + id).value = C[key]; $('#' + id + 'V').textContent = fmt(C[key]);
     $('#' + id).oninput = e => { C[key] = +e.target.value; $('#' + id + 'V').textContent = fmt(C[key]); drawCombine(true); };
   }
-  $('#cDownload').onclick = async () => { const cv = composeCard({ ...cmbOptions(), art: await currentArt() }); downloadCanvas(cv, `card_${safeName(C.name || 'card')}_${GRADES[C.t]}.png`); };
-  $('#cDownloadAll').onclick = async () => { const art = await currentArt(); for (let t = 0; t < 5; t++) { downloadCanvas(composeCard({ ...cmbOptions(t), art }), `card_${safeName(C.name || 'card')}_${GRADES[t]}.png`); await sleep(350); } };
   initFontControls();
   initSaveBox();
   drawCombine();
@@ -703,7 +701,7 @@ function cmbFileName() {
   const C = state.cmb, art = C.artId === '__temp' ? C.temp : state.arts.find(a => a.id === C.artId);
   const role = ROLES.find(r => r.id === C.role)?.ko, concept = (art?.concept || '').trim().slice(0, 24);
   const skills = (C.skills || []).map(id => SKILLS.find(s => s.id === id)?.ko).filter(Boolean).join('+');
-  return [GRADES[C.t], role, concept, skills, C.name.trim(), ...(C.saveExtras || []).map(x => x.trim())].filter(Boolean).map(x => x.replace(/[\\/:*?"<>|]+/g, '').replace(/\s+/g, '_')).filter(Boolean).join('_');
+  return [GRADES[C.t], role, concept, skills, C.name.trim(), ...(C.saveExtras || []).map(x => x.trim()), C.saveNum ? String(C.saveNum) : '', C.savePlus ? 'plus' : ''].filter(Boolean).map(x => x.replace(/[\\/:*?"<>|]+/g, '').replace(/\s+/g, '_')).filter(Boolean).join('_');
 }
 function initSaveBox() {
   const C = state.cmb; C.saveExtras ??= [];
@@ -724,6 +722,15 @@ function initSaveBox() {
     sel.value = '';
   };
   const remember = f => { recent = [f, ...recent.filter(x => x.toLowerCase() !== f.toLowerCase())].slice(0, 5); LS.set('saveFolders', recent); renderRecent(); };
+  const renderSuffix = () => {
+    $('#svPlus').classList.toggle('on', !!C.savePlus); $('#svPlus').textContent = C.savePlus ? '✓ _plus 붙음' : 'plus 덧붙이기';
+    $('#svNum').classList.toggle('on', !!C.saveNum); $('#svNum').textContent = C.saveNum ? `숫자 ${C.saveNum} → ${C.saveNum + 1}` : '숫자 덧붙이기';
+    $('#svNumReset').hidden = !C.saveNum; showName();
+  };
+  $('#svPlus').onclick = () => { C.savePlus = !C.savePlus; renderSuffix(); };
+  $('#svNum').onclick = () => { C.saveNum = (C.saveNum || 0) + 1; renderSuffix(); };
+  $('#svNumReset').onclick = () => { C.saveNum = 0; renderSuffix(); };
+  renderSuffix();
   $('#svAddExtra').onclick = () => { if (C.saveExtras.length < 3) { C.saveExtras.push(''); renderExtras(); $('#svExtras').lastChild?.querySelector('input').focus(); } };
   $('#svFolder').value ||= recent[0] || '';
   $('#svRecent').onchange = e => { if (e.target.value) $('#svFolder').value = e.target.value; renderRecent(); };
