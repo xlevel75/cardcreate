@@ -1280,6 +1280,38 @@ const BASEFX_DRAW = {
     g.restore();
     for (let i = 0; i < 14 + t * 4; i++) { const x = S.x + (rnd() - .5) * S.rx * 2, y = S.y - rnd() * 160; radial(g, x, y, 6 + rnd() * 14, col, .45, 'lighter'); }
   },
+  // 묵직함: 알 무게로 바닥이 갈라지고 꺼짐 (알 뒤/아래)
+  heavyBack(c) {
+    const { g, S, rnd } = c, cy = S.y + S.th + S.ry * .35;
+    // 무게로 꺼진 얕은 구덩이 + 테두리로 밀려 올라온 바닥
+    g.save(); g.translate(S.x, cy); g.scale(1, .3);
+    g.strokeStyle = 'rgba(255,240,220,.18)'; g.lineWidth = 14; g.beginPath(); g.arc(0, -8, S.rx * 1.45, Math.PI, 0); g.stroke();
+    radial(g, 0, 0, S.rx * 1.5, '#000000', .85); g.restore();
+    g.save(); g.lineCap = 'round'; g.lineJoin = 'round';
+    for (let i = 0; i < 14; i++) {
+      const a = (i / 14) * Math.PI * 2 + (rnd() - .5) * .3; let r = S.rx * .85, x = S.x + Math.cos(a) * r, y = cy + Math.sin(a) * r * .3;
+      const pts = [[x, y]]; let aa = a;
+      for (let k = 0; k < 5; k++) { aa += (rnd() - .5) * .5; r += 22 + rnd() * 30; pts.push([S.x + Math.cos(aa) * r, cy + Math.sin(aa) * r * .3]); }
+      // 갈라진 틈: 안쪽은 굵고 바깥으로 갈수록 가늘어짐 + 위쪽 모서리에 밝은 테두리
+      for (let k = 1; k < pts.length; k++) { const w = 12 * (1 - k / pts.length) + 2; g.strokeStyle = 'rgba(8,5,3,.85)'; g.lineWidth = w; g.beginPath(); g.moveTo(...pts[k - 1]); g.lineTo(...pts[k]); g.stroke(); g.strokeStyle = 'rgba(255,240,220,.3)'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(pts[k - 1][0], pts[k - 1][1] - w / 2); g.lineTo(pts[k][0], pts[k][1] - w / 2); g.stroke(); }
+    }
+    g.restore();
+  },
+  // 묵직함: 튀어 오르는 돌 부스러기 + 바닥 먼지 (알 앞)
+  heavy(c) {
+    const { g, S, rnd, t } = c, cy = S.y + S.th + S.ry * .35;
+    for (let i = 0; i < 16; i++) { const a = Math.PI * (rnd() < .5 ? rnd() * .35 : .65 + rnd() * .35), d = S.rx * (1 + rnd() * .5); radial(g, S.x + Math.cos(a) * d, cy - rnd() * 30, 40 + rnd() * 50, '#b8a894', .12, 'source-over'); }
+    for (let i = 0; i < 12 + t * 3; i++) {
+      const sd = rnd() < .5 ? -1 : 1, x = S.x + sd * (S.rx * (.8 + rnd() * .7)), y = cy - 10 - rnd() * 120, r = 3 + rnd() * 9;
+      g.save(); g.translate(x, y); g.rotate(rnd() * 6); g.fillStyle = rnd() < .5 ? '#3a342e' : '#6b6157';
+      g.beginPath(); g.moveTo(-r, -r * .4); g.lineTo(r * .2, -r); g.lineTo(r, r * .1); g.lineTo(-r * .3, r * .8); g.closePath(); g.fill();
+      g.strokeStyle = 'rgba(255,245,230,.35)'; g.lineWidth = 1; g.stroke(); g.restore();
+    }
+    // 단단한 표면: 날카로운 하이라이트
+    g.save(); g.globalCompositeOperation = 'lighter'; g.strokeStyle = 'rgba(255,255,255,.55)'; g.lineWidth = 3; g.shadowColor = '#ffffff'; g.shadowBlur = 6;
+    g.beginPath(); g.ellipse(S.x, S.y, S.rx * .96, S.ry * .94, 0, Math.PI * 1.1, Math.PI * 1.55); g.stroke();
+    g.lineWidth = 2; g.beginPath(); g.ellipse(S.x, S.y + S.th, S.rx * .99, S.ry, 0, Math.PI * .15, Math.PI * .5); g.stroke(); g.restore();
+  },
   spark(c, col) {
     const { g, S, rnd, t } = c;
     for (let i = 0; i < 6 + t * 2; i++) {
@@ -1340,6 +1372,7 @@ function renderArt(req, seed) {
   if (t >= 3 && !noFx) { radial(g, 400, 620, 360, mainCol, (th.bright ? .22 : .42) * (cloaked ? .3 : 1), 'lighter'); if (isNoble(req.concept)) radial(g, 400, 560, 300, '#ffd76a', th.bright ? .15 : .3, 'lighter'); }
   for (const s of skills) SKFX[s.id].back?.(ctx, colFor(s));
   if (fx === 'aura' && !cloaked) BASEFX_DRAW.aura(ctx, mainCol);
+  if (fx === 'heavy' && !cloaked) BASEFX_DRAW.heavyBack(ctx, mainCol);
   drawMainStone(ctx, skills.map(s => s.id), mainCol);
   if (fx !== 'auto' && fx !== 'none' && fx !== 'aura' && !cloaked) BASEFX_DRAW[fx]?.(ctx, mainCol);
   if (req.engrave && skills.length && !cloaked) engraveSkills(ctx, skills, colFor);
@@ -1363,6 +1396,7 @@ const BASE_FX = [
   { id: 'wind', label: '🌪 바람', ai: 'BASE EFFECT around the stone: WIND — soft curved streaks of wind and air currents sweeping around the stone, flowing ribbons of air carrying a little glowing dust; no lightning, no glowing ring.' },
   { id: 'sparkle', label: '💫 반짝반짝', ai: 'BASE EFFECT around the stone: SPARKLES — many tiny twinkling star-shaped glints and glitter dots floating around the stone, like magical shimmering dust; no swirls, no rings.' },
   { id: 'aura', label: '🔆 오라', ai: 'BASE EFFECT around the stone: AURA — a soft glowing aura of light emanating evenly from the stone, a gentle halo and rising flame-like energy outline hugging its silhouette; no swirls, no rings, no lightning.' },
+  { id: 'heavy', label: '🪨 묵직함', ai: 'BASE EFFECT: HEAVY AND SOLID — make the stone look extremely dense, hard and HEAVY, like it weighs tons: the ground beneath it is CRACKED and slightly sunken into a shallow crater from its weight, with radiating fractures, small rock debris and chips flying up, a low ring of dust kicked up around its base by the impact, a deep heavy contact shadow, and a hard polished surface with crisp metallic-like specular highlights and sharp thick edges. No swirls, no magic rings, no sparkles — the feeling is pure weight and hardness.' },
   { id: 'spark', label: '⚡ 스파크', ai: 'BASE EFFECT around the stone: SPARKS — crackling electric sparks and small branching lightning arcs jumping across and around the edge of the stone, with bright spark particles; no swirls, no rings.' },
 ];
 // 기본 이펙트를 직접 고르면(스킬 없음) 등급 문구에서 이펙트 부분을 뺀 배경 위주 문구를 씀
