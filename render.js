@@ -1368,13 +1368,13 @@ function renderArt(req, seed) {
   const mainCol = skills[0] ? colFor(skills[0]) : th.accent;
   drawSky(ctx); drawEnv(ctx, 'back'); drawFloor(ctx);
   const cloaked = skills.some(s => s.id === 'cloak'); // 은신: 알 뒤 후광을 줄여야 비쳐 보임
-  const fx = req.fx || 'auto', noFx = fx === 'none' && !skills.length; ctx.noFx = noFx;
+  const fxs = fxList(req), noFx = fxs[0] === 'none' && !skills.length; ctx.noFx = noFx;
   if (t >= 3 && !noFx) { radial(g, 400, 620, 360, mainCol, (th.bright ? .22 : .42) * (cloaked ? .3 : 1), 'lighter'); if (isNoble(req.concept)) radial(g, 400, 560, 300, '#ffd76a', th.bright ? .15 : .3, 'lighter'); }
   for (const s of skills) SKFX[s.id].back?.(ctx, colFor(s));
-  if (fx === 'aura' && !cloaked) BASEFX_DRAW.aura(ctx, mainCol);
-  if (fx === 'heavy' && !cloaked) BASEFX_DRAW.heavyBack(ctx, mainCol);
+  if (fxs.includes('aura') && !cloaked) BASEFX_DRAW.aura(ctx, mainCol);
+  if (fxs.includes('heavy') && !cloaked) BASEFX_DRAW.heavyBack(ctx, mainCol);
   drawMainStone(ctx, skills.map(s => s.id), mainCol);
-  if (fx !== 'auto' && fx !== 'none' && fx !== 'aura' && !cloaked) BASEFX_DRAW[fx]?.(ctx, mainCol);
+  if (!cloaked) for (const f of fxs) if (f !== 'none' && f !== 'aura') BASEFX_DRAW[f]?.(ctx, mainCol);
   if (req.engrave && skills.length && !cloaked) engraveSkills(ctx, skills, colFor);
   for (const s of skills) SKFX[s.id].front?.(ctx, colFor(s));
   drawEnv(ctx, 'front');
@@ -1389,15 +1389,17 @@ function renderArt(req, seed) {
    4) AI 이미지용 프롬프트
    ================================================================= */
 // 등급이 높을수록 이펙트·배경·조명이 화려해짐 (C도 캐릭터 카드 느낌은 유지)
-// 알 주위 기본 이펙트 (스킬과 별개). auto = 등급 문구대로 자동
+// 알 주위 기본 이펙트 (스킬과 별개, 여러 개 조합). 빈 목록 = 자동(등급 문구대로), ['none'] = 없음
+// 예전 저장값(문자열 하나)도 목록으로 바꿔 읽음
+function fxList(o) { const v = o?.fx; const a = Array.isArray(v) ? v : v && v !== 'auto' ? [v] : []; return a.includes('none') ? ['none'] : a.filter(x => x !== 'auto'); }
 const BASE_FX = [
   { id: 'auto', label: '✨ 자동' },
   { id: 'none', label: '🚫 없음', ai: 'BASE EFFECT: NONE — absolutely NO effects around the stone: no wind swirls, no energy rings, no orbiting light trails, no aura, no sparkles, no particles circling it. The stone simply sits in the scene, lit only by natural rim light.' },
-  { id: 'wind', label: '🌪 바람', ai: 'BASE EFFECT around the stone: WIND — soft curved streaks of wind and air currents sweeping around the stone, flowing ribbons of air carrying a little glowing dust; no lightning, no glowing ring.' },
-  { id: 'sparkle', label: '💫 반짝반짝', ai: 'BASE EFFECT around the stone: SPARKLES — many tiny twinkling star-shaped glints and glitter dots floating around the stone, like magical shimmering dust; no swirls, no rings.' },
-  { id: 'aura', label: '🔆 오라', ai: 'BASE EFFECT around the stone: AURA — a soft glowing aura of light emanating evenly from the stone, a gentle halo and rising flame-like energy outline hugging its silhouette; no swirls, no rings, no lightning.' },
-  { id: 'heavy', label: '🪨 묵직함', ai: 'BASE EFFECT: HEAVY AND SOLID — make the stone look extremely dense, hard and HEAVY, like it weighs tons: the ground beneath it is CRACKED and slightly sunken into a shallow crater from its weight, with radiating fractures, small rock debris and chips flying up, a low ring of dust kicked up around its base by the impact, a deep heavy contact shadow, and a hard polished surface with crisp metallic-like specular highlights and sharp thick edges. No swirls, no magic rings, no sparkles — the feeling is pure weight and hardness.' },
-  { id: 'spark', label: '⚡ 스파크', ai: 'BASE EFFECT around the stone: SPARKS — crackling electric sparks and small branching lightning arcs jumping across and around the edge of the stone, with bright spark particles; no swirls, no rings.' },
+  { id: 'wind', label: '🌪 바람', ai: 'BASE EFFECT around the stone: WIND — soft curved streaks of wind and air currents sweeping around the stone, flowing ribbons of air carrying a little glowing dust.', only: 'No lightning, no glowing ring.' },
+  { id: 'sparkle', label: '💫 반짝반짝', ai: 'BASE EFFECT around the stone: SPARKLES — many tiny twinkling star-shaped glints and glitter dots floating around the stone, like magical shimmering dust.', only: 'No swirls, no rings.' },
+  { id: 'aura', label: '🔆 오라', ai: 'BASE EFFECT around the stone: AURA — a soft glowing aura of light emanating evenly from the stone, a gentle halo and rising flame-like energy outline hugging its silhouette.', only: 'No swirls, no rings, no lightning.' },
+  { id: 'heavy', label: '🪨 묵직함', ai: 'BASE EFFECT: HEAVY AND SOLID — make the stone look extremely dense, hard and HEAVY, like it weighs tons: the ground beneath it is CRACKED and slightly sunken into a shallow crater from its weight, with radiating fractures, small rock debris and chips flying up, a low ring of dust kicked up around its base by the impact, a deep heavy contact shadow, and a hard polished surface with crisp metallic-like specular highlights and sharp thick edges. The feeling is weight and hardness.', only: 'No swirls, no magic rings, no sparkles.' },
+  { id: 'spark', label: '⚡ 스파크', ai: 'BASE EFFECT around the stone: SPARKS — crackling electric sparks and small branching lightning arcs jumping across and around the edge of the stone, with bright spark particles.', only: 'No swirls, no rings.' },
 ];
 // 기본 이펙트를 직접 고르면(스킬 없음) 등급 문구에서 이펙트 부분을 뺀 배경 위주 문구를 씀
 const TIER_PROMPT_BG = [
@@ -1414,7 +1416,7 @@ const TIER_PROMPT = [
   'EPIC hero grade: explosive dramatic skill effects filling the scene, intense cinematic lighting and light rays, energy swirling around the stone, epic background',
   'LEGENDARY grade: the most spectacular version — overwhelming radiant aura, god rays, iridescent highlights, vortex of particles and magic, breathtaking epic background, masterpiece splash-art quality',
 ];
-const fxOf = req => req.fx && req.fx !== 'auto' ? BASE_FX.find(f => f.id === req.fx) : null;
+const fxOf = req => fxList(req).map(id => BASE_FX.find(f => f.id === id)).filter(f => f?.ai);
 function buildPrompt(req) {
   const t = Math.max(0, GRADES.indexOf(req.grade));
   const sk = (req.skills || []).map(id => SKILLS.find(s => s.id === id)).filter(Boolean);
@@ -1428,9 +1430,9 @@ function buildPrompt(req) {
     'Background: an atmospheric, painterly environment that matches the theme, with depth and bokeh — not a game board diagram, not a top-down view, no tutorial or explanation style.',
     req.concept ? pickThemes(req.concept).slice(0, 2).map(th => th.ai).filter(Boolean).join(' ') : '',
     req.engrave && sk.length ? `STONE ENGRAVING: the top face of the go stone is deeply ENGRAVED with a glowing emblem that clearly depicts its skill — ${sk.map(s => `${s.ko}/${s.id}: ${s.eng}`).join('; combined with ')} — framed by a simple thin ring made only of plain lines and dots. The engraving must obviously represent this skill. NO runes, NO letters, NO numbers, NO glyphs or symbols that look like writing anywhere on the stone.` : '',
-    fxOf(req) ? fxOf(req).ai : '',
-    `${(fxOf(req) && !sk.length ? TIER_PROMPT_BG : TIER_PROMPT)[t]}.`,
-    `Style: high-end fantasy card game splash art, painterly digital illustration, rich colours, ${req.fx === 'none' && !sk.length ? '' : 'glowing VFX, '}high contrast.`,
+    fxOf(req).length > 1 ? `COMBINE ALL OF THESE BASE EFFECTS around the stone at the same time, blended into one cohesive look (show every one of them clearly): ${fxOf(req).map((f, i) => `(${i + 1}) ${f.ai.replace(/^BASE EFFECT( around the stone)?: /, '')}`).join(' ')}` : fxOf(req)[0] ? `${fxOf(req)[0].ai} ${fxOf(req)[0].only || ''}` : '',
+    `${(fxOf(req).length && !sk.length ? TIER_PROMPT_BG : TIER_PROMPT)[t]}.`,
+    `Style: high-end fantasy card game splash art, painterly digital illustration, rich colours, ${fxList(req)[0] === 'none' && !sk.length ? '' : 'glowing VFX, '}high contrast.`,
     'Vertical 2:3, full-bleed edge to edge (no white margin, no border, no frame). Keep the very top-left corner, top-center and bottom-center slightly calmer because a card frame will be overlaid.',
     'Absolutely no text, letters, numbers or logos. No hands, no people.',
   ].filter(Boolean).join(' ');
