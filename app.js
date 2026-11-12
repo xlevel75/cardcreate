@@ -370,6 +370,7 @@ function initGenForm() {
   const G = state.gen;
   seg($('#gGrade'), GRADE_INFO.map(x => ({ label: `${x.g} ${x.ko}`, value: x.g, color: x.col })), G.grade, v => { G.grade = v; saveGen(); });
   seg($('#gStone'), [{ label: '⚫ 흑', value: 'black' }, { label: '⚪ 백', value: 'white' }, { label: '🎲 랜덤', value: 'random' }], G.stone, v => { G.stone = v; saveGen(); });
+  seg($('#gFx'), BASE_FX.map(f => ({ label: f.label, value: f.id })), G.fx || 'auto', v => { G.fx = v; saveGen(); });
   seg($('#gCount'), [1, 2, 3, 4, 6].map(n => ({ label: n + '장', value: n })), G.count, v => { G.count = v; saveGen(); });
   renderSkillChips();
   $('#gConcept').value = G.concept; $('#gConcept').oninput = e => { G.concept = e.target.value; saveGen(); };
@@ -444,14 +445,14 @@ function submitRequest() {
   if (!G.skills.length && !G.concept.trim()) { toast('스킬이나 컨셉 중 하나는 입력해 주세요'); return; }
   const eng = ENGINES[G.engine];
   if (eng.key && !state.settings[eng.key]) { $('#apiBox').open = true; toast(`${eng.label} API 키를 설정에 입력해 주세요`); return; }
-  const req = { id: ++state.reqSeq, grade: G.grade, skills: [...G.skills], stone: G.stone, concept: G.concept.trim(), count: G.count, engine: G.engine, texture: G.texture !== false, engrave: !!G.engrave, created: Date.now() };
+  const req = { id: ++state.reqSeq, grade: G.grade, skills: [...G.skills], stone: G.stone, concept: G.concept.trim(), count: G.count, engine: G.engine, texture: G.texture !== false, engrave: !!G.engrave, fx: G.fx || 'auto', created: Date.now() };
   $('#queue .empty')?.remove();
   const skillTxt = req.skills.map(id => SKILLS.find(s => s.id === id).ko).join(' + ') || '스킬 없음';
   const timer = el('span', { class: 'tag' }, '0초');
   const slots = el('div', { class: 'slots' });
   const block = el('div', { class: 'req' },
     el('div', { class: 'rh' }, el('span', { class: 'ttl' }, `요청 #${req.id}`), gradeTag(req.grade),
-      el('span', { class: 'meta' }, `${skillTxt}${req.engrave && req.skills.length ? ' · 🔱각인' : ''} · ${req.concept ? '“' + req.concept + '”' : '컨셉 없음'} · ${ENGINES[req.engine].label}${ENGINES[req.engine].model ? ' · ' + state.settings[ENGINES[req.engine].model] : ''}`),
+      el('span', { class: 'meta' }, `${skillTxt}${req.engrave && req.skills.length ? ' · 🔱각인' : ''}${req.fx && req.fx !== 'auto' ? ' · ' + (BASE_FX.find(f => f.id === req.fx)?.label || '') : ''} · ${req.concept ? '“' + req.concept + '”' : '컨셉 없음'} · ${ENGINES[req.engine].label}${ENGINES[req.engine].model ? ' · ' + state.settings[ENGINES[req.engine].model] : ''}`),
       timer,
       el('button', { class: 'btn sm', onclick: () => $$('.slot.done:not(.saved)', block).forEach(s => s._save()) }, '모두 저장'),
       el('button', { class: 'btn sm danger', onclick: () => { $$('.slot:not(.pending)', block).forEach(s => s._discard(true)); } }, '모두 버리기')),
