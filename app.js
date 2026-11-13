@@ -620,7 +620,9 @@ function fillSlot(req, slot, canvas, ctx = {}) {
       el('button', { class: 'btn danger', onclick: () => slot._discard() }, '🗑')));
   if (ctx.error && !ctx.errTitle) editIn.focus();
 }
-async function genAiArt(req) { return coverTo(await aiImage({ engine: req.engine, prompt: buildPrompt(req), aspect: '2:3' }), W, H); }
+// 왕알: 모양 참고 그림(ref/king_stone.png)을 함께 보냄 — 모양만 참고, 색·배경·이펙트는 따라 하지 않게 문구로 지시
+async function kingRef() { const img = await loadImage('ref/king_stone.png'); const c = mk(img.width, img.height); c.getContext('2d').drawImage(img, 0, 0); return c; }
+async function genAiArt(req) { return coverTo(await aiImage({ engine: req.engine, prompt: buildPrompt(req), refs: req.king ? [await kingRef()] : [], aspect: '2:3' }), W, H); }
 
 /* =================================================================
    ③ 보관함

@@ -218,7 +218,7 @@ function texturePrompt(req) {
     'Seen perfectly straight from above (orthographic top-down), one perfect circle, centered, filling the square canvas almost edge to edge.',
     `Material: ${stone} polished stone matching the stone in the reference image.`,
     `In the center: a round emblem icon that represents this card${sk.length ? ` — its power: ${sk.map(s => s.en.split(' — ')[0]).join(' + ')} — the emblem clearly depicts: ${sk.map(s => s.eng).join(' combined with ')}` : ''}${req.concept ? `, theme (Korean): "${req.concept}"` : ''}. Use the same colours, effects and art style as the reference image.`,
-    req.king ? 'KING STONE: the disc has a thick, rounded outer ring frame, and inside it a wide smooth slightly domed centre surface outlined by a THIN GOLD RIM line; no other gold decoration.' : '',
+    req.king ? 'KING STONE: a smooth, slightly domed polished disc with a THIN GOLD RING inlaid just inside its outer edge; no other gold decoration.' : '',
     `${TEX_TIER_PROMPT[t]}.`,
     'Everything outside the circle must be flat pure chroma green (#00FF00). No perspective, no side view, no shadow outside the disc, no text, no letters. Square 1:1.',
   ].filter(Boolean).join(' ');
@@ -257,9 +257,9 @@ function proceduralTexture(req, art) {
   }
   if (t >= 3) sparkle(g, cx - er * .45, cx - er * .5, 26 + t * 6, '#ffffff', 1);
   if (req.king) { // 왕알: 두꺼운 둥근 테두리 안쪽 가장자리에 얇은 금색 테두리
-    g.save(); g.strokeStyle = 'rgba(0,0,0,.45)'; g.lineWidth = 8; g.beginPath(); g.arc(cx, cx, R * .8, 0, 7); g.stroke();
+    g.save(); 
     g.lineWidth = 4; g.strokeStyle = goldGrad(g, cx - R, cx - R, cx + R, cx + R, '#e9b23a'); g.shadowColor = '#ffd76a'; g.shadowBlur = 6;
-    g.beginPath(); g.arc(cx, cx, R * .78, 0, 7); g.stroke(); g.restore();
+    g.beginPath(); g.arc(cx, cx, R * .88, 0, 7); g.stroke(); g.restore();
   }
   g.beginPath(); g.arc(cx, cx, R, 0, 7); g.lineWidth = 4; g.strokeStyle = black ? 'rgba(255,255,255,.18)' : 'rgba(0,0,0,.18)'; g.stroke();
   const hl = g.createLinearGradient(0, cx - R, 0, cx); hl.addColorStop(0, 'rgba(255,255,255,.28)'); hl.addColorStop(1, 'rgba(255,255,255,0)');
