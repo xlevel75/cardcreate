@@ -218,7 +218,7 @@ function texturePrompt(req) {
     'Seen perfectly straight from above (orthographic top-down), one perfect circle, centered, filling the square canvas almost edge to edge.',
     `Material: ${stone} polished stone matching the stone in the reference image.`,
     `In the center: a round emblem icon that represents this card${sk.length ? ` — its power: ${sk.map(s => s.en.split(' — ')[0]).join(' + ')} — the emblem clearly depicts: ${sk.map(s => s.eng).join(' combined with ')}` : ''}${req.concept ? `, theme (Korean): "${req.concept}"` : ''}. Use the same colours, effects and art style as the reference image.`,
-    req.king ? 'KING STONE: a smooth, slightly domed polished disc with a THIN GOLD RING inlaid just inside its outer edge; no other gold decoration.' : '',
+    req.king ? 'KING STONE: a smooth, slightly domed polished disc with a THIN GOLD RING inlaid just inside its outer edge; no other gold decoration. In the exact CENTRE of the disc a simple CROWN icon (a clean five-point royal crown silhouette with a band at its base) is ENGRAVED INTO the stone — DEBOSSED / intaglio, carved and recessed below the surface, NOT raised, NOT a sticker: the carved grooves show a soft inner shadow on their upper walls and a thin light glint on their lower walls, the same glossy material as the stone.' : '',
     `${TEX_TIER_PROMPT[t]}.`,
     'Everything outside the circle must be flat pure chroma green (#00FF00). No perspective, no side view, no shadow outside the disc, no text, no letters. Square 1:1.',
   ].filter(Boolean).join(' ');
