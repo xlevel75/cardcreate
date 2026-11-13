@@ -601,7 +601,7 @@ function fillSlot(req, slot, canvas, ctx = {}) {
     if (slot.classList.contains('saved')) return;
     const name = nameIn.value.trim() || defaultArtName(req);
     const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
-    const art = { id: uid(), name, grade: req.grade, skills: req.skills, concept: req.concept, stone: req.stone, engine: req.engine, created: Date.now(), blob, texture: ctx.texture ? await canvasToBlob(ctx.texture) : null, thumb: thumbOf(canvas, 240).toDataURL('image/jpeg', .85) };
+    const art = { id: uid(), name, grade: req.grade, skills: req.skills, concept: req.concept, stone: req.stone, king: !!req.king, engine: req.engine, created: Date.now(), blob, texture: ctx.texture ? await canvasToBlob(ctx.texture) : null, thumb: thumbOf(canvas, 240).toDataURL('image/jpeg', .85) };
     await DB.put('arts', art); state.arts.unshift(art); artBitmaps.set(art.id, canvas);
     slot.classList.add('saved'); slot._artId = art.id; imgBox.append(el('span', { class: 'savedTag' }, '저장됨 ✓'));
     saveBtn.disabled = true; saveBtn.textContent = '저장됨'; nameIn.disabled = true; updateHint(); toast(`💾 “${name}” 보관함에 저장`);
@@ -616,7 +616,7 @@ function fillSlot(req, slot, canvas, ctx = {}) {
       el('button', { class: 'btn', title: '같은 등급·스킬·컨셉으로 그림을 처음부터 새로 만들기 (↶ 로 되돌리기 가능)', onclick: () => regenSlot(req, slot, canvas, ctx) }, '🔄 새로 만들기'),
       el('button', { class: 'btn', title: '이 그림을 바탕으로 수정 요청', onclick: () => { editRow.hidden = !editRow.hidden; if (!editRow.hidden) editIn.focus(); } }, '✏ 편집'),
       ctx.history.length ? el('button', { class: 'btn', title: '편집 전 그림으로 되돌리기', onclick: () => fillSlot(req, slot, ctx.history.at(-1), { name: ctx.name, history: ctx.history.slice(0, -1), edits: ctx.edits.slice(0, -1) }) }, '↶') : null,
-      el('button', { class: 'btn', onclick: () => { if (slot._artId) openCombine({ artId: slot._artId }); else openCombine({ temp: { canvas, skills: req.skills, grade: req.grade, name: nameIn.value } }); } }, '🧩 조합'),
+      el('button', { class: 'btn', onclick: () => { if (slot._artId) openCombine({ artId: slot._artId }); else openCombine({ temp: { canvas, skills: req.skills, grade: req.grade, king: !!req.king, name: nameIn.value } }); } }, '🧩 조합'),
       el('button', { class: 'btn danger', onclick: () => slot._discard() }, '🗑')));
   if (ctx.error && !ctx.errTitle) editIn.focus();
 }
@@ -771,7 +771,7 @@ function cmbFileName() {
   const C = state.cmb, art = C.artId === '__temp' ? C.temp : state.arts.find(a => a.id === C.artId);
   const role = ROLES.find(r => r.id === C.role)?.ko, concept = (art?.concept || '').trim().slice(0, 24);
   const skills = (C.skills || []).map(id => SKILLS.find(s => s.id === id)?.ko).filter(Boolean).join('+');
-  return [GRADES[C.t], role, concept, skills, C.name.trim(), ...(C.saveExtras || []).map(x => x.trim()), C.saveNum ? String(C.saveNum) : '', C.savePlus ? 'plus' : ''].filter(Boolean).map(x => x.replace(/[\\/:*?"<>|]+/g, '').replace(/\s+/g, '_')).filter(Boolean).join('_');
+  return [GRADES[C.t], art?.king ? '왕' : '', role, concept, skills, C.name.trim(), ...(C.saveExtras || []).map(x => x.trim()), C.saveNum ? String(C.saveNum) : '', C.savePlus ? 'plus' : ''].filter(Boolean).map(x => x.replace(/[\\/:*?"<>|]+/g, '').replace(/\s+/g, '_')).filter(Boolean).join('_');
 }
 function initSaveBox() {
   const C = state.cmb; C.saveExtras ??= [];
