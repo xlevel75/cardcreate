@@ -1378,7 +1378,7 @@ function renderArt(req, seed) {
   const ctx = {
     g, t, rnd, th, th2, stone, enemy: stone === 'black' ? 'white' : 'black',
     Q: [.45, .7, 1, 1.35, 1.8][t], glow: [0, 8, 14, 22, 32][t],
-    S: req.king ? { x: 400, y: 600, rx: 205, ry: 120, th: 66 } : { x: 400, y: 610, rx: 165, ry: 98, th: 42 },
+    S: req.king ? { x: 400, y: 605, rx: 185, ry: 108, th: 84 } : { x: 400, y: 610, rx: 165, ry: 98, th: 42 },
   };
   const colFor = s => mix(s.color, th.accent, .2);
   const mainCol = skills[0] ? colFor(skills[0]) : th.accent;
@@ -1441,7 +1441,7 @@ function buildPrompt(req) {
   return [
     'Character splash art for a collectible game card ("Super Alkkagi", a game of flicking go stones).',
     `THE HERO is a single large ${stone} go stone (round, slightly domed, polished like a gem), treated as a powerful living character — like the champion portrait on a hero card in a mobile RPG.`,
-    req.king ? 'KING STONE: this is NOT an ordinary go stone but the royal KING piece — a BIGGER, THICK CYLINDRICAL puck (like a tall checkers/draughts king piece or a thick hockey puck): a wide round disc with the SAME thickness all the way across, STRAIGHT VERTICAL side walls, a flat bottom, and a broad gently-domed top whose only rounding is a smooth bevel along the top edge. NOT a jar, NOT a pot, NOT a vase, NOT an urn, no bulging belly, no neck, no lid, no taper — the silhouette is a short wide cylinder, wider than it is tall (about 3 times wider than its height). A thick ornate GOLD BAND (engraved gold metal with small inset gems) wraps around the straight side wall like a crown ring, and a thinner gold ring circles the top face near its edge. It must look regal, dense and heavy.' : '',
+    req.king ? 'KING STONE: this is the royal KING piece — a slightly bigger go stone that is only about TWICE AS THICK as a normal go stone, and NO taller than that. It is still a LOW, WIDE, FLAT disc (about 4 to 5 times wider than its height), seen from a low angle: a thick round puck with STRAIGHT side walls of the same thickness all around, a flat bottom, and a gently domed top rounded only along the top edge. NOT tall, NOT a tower, NOT a drum, NOT a jar or pot, no bulge, no neck, no lid. A thick ornate GOLD BAND (engraved gold metal with small inset gems) wraps around its side wall like a crown ring, and a thinner gold ring circles the top face near its edge. It must look regal, dense and heavy.' : '',
     'Composition: the stone is BIG and dominant, centered, filling about 60% of the image width, dramatic low hero angle, close-up, strong rim light, the stone pops out from the background.',
     sk.length ? `Its power${sk.length > 1 ? 's (fused into one combined effect) radiate' : ' radiates'} around it: ${sk.map(s => s.en).join('; ')}.` : '',
     req.concept ? `Theme, world and colour mood of the background and effects (Korean): "${req.concept}".` : '',
