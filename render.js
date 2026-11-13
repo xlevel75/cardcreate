@@ -1290,29 +1290,30 @@ function drawKingStone(c) {
   g.restore();
   engraveCrown(c);
 }
-// 왕알 가운데 크라운 음각: 파인 홈 안쪽 윗벽은 그늘, 아랫벽은 빛을 받음
+// 왕알 가운데 크라운: 네온 라인 (얇은 흰 심 + 금빛 네온 번짐 + 돌 표면에 비친 빛)
 function engraveCrown(c) {
-  const { g, S, stone } = c, black = stone !== 'white', w = S.rx * .3, h = S.ry * .44, cx = S.x, cy = S.y + 4;
+  const { g, S, t } = c, w = S.rx * .3, h = S.ry * .44, cx = S.x, cy = S.y + 4, neon = '#ffb52e';
   const P = ([x, y]) => [cx + x * w, cy + y * h];
   const path = () => {
     g.beginPath();
     [[-1, .62], [1, .62], [1, .3], [1.08, -.55], [.5, -.02], [0, -.78], [-.5, -.02], [-1.08, -.55], [-1, .3]].forEach((p, i) => { const [x, y] = P(p); i ? g.lineTo(x, y) : g.moveTo(x, y); });
-    g.closePath();
-    for (const p of [[-1.08, -.72], [0, -.96], [1.08, -.72]]) { const [x, y] = P(p); g.moveTo(x + w * .13, y); g.ellipse(x, y, w * .13, h * .13, 0, 0, 7); }
+    g.closePath(); g.moveTo(...P([-1, .3])); g.lineTo(...P([1, .3]));
+    for (const p of [[-1.08, -.72], [0, -.96], [1.08, -.72]]) { const [x, y] = P(p); g.moveTo(x + w * .11, y); g.ellipse(x, y, w * .11, h * .11, 0, 0, 7); }
   };
-  g.save();
-  // 홈 바닥
-  path(); g.fillStyle = black ? 'rgba(0,0,0,.55)' : 'rgba(70,78,92,.38)'; g.fill();
-  g.clip();
-  // 윗벽 그늘 (위에서 빛이 오므로 안쪽 윗부분이 어두움)
-  g.save(); g.translate(0, 4); path(); g.lineWidth = 7; g.strokeStyle = black ? 'rgba(0,0,0,.85)' : 'rgba(40,46,58,.5)'; g.stroke(); g.restore();
-  // 아랫벽 빛
-  g.save(); g.translate(0, -3); path(); g.lineWidth = 2.5; g.strokeStyle = black ? 'rgba(170,190,240,.45)' : 'rgba(255,255,255,.95)'; g.stroke(); g.restore();
+  const white = c.stone === 'white';
+  g.save(); g.lineJoin = 'round'; g.lineCap = 'round';
+  if (white) { // 밝은 알: 더하기 합성은 하얗게 날아가므로 진한 주황 네온을 그대로 덧칠
+    path(); g.shadowColor = '#ff8a00'; g.shadowBlur = 16; g.strokeStyle = 'rgba(255,140,0,.55)'; g.lineWidth = 7; g.stroke();
+    path(); g.shadowBlur = 6; g.strokeStyle = '#ff9d1a'; g.lineWidth = 3.5; g.stroke();
+    path(); g.shadowBlur = 0; g.strokeStyle = '#fff1c8'; g.lineWidth = 1.3; g.stroke();
+  } else {
+    radial(g, cx, cy - h * .1, w * 1.7, neon, .22 + t * .04, 'lighter'); // 돌 표면에 비친 네온 빛
+    g.globalCompositeOperation = 'lighter';
+    path(); g.shadowColor = neon; g.shadowBlur = 22; g.strokeStyle = rgba(neon, .55); g.lineWidth = 7; g.stroke();
+    path(); g.shadowBlur = 10; g.strokeStyle = rgba('#ffd27a', .9); g.lineWidth = 3.5; g.stroke();
+    path(); g.shadowBlur = 0; g.strokeStyle = 'rgba(255,250,235,.95)'; g.lineWidth = 1.4; g.stroke();
+  }
   g.restore();
-  // 왕관 띠 안의 홈 줄 + 바깥 아래 테두리의 얇은 반사
-  g.save(); g.strokeStyle = black ? 'rgba(0,0,0,.6)' : 'rgba(60,66,80,.35)'; g.lineWidth = 2; g.beginPath(); g.moveTo(...P([-.92, .3])); g.lineTo(...P([.92, .3])); g.stroke();
-  g.globalCompositeOperation = 'lighter'; g.strokeStyle = black ? 'rgba(150,170,230,.25)' : 'rgba(255,255,255,.5)'; g.lineWidth = 1.2;
-  g.beginPath(); g.moveTo(...P([-1, .66])); g.lineTo(...P([1, .66])); g.stroke(); g.restore();
 }
 // 내장 엔진용 알 주위 기본 이펙트
 const BASEFX_DRAW = {
@@ -1481,7 +1482,7 @@ function buildPrompt(req) {
   return [
     'Character splash art for a collectible game card ("Super Alkkagi", a game of flicking go stones).',
     `THE HERO is a single large ${stone} go stone (round, slightly domed, polished like a gem), treated as a powerful living character — like the champion portrait on a hero card in a mobile RPG.`,
-    req.king ? `KING STONE: the stone is the royal KING piece. Its SHAPE must match the ATTACHED REFERENCE IMAGE exactly — use the reference ONLY for the stone's shape and the gold ring; IGNORE the reference's background, colours, sparkles, light streaks and all its effects. Shape: a thick, smooth, rounded PEBBLE-like disc — wide and low (about 3 times wider than its height), with FULLY ROUNDED soft edges all around (no separate rim, no flat side wall, no sharp edge), a gently domed smooth top, and a rounded underside; it looks like a large polished river pebble / a very thick puffy go stone. A THIN GOLD RING is inlaid on the top surface, running all the way around just inside the outer edge. Glossy ${req.stone === 'white' ? 'white' : req.stone === 'black' ? 'black' : ''} polished surface with soft reflections. In the exact CENTRE of the top surface a simple CROWN icon (a clean five-point royal crown silhouette with a band at its base) is ENGRAVED INTO the stone — DEBOSSED / intaglio, carved and recessed below the surface, NOT raised, NOT a sticker: the carved grooves show a soft inner shadow on their upper walls and a thin light glint on their lower walls, the same glossy material as the stone. NOT a flying saucer, NOT a cylinder, NOT a jar, no dome bump in the middle, no other decoration besides the gold ring and the engraved crown.` : '',
+    req.king ? `KING STONE: the stone is the royal KING piece. Its SHAPE must match the ATTACHED REFERENCE IMAGE exactly — use the reference ONLY for the stone's shape and the gold ring; IGNORE the reference's background, colours, sparkles, light streaks and all its effects. Shape: a thick, smooth, rounded PEBBLE-like disc — wide and low (about 3 times wider than its height), with FULLY ROUNDED soft edges all around (no separate rim, no flat side wall, no sharp edge), a gently domed smooth top, and a rounded underside; it looks like a large polished river pebble / a very thick puffy go stone. A THIN GOLD RING is inlaid on the top surface, running all the way around just inside the outer edge. Glossy ${req.stone === 'white' ? 'white' : req.stone === 'black' ? 'black' : ''} polished surface with soft reflections. In the exact CENTRE of the top surface a simple CROWN icon (a clean five-point royal crown with a band at its base) is drawn as a glowing NEON LINE — only a thin continuous OUTLINE, no fill, like a bright neon tube inlaid flush in the polished surface: a white-hot core line wrapped in a warm golden-amber neon glow with soft bloom and a faint reflection of the glow on the surrounding stone. NOT a flying saucer, NOT a cylinder, NOT a jar, no dome bump in the middle, no other decoration besides the gold ring and the neon crown.` : '',
     'Composition: the stone is BIG and dominant, centered, filling about 60% of the image width, dramatic low hero angle, close-up, strong rim light, the stone pops out from the background.',
     sk.length ? `Its power${sk.length > 1 ? 's (fused into one combined effect) radiate' : ' radiates'} around it: ${sk.map(s => s.en).join('; ')}.` : '',
     req.concept ? `Theme, world and colour mood of the background and effects (Korean): "${req.concept}".` : '',
