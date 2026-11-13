@@ -819,14 +819,14 @@ function initSaveBox() {
   $('#svPick').onclick = async () => { try { const j = await api('/api/pick-folder', { start: $('#svFolder').value }); if (j.folder) $('#svFolder').value = j.folder; } catch (e) { toast('⚠ ' + e.message); } };
   $('#svOpen').onclick = async () => { const f = $('#svFolder').value.trim(); if (!f) return toast('저장 폴더를 먼저 정해 주세요'); try { await api('/api/open-folder', { folder: f }); } catch (e) { toast('⚠ ' + e.message); } };
   const sub = (f, d) => f.replace(/[\\/]+$/, '') + (f.includes('/') && !f.includes('\\') ? '/' : '\\') + d;
-  // 저장: card(프레임 조합) + cardonly(프레임 없는 그림, 같은 위치·확대)
+  // 저장: card(프레임 조합, 이름 위 스킬 표시는 빼고 저장 — 화면 미리보기에는 그대로 보임) + cardonly(프레임 없는 그림, 같은 위치·확대)
   $('#svSave').onclick = async () => {
     const f = $('#svFolder').value.trim(); if (!f) return toast('저장 폴더를 먼저 정해 주세요');
     const art = await currentArt(); if (!art) return toast('카드 그림을 먼저 고르세요');
     const o = cmbOptions(), name = cmbFileName(), png = cv => cv.toDataURL('image/png').split(',')[1];
     const only = mk(), z = o.zoom || 1; only.getContext('2d').drawImage(art, (W - W * z) / 2 + (o.ox || 0), (H - H * z) / 2 + (o.oy || 0), W * z, H * z);
     try {
-      const a = await api('/api/save-file', { folder: sub(f, 'card'), name, data: png(composeCard({ ...o, art })) });
+      const a = await api('/api/save-file', { folder: sub(f, 'card'), name, data: png(composeCard({ ...o, art, showSkills: false })) });
       await api('/api/save-file', { folder: sub(f, 'cardonly'), name, data: png(only) });
       remember(f); toast('💾 저장했습니다: ' + a.path.split(/[\\/]/).pop() + ' (card + cardonly)');
     } catch (e) { toast('⚠ 저장 실패: ' + e.message); }
