@@ -1,0 +1,35 @@
+{
+ "seed": 29492,
+ "style": "medal",
+ "rim": "gold",
+ "variant": {
+  "atk": 0,
+  "def": 0,
+  "dis": 1,
+  "sup": 1,
+  "king": 0
+ },
+ "id": "mw9dvjtrue5bm",
+ "name": "기본아이콘",
+ "created": 1794236147522,
+ "kind": "ai",
+ "aiStyle": "",
+ "engine": "openai",
+ "images": {
+  "atk": {
+   "$file": "data/iconSets/mw9dvjtrue5bm/images_atk.png"
+  },
+  "def": {
+   "$file": "data/iconSets/mw9dvjtrue5bm/images_def.png"
+  },
+  "dis": {
+   "$file": "data/iconSets/mw9dvjtrue5bm/images_dis.png"
+  },
+  "sup": {
+   "$file": "data/iconSets/mw9dvjtrue5bm/images_sup.png"
+  },
+  "king": {
+   "$file": "data/iconSets/mw9dvjtrue5bm/images_king.png"
+  }
+ }
+}

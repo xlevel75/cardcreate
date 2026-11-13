@@ -1,7 +1,71 @@
 {
+ "activeFrame": "mvs45sh69lxi2",
+ "activeIcon": "mw9dvjtrue5bm",
  "settings": {
-  "openaiModel": "gpt-image-1",
+  "openaiModel": "gpt-image-2",
   "openaiQuality": "medium",
   "geminiModel": "gemini-2.5-flash-image"
- }
+ },
+ "aiFrEngine": "openai",
+ "gen": {
+  "grade": "A",
+  "skills": [
+   "thorns"
+  ],
+  "stone": "black",
+  "count": 2,
+  "engine": "openai",
+  "concept": "올림푸스 신화 컨셉의 영웅적인 모습",
+  "engrave": false,
+  "texture": false,
+  "fx": [
+   "wind"
+  ],
+  "king": true
+ },
+ "cmbStyle": {
+  "layout": {
+   "icon:3": {
+    "dx": 2,
+    "dy": 5,
+    "s": 1.115207671818371
+   },
+   "icon:4": {
+    "dx": 4,
+    "dy": 13,
+    "s": 1
+   },
+   "icon:1": {
+    "dx": 11,
+    "dy": 8,
+    "s": 1.0927721778881152
+   },
+   "icon:0": {
+    "dx": -4,
+    "dy": -2,
+    "s": 1.1683059041909318
+   },
+   "name": {
+    "dx": 4,
+    "dy": 5,
+    "s": 1
+   },
+   "icon:2": {
+    "dx": 4,
+    "dy": 2,
+    "s": 1.0143157732789954
+   }
+  },
+  "font": {
+   "family": "\"Do Hyeon\"",
+   "size": 41,
+   "color": "#ffffff",
+   "stroke": "#000000",
+   "strokeW": 6
+  }
+ },
+ "saveFolders": [
+  "E:\\_Resources\\Cards"
+ ],
+ "aiIcEngine": "openai"
 }

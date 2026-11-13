@@ -1,0 +1,48 @@
+{
+ "seed": 51392,
+ "shape": "notch",
+ "pattern": "diamonds",
+ "corner": 2,
+ "thick": 29,
+ "radius": 27,
+ "id": "mvs45sh69lxi2",
+ "name": "AI 프레임 6",
+ "created": 1793191904612,
+ "kind": "ai",
+ "aiStyle": "",
+ "engine": "openai",
+ "frames": [
+  {
+   "$file": "data/frameGroups/mvs45sh69lxi2/frames_0.png"
+  },
+  {
+   "$file": "data/frameGroups/mvs45sh69lxi2/frames_1.png"
+  },
+  {
+   "$file": "data/frameGroups/mvs45sh69lxi2/frames_2.png"
+  },
+  {
+   "$file": "data/frameGroups/mvs45sh69lxi2/frames_3.png"
+  },
+  {
+   "$file": "data/frameGroups/mvs45sh69lxi2/frames_4.png"
+  }
+ ],
+ "masks": [
+  {
+   "$file": "data/frameGroups/mvs45sh69lxi2/masks_0.png"
+  },
+  {
+   "$file": "data/frameGroups/mvs45sh69lxi2/masks_1.png"
+  },
+  {
+   "$file": "data/frameGroups/mvs45sh69lxi2/masks_2.png"
+  },
+  {
+   "$file": "data/frameGroups/mvs45sh69lxi2/masks_3.png"
+  },
+  {
+   "$file": "data/frameGroups/mvs45sh69lxi2/masks_4.png"
+  }
+ ]
+}

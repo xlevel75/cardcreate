@@ -1,0 +1,48 @@
+{
+ "seed": 51392,
+ "shape": "notch",
+ "pattern": "diamonds",
+ "corner": 2,
+ "thick": 29,
+ "radius": 27,
+ "id": "mvs45p6p8kj1u",
+ "name": "첫번째 프레임",
+ "created": 1793191901281,
+ "kind": "ai",
+ "aiStyle": "",
+ "engine": "openai",
+ "frames": [
+  {
+   "$file": "data/frameGroups/mvs45p6p8kj1u/frames_0.png"
+  },
+  {
+   "$file": "data/frameGroups/mvs45p6p8kj1u/frames_1.png"
+  },
+  {
+   "$file": "data/frameGroups/mvs45p6p8kj1u/frames_2.png"
+  },
+  {
+   "$file": "data/frameGroups/mvs45p6p8kj1u/frames_3.png"
+  },
+  {
+   "$file": "data/frameGroups/mvs45p6p8kj1u/frames_4.png"
+  }
+ ],
+ "masks": [
+  {
+   "$file": "data/frameGroups/mvs45p6p8kj1u/masks_0.png"
+  },
+  {
+   "$file": "data/frameGroups/mvs45p6p8kj1u/masks_1.png"
+  },
+  {
+   "$file": "data/frameGroups/mvs45p6p8kj1u/masks_2.png"
+  },
+  {
+   "$file": "data/frameGroups/mvs45p6p8kj1u/masks_3.png"
+  },
+  {
+   "$file": "data/frameGroups/mvs45p6p8kj1u/masks_4.png"
+  }
+ ]
+}
