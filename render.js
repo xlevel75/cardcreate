@@ -1259,18 +1259,25 @@ function drawMainStone(c, ids, col) {
 }
 // 왕알: 옆면을 두르는 금빛 띠 + 윗면 가장자리 띠
 function kingBand(c) {
-  const { g, S } = c, y0 = S.y + S.th * .3, y1 = S.y + S.th * .72;
-  g.save(); g.beginPath(); g.ellipse(S.x, y0, S.rx, S.ry, 0, 0, Math.PI); g.ellipse(S.x, y1, S.rx, S.ry, 0, Math.PI, 0, true); g.closePath();
-  const gr = g.createLinearGradient(S.x - S.rx, 0, S.x + S.rx, 0);
-  [[0, '#5a3a06'], [.18, '#c98d1a'], [.38, '#ffe9a0'], [.5, '#e0a72a'], [.75, '#9a6510'], [1, '#4a2f05']].forEach(([o, c]) => gr.addColorStop(o, c));
-  g.fillStyle = gr; g.fill();
-  g.strokeStyle = 'rgba(255,240,190,.85)'; g.lineWidth = 2; g.beginPath(); g.ellipse(S.x, y0, S.rx, S.ry, 0, .05, Math.PI - .05); g.stroke();
-  g.strokeStyle = 'rgba(40,24,0,.7)'; g.beginPath(); g.ellipse(S.x, y1, S.rx, S.ry, 0, .05, Math.PI - .05); g.stroke();
-  // 띠 위 작은 보석 장식
-  for (let i = 1; i < 8; i++) { const a = Math.PI * i / 8, x = S.x + Math.cos(a) * S.rx, y = (y0 + y1) / 2 + Math.sin(a) * S.ry; g.fillStyle = i % 2 ? '#fff4c8' : '#c22a2a'; g.beginPath(); g.arc(x, y, 3.5 + Math.sin(a) * 2.5, 0, 7); g.fill(); }
-  // 윗면 가장자리 띠
-  g.strokeStyle = 'rgba(240,190,70,.9)'; g.lineWidth = 7; g.shadowColor = '#ffd76a'; g.shadowBlur = 8; g.beginPath(); g.ellipse(S.x, S.y, S.rx * .86, S.ry * .84, 0, 0, 7); g.stroke();
-  g.shadowBlur = 0; g.strokeStyle = 'rgba(255,245,210,.7)'; g.lineWidth = 1.5; g.beginPath(); g.ellipse(S.x, S.y, S.rx * .86, S.ry * .84, 0, Math.PI * 1.05, Math.PI * 1.6); g.stroke();
+  const { g, S, stone } = c, black = stone !== 'white', ix = S.rx * .74, iy = S.ry * .7, cy = S.y + 2;
+  g.save();
+  // 두껍고 둥근 테두리: 바깥 링 위쪽 곡면 하이라이트 + 안쪽으로 꺾이는 그늘
+  g.globalCompositeOperation = 'lighter'; g.strokeStyle = black ? 'rgba(255,255,255,.16)' : 'rgba(255,255,255,.5)'; g.lineWidth = S.ry * .12;
+  g.beginPath(); g.ellipse(S.x, S.y, S.rx * .9, S.ry * .87, 0, Math.PI * 1.1, Math.PI * 1.9); g.stroke();
+  g.globalCompositeOperation = 'source-over';
+  g.strokeStyle = black ? 'rgba(0,0,0,.65)' : 'rgba(60,66,80,.35)'; g.lineWidth = 6;
+  g.beginPath(); g.ellipse(S.x, cy, ix + 6, iy + 5, 0, 0, 7); g.stroke();
+  // 가운데 살짝 솟은 매끈한 돔
+  const dg = g.createRadialGradient(S.x - ix * .3, cy - iy * .45, 4, S.x, cy, ix);
+  (black ? [[0, '#5b616b'], [.35, '#202328'], [1, '#08090b']] : [[0, '#ffffff'], [.5, '#f1f3f6'], [1, '#c7ccd4']]).forEach(([o, c]) => dg.addColorStop(o, c));
+  g.fillStyle = dg; g.beginPath(); g.ellipse(S.x, cy, ix, iy, 0, 0, 7); g.fill();
+  // 얇은 금색 테두리
+  const gold = g.createLinearGradient(S.x - ix, 0, S.x + ix, 0); [[0, '#7a4e0a'], [.3, '#f3c75a'], [.5, '#fff0b5'], [.7, '#d39a26'], [1, '#6b4308']].forEach(([o, c]) => gold.addColorStop(o, c));
+  g.strokeStyle = gold; g.lineWidth = 3.5; g.shadowColor = '#ffd76a'; g.shadowBlur = 6;
+  g.beginPath(); g.ellipse(S.x, cy, ix, iy, 0, 0, 7); g.stroke(); g.shadowBlur = 0;
+  // 돔 반사광
+  g.globalCompositeOperation = 'lighter'; g.fillStyle = black ? 'rgba(255,255,255,.18)' : 'rgba(255,255,255,.6)';
+  g.beginPath(); g.ellipse(S.x - ix * .28, cy - iy * .42, ix * .38, iy * .2, -.15, 0, 7); g.fill();
   g.restore();
 }
 // 내장 엔진용 알 주위 기본 이펙트
@@ -1378,7 +1385,7 @@ function renderArt(req, seed) {
   const ctx = {
     g, t, rnd, th, th2, stone, enemy: stone === 'black' ? 'white' : 'black',
     Q: [.45, .7, 1, 1.35, 1.8][t], glow: [0, 8, 14, 22, 32][t],
-    S: req.king ? { x: 400, y: 605, rx: 185, ry: 108, th: 84 } : { x: 400, y: 610, rx: 165, ry: 98, th: 42 },
+    S: req.king ? { x: 400, y: 605, rx: 190, ry: 110, th: 70 } : { x: 400, y: 610, rx: 165, ry: 98, th: 42 },
   };
   const colFor = s => mix(s.color, th.accent, .2);
   const mainCol = skills[0] ? colFor(skills[0]) : th.accent;
@@ -1441,7 +1448,7 @@ function buildPrompt(req) {
   return [
     'Character splash art for a collectible game card ("Super Alkkagi", a game of flicking go stones).',
     `THE HERO is a single large ${stone} go stone (round, slightly domed, polished like a gem), treated as a powerful living character — like the champion portrait on a hero card in a mobile RPG.`,
-    req.king ? 'KING STONE: this is the royal KING piece — a slightly bigger go stone that is only about TWICE AS THICK as a normal go stone, and NO taller than that. It is still a LOW, WIDE, FLAT disc (about 4 to 5 times wider than its height), seen from a low angle: a thick round puck with STRAIGHT side walls of the same thickness all around, a flat bottom, and a gently domed top rounded only along the top edge. NOT tall, NOT a tower, NOT a drum, NOT a jar or pot, no bulge, no neck, no lid. A thick ornate GOLD BAND (engraved gold metal with small inset gems) wraps around its side wall like a crown ring, and a thinner gold ring circles the top face near its edge. It must look regal, dense and heavy.' : '',
+    req.king ? `KING STONE: the stone is the royal KING piece with this exact shape — a LOW, FLAT, oval-looking (seen in perspective) round DISC, much wider than it is tall. The centre of the top rises slightly into a gentle smooth ${req.stone === 'white' ? 'white' : req.stone === 'black' ? 'black' : 'stone-coloured'} oval DOME. The top centre is a wide, smooth, polished surface, and a THIN GOLD RIM line runs around the edge of that top surface. Around it, the side of the piece is a THICK, ROUNDED circular FRAME (like a thick rounded ring / tyre-like rim around the dome), smoothly curved on both its top and bottom edges — no sharp corners, no straight tall walls. Overall a low, wide, flat disc; NOT tall, NOT a cylinder tower, NOT a jar. No other gold decoration besides the thin gold rim.` : '',
     'Composition: the stone is BIG and dominant, centered, filling about 60% of the image width, dramatic low hero angle, close-up, strong rim light, the stone pops out from the background.',
     sk.length ? `Its power${sk.length > 1 ? 's (fused into one combined effect) radiate' : ' radiates'} around it: ${sk.map(s => s.en).join('; ')}.` : '',
     req.concept ? `Theme, world and colour mood of the background and effects (Korean): "${req.concept}".` : '',
