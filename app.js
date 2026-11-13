@@ -707,7 +707,7 @@ function renderCombine() {
   $('#cName').value = C.name; $('#cName').oninput = e => { C.name = e.target.value; C.nameTouched = true; $('#cNameStyle').textContent = ''; drawCombine(); };
   $('#cNameGen').onclick = () => {
     const art = C.artId === '__temp' ? C.temp : state.arts.find(a => a.id === C.artId);
-    let g; for (let i = 0; i < 6; i++) { g = autoCardName(art?.concept || '', C.skills || [], C.t); if (g.name !== C.name) break; }
+    let g; for (let i = 0; i < 6; i++) { g = autoCardName(art?.concept || '', C.skills || [], C.t, cmbKing()); if (g.name !== C.name) break; }
     C.name = g.name; C.nameTouched = true; $('#cName').value = g.name; $('#cNameStyle').textContent = `스타일: ${g.style}${art?.concept ? ` · 컨셉 “${art.concept}”` : ' · 컨셉 없음'}`; drawCombine();
   };
   $('#cShowName').checked = C.showName; $('#cShowName').onchange = e => { C.showName = e.target.checked; drawCombine(); };
@@ -756,15 +756,21 @@ const NAME_STYLES = [
   { ko: '한글 시적 표현', plain: true, make: (T, K, p) => p([`${p(T.ko)}의 ${p(K.ko)}`, `${p(T.ko)}의 ${p(K.ko)}`, T.ka ? `${p(T.ka)} ${p(K.ko)}` : `${p(T.ko)} ${p(K.ko)}`]) },
   { ko: '신화 + 한글', plain: true, make: (T, K, p) => `${p(T.gr)}, ${p(T.ko)}의 ${p(K.ko)}` },
 ];
-function autoCardName(concept, skills, t) {
+// 왕: 왕·제왕 느낌 단어를 섞고, 이름에 반드시 왕을 뜻하는 말이 들어가게 함
+const NAME_KING = { en: ['킹', '로열', '임페리얼', '소버린'], la: ['렉스', '임페라토르', '도미누스'], ko: ['왕', '제왕', '군주', '패왕'], ka: ['위대한', '고귀한'], title: ['킹', '렉스', '엠페러', '임페라토르', '로드', '소버린'] };
+function autoCardName(concept, skills, t, king) {
   const r = Math.random, p = a => a[Math.floor(r() * a.length)];
   const ths = pickThemes(concept || ''), th = r() < .75 || !ths[1] ? ths[0] : ths[1];
   const T = { ...NAME_THEME[th.id] || NAME_THEME.arcane };
   if (isNoble(concept)) { T.en = [...T.en, '로열', '골든']; T.ko = [...T.ko, '황금']; T.ka = [...(T.ka || []), '고귀한']; }
-  const sk = skills?.length ? (r() < .7 ? skills[0] : p(skills)) : 'none', K = NAME_SKILL[sk] || NAME_SKILL.none;
+  if (king) { T.en = [...T.en, ...NAME_KING.en]; T.ka = [...(T.ka || []), ...NAME_KING.ka]; }
+  const sk = skills?.length ? (r() < .7 ? skills[0] : p(skills)) : 'none';
+  let K = NAME_SKILL[sk] || NAME_SKILL.none;
+  if (king) K = { ...K, ko: NAME_KING.ko, la: [...K.la, ...NAME_KING.la] };
   const st = p(NAME_STYLES);
   let name = st.make(T, K, p);
-  if (!st.plain && t >= 2 && r() < [0, 0, .3, .45, .6][t]) name += ' ' + p(NAME_TITLE[t]);
+  if (king) { if (!st.plain && !NAME_KING.title.concat(NAME_KING.en, NAME_KING.la, NAME_KING.ko).some(w => name.includes(w))) name += ' ' + p(NAME_KING.title); }
+  else if (!st.plain && t >= 2 && r() < [0, 0, .3, .45, .6][t]) name += ' ' + p(NAME_TITLE[t]);
   return { name, style: st.ko };
 }
 /* ---- 폴더에 저장: 등급_역할_컨셉_스킬_이름(+덧붙인 이름) ---- */
