@@ -600,7 +600,7 @@ function fillSlot(req, slot, canvas, ctx = {}) {
   slot._save = async () => {
     if (slot.classList.contains('saved')) return;
     const name = nameIn.value.trim() || defaultArtName(req);
-    const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+    const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', .92)); // 카드 원본 그림은 투명 영역이 없어 JPG로 보관 (알 텍스처는 투명이 필요해 PNG 유지)
     const art = { id: uid(), name, grade: req.grade, skills: req.skills, concept: req.concept, stone: req.stone, king: !!req.king, engine: req.engine, created: Date.now(), blob, texture: ctx.texture ? await canvasToBlob(ctx.texture) : null, thumb: thumbOf(canvas, 240).toDataURL('image/jpeg', .85) };
     await DB.put('arts', art); state.arts.unshift(art); artBitmaps.set(art.id, canvas);
     slot.classList.add('saved'); slot._artId = art.id; imgBox.append(el('span', { class: 'savedTag' }, '저장됨 ✓'));

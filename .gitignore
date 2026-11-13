@@ -4,3 +4,4 @@ data/**/*.tmp/
 .claude/settings.local.json
 Thumbs.db
 .DS_Store
+data_png_backup/
