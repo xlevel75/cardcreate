@@ -674,9 +674,10 @@ async function artCanvas(id) {
    ================================================================= */
 function openCombine({ artId, temp }) {
   const C = state.cmb;
+  C.saveKing = undefined;
   if (artId) { C.artId = artId; C.temp = null; const a = state.arts.find(x => x.id === artId); if (a) { C.t = GRADES.indexOf(a.grade); C.skills = a.skills; if (!C.nameTouched) C.name = ''; } }
   if (temp) { C.temp = temp; C.artId = '__temp'; C.t = GRADES.indexOf(temp.grade); C.skills = temp.skills; }
-  C.zoom = 100; C.ox = 0; C.oy = 0;
+  C.zoom = 100; C.ox = 0; C.oy = 0; state.cmbRefreshSuffix?.();
   showTab('combine');
 }
 function cmbOptions(t) {
@@ -699,7 +700,7 @@ function renderCombine() {
   seg($('#cGrade'), GRADE_INFO.map((x, i) => ({ label: x.g, value: i, color: x.col })), C.t, v => { C.t = v; drawCombine(); });
   seg($('#cRole'), [...ROLES.map(r => ({ label: r.ko, value: r.id, color: r.color })), { label: '없음', value: null }], C.role, v => { C.role = v; drawCombine(); });
   const ap = $('#cArts'); ap.innerHTML = '';
-  const pick = (id, node) => { node.onclick = () => { C.artId = id; if (id && id !== '__temp') { const a = state.arts.find(x => x.id === id); C.skills = a.skills; C.t = GRADES.indexOf(a.grade); } else if (id === '__temp') { C.skills = C.temp.skills; } else C.skills = []; C.zoom = 100; C.ox = 0; C.oy = 0; renderCombine(); }; if ((C.artId || null) === id) node.classList.add('on'); ap.append(node); };
+  const pick = (id, node) => { node.onclick = () => { C.artId = id; C.saveKing = undefined; if (id && id !== '__temp') { const a = state.arts.find(x => x.id === id); C.skills = a.skills; C.t = GRADES.indexOf(a.grade); } else if (id === '__temp') { C.skills = C.temp.skills; } else C.skills = []; C.zoom = 100; C.ox = 0; C.oy = 0; renderCombine(); state.cmbRefreshSuffix?.(); }; if ((C.artId || null) === id) node.classList.add('on'); ap.append(node); };
   pick(null, el('div', { class: 'ap none' }, '빈 프레임'));
   if (C.temp) { const tn = thumbOf(C.temp.canvas, 64); tn.style.cssText = 'width:100%;display:block'; pick('__temp', el('div', { class: 'ap', title: '대기열에서 가져온 임시 그림 (미저장)' }, tn, el('span', { style: 'position:absolute;top:2px;left:2px;background:#ffc83d;color:#000;font-size:9px;padding:0 4px;border-radius:4px;font-weight:900' }, '임시'))); }
   state.arts.forEach(a => pick(a.id, el('div', { class: 'ap', title: a.name }, el('img', { src: a.thumb }))));
@@ -767,11 +768,13 @@ function autoCardName(concept, skills, t) {
   return { name, style: st.ko };
 }
 /* ---- 폴더에 저장: 등급_역할_컨셉_스킬_이름(+덧붙인 이름) ---- */
+// 왕 덧붙이기: 직접 켜고 끈 값이 우선, 손대지 않았으면 왕알 그림일 때 자동으로 붙음
+function cmbKing() { const C = state.cmb, art = C.artId === '__temp' ? C.temp : state.arts.find(a => a.id === C.artId); return C.saveKing ?? !!art?.king; }
 function cmbFileName() {
   const C = state.cmb, art = C.artId === '__temp' ? C.temp : state.arts.find(a => a.id === C.artId);
   const role = ROLES.find(r => r.id === C.role)?.ko, concept = (art?.concept || '').trim().slice(0, 24);
   const skills = (C.skills || []).map(id => SKILLS.find(s => s.id === id)?.ko).filter(Boolean).join('+');
-  return [GRADES[C.t], art?.king ? '왕' : '', role, concept, skills, C.name.trim(), ...(C.saveExtras || []).map(x => x.trim()), C.saveNum ? String(C.saveNum) : '', C.savePlus ? 'plus' : ''].filter(Boolean).map(x => x.replace(/[\\/:*?"<>|]+/g, '').replace(/\s+/g, '_')).filter(Boolean).join('_');
+  return [GRADES[C.t], cmbKing() ? '왕' : '', role, concept, skills, C.name.trim(), ...(C.saveExtras || []).map(x => x.trim()), C.saveNum ? String(C.saveNum) : '', C.savePlus ? 'plus' : ''].filter(Boolean).map(x => x.replace(/[\\/:*?"<>|]+/g, '').replace(/\s+/g, '_')).filter(Boolean).join('_');
 }
 function initSaveBox() {
   const C = state.cmb; C.saveExtras ??= [];
@@ -793,14 +796,16 @@ function initSaveBox() {
   };
   const remember = f => { recent = [f, ...recent.filter(x => x.toLowerCase() !== f.toLowerCase())].slice(0, 5); LS.set('saveFolders', recent); renderRecent(); };
   const renderSuffix = () => {
+    $('#svKing').classList.toggle('on', cmbKing()); $('#svKing').textContent = cmbKing() ? '✓ _왕_ 붙음' : '👑 왕 덧붙이기';
     $('#svPlus').classList.toggle('on', !!C.savePlus); $('#svPlus').textContent = C.savePlus ? '✓ _plus 붙음' : 'plus 덧붙이기';
     $('#svNum').classList.toggle('on', !!C.saveNum); $('#svNum').textContent = C.saveNum ? `숫자 ${C.saveNum} → ${C.saveNum + 1}` : '숫자 덧붙이기';
     $('#svNumReset').hidden = !C.saveNum; showName();
   };
+  $('#svKing').onclick = () => { C.saveKing = !cmbKing(); renderSuffix(); };
   $('#svPlus').onclick = () => { C.savePlus = !C.savePlus; renderSuffix(); };
   $('#svNum').onclick = () => { C.saveNum = (C.saveNum || 0) + 1; renderSuffix(); };
   $('#svNumReset').onclick = () => { C.saveNum = 0; renderSuffix(); };
-  renderSuffix();
+  renderSuffix(); state.cmbRefreshSuffix = renderSuffix;
   $('#svAddExtra').onclick = () => { if (C.saveExtras.length < 3) { C.saveExtras.push(''); renderExtras(); $('#svExtras').lastChild?.querySelector('input').focus(); } };
   $('#svFolder').value ||= recent[0] || '';
   $('#svRecent').onchange = e => { if (e.target.value) $('#svFolder').value = e.target.value; renderRecent(); };
