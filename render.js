@@ -1257,6 +1257,22 @@ function drawMainStone(c, ids, col) {
   }
   drawStone(g, S.x, S.y, S.rx, S.ry, S.th, stone, { rim: t >= 1 ? col : null, rimA: [0, .4, .6, .8, 1][t], glow: c.glow + 4 });
 }
+// 왕알: 옆면을 두르는 금빛 띠 + 윗면 가장자리 띠
+function kingBand(c) {
+  const { g, S } = c, y0 = S.y + S.th * .3, y1 = S.y + S.th * .72;
+  g.save(); g.beginPath(); g.ellipse(S.x, y0, S.rx, S.ry, 0, 0, Math.PI); g.ellipse(S.x, y1, S.rx, S.ry, 0, Math.PI, 0, true); g.closePath();
+  const gr = g.createLinearGradient(S.x - S.rx, 0, S.x + S.rx, 0);
+  [[0, '#5a3a06'], [.18, '#c98d1a'], [.38, '#ffe9a0'], [.5, '#e0a72a'], [.75, '#9a6510'], [1, '#4a2f05']].forEach(([o, c]) => gr.addColorStop(o, c));
+  g.fillStyle = gr; g.fill();
+  g.strokeStyle = 'rgba(255,240,190,.85)'; g.lineWidth = 2; g.beginPath(); g.ellipse(S.x, y0, S.rx, S.ry, 0, .05, Math.PI - .05); g.stroke();
+  g.strokeStyle = 'rgba(40,24,0,.7)'; g.beginPath(); g.ellipse(S.x, y1, S.rx, S.ry, 0, .05, Math.PI - .05); g.stroke();
+  // 띠 위 작은 보석 장식
+  for (let i = 1; i < 8; i++) { const a = Math.PI * i / 8, x = S.x + Math.cos(a) * S.rx, y = (y0 + y1) / 2 + Math.sin(a) * S.ry; g.fillStyle = i % 2 ? '#fff4c8' : '#c22a2a'; g.beginPath(); g.arc(x, y, 3.5 + Math.sin(a) * 2.5, 0, 7); g.fill(); }
+  // 윗면 가장자리 띠
+  g.strokeStyle = 'rgba(240,190,70,.9)'; g.lineWidth = 7; g.shadowColor = '#ffd76a'; g.shadowBlur = 8; g.beginPath(); g.ellipse(S.x, S.y, S.rx * .86, S.ry * .84, 0, 0, 7); g.stroke();
+  g.shadowBlur = 0; g.strokeStyle = 'rgba(255,245,210,.7)'; g.lineWidth = 1.5; g.beginPath(); g.ellipse(S.x, S.y, S.rx * .86, S.ry * .84, 0, Math.PI * 1.05, Math.PI * 1.6); g.stroke();
+  g.restore();
+}
 // 내장 엔진용 알 주위 기본 이펙트
 const BASEFX_DRAW = {
   wind(c, col) {
@@ -1362,7 +1378,7 @@ function renderArt(req, seed) {
   const ctx = {
     g, t, rnd, th, th2, stone, enemy: stone === 'black' ? 'white' : 'black',
     Q: [.45, .7, 1, 1.35, 1.8][t], glow: [0, 8, 14, 22, 32][t],
-    S: { x: 400, y: 610, rx: 165, ry: 98, th: 42 },
+    S: req.king ? { x: 400, y: 600, rx: 205, ry: 120, th: 66 } : { x: 400, y: 610, rx: 165, ry: 98, th: 42 },
   };
   const colFor = s => mix(s.color, th.accent, .2);
   const mainCol = skills[0] ? colFor(skills[0]) : th.accent;
@@ -1374,6 +1390,7 @@ function renderArt(req, seed) {
   if (fxs.includes('aura') && !cloaked) BASEFX_DRAW.aura(ctx, mainCol);
   if (fxs.includes('heavy') && !cloaked) BASEFX_DRAW.heavyBack(ctx, mainCol);
   drawMainStone(ctx, skills.map(s => s.id), mainCol);
+  if (req.king && !cloaked) kingBand(ctx);
   if (!cloaked) for (const f of fxs) if (f !== 'none' && f !== 'aura') BASEFX_DRAW[f]?.(ctx, mainCol);
   if (req.engrave && skills.length && !cloaked) engraveSkills(ctx, skills, colFor);
   for (const s of skills) SKFX[s.id].front?.(ctx, colFor(s));
@@ -1424,6 +1441,7 @@ function buildPrompt(req) {
   return [
     'Character splash art for a collectible game card ("Super Alkkagi", a game of flicking go stones).',
     `THE HERO is a single large ${stone} go stone (round, slightly domed, polished like a gem), treated as a powerful living character — like the champion portrait on a hero card in a mobile RPG.`,
+    req.king ? 'KING STONE: this is NOT an ordinary go stone but the royal KING piece — noticeably BIGGER, much THICKER and heavier-looking than a normal go stone, a massive solid disc with a tall rounded side wall. A thick ornate GOLD BAND wraps all the way around its round side like a crown ring (engraved gold metal with small inset gems), and a thinner gold ring band circles the top face near its edge. It must look regal, dense and heavy.' : '',
     'Composition: the stone is BIG and dominant, centered, filling about 60% of the image width, dramatic low hero angle, close-up, strong rim light, the stone pops out from the background.',
     sk.length ? `Its power${sk.length > 1 ? 's (fused into one combined effect) radiate' : ' radiates'} around it: ${sk.map(s => s.en).join('; ')}.` : '',
     req.concept ? `Theme, world and colour mood of the background and effects (Korean): "${req.concept}".` : '',

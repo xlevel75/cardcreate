@@ -392,6 +392,7 @@ function initGenForm() {
   initGptModel(renderEngine);
   if (!ENGINES[G.engine]) G.engine = 'gemini';
   renderEngine();
+  $('#gKing').checked = !!G.king; $('#gKing').onchange = e => { G.king = e.target.checked; saveGen(); };
   $('#gEngrave').checked = !!G.engrave; $('#gEngrave').onchange = e => { G.engrave = e.target.checked; saveGen(); };
   $('#gTexture').checked = G.texture !== false; $('#gTexture').onchange = e => { G.texture = e.target.checked; saveGen(); };
   $('#gSubmit').onclick = submitRequest;
@@ -459,14 +460,14 @@ function submitRequest() {
   if (!G.skills.length && !G.concept.trim()) { toast('스킬이나 컨셉 중 하나는 입력해 주세요'); return; }
   const eng = ENGINES[G.engine];
   if (eng.key && !state.settings[eng.key]) { $('#apiBox').open = true; toast(`${eng.label} API 키를 설정에 입력해 주세요`); return; }
-  const req = { id: ++state.reqSeq, grade: G.grade, skills: [...G.skills], stone: G.stone, concept: G.concept.trim(), count: G.count, engine: G.engine, texture: G.texture !== false, engrave: !!G.engrave, fx: [...fxList(G)], created: Date.now() };
+  const req = { id: ++state.reqSeq, grade: G.grade, skills: [...G.skills], stone: G.stone, concept: G.concept.trim(), count: G.count, engine: G.engine, texture: G.texture !== false, engrave: !!G.engrave, king: !!G.king, fx: [...fxList(G)], created: Date.now() };
   $('#queue .empty')?.remove();
   const skillTxt = req.skills.map(id => SKILLS.find(s => s.id === id).ko).join(' + ') || '스킬 없음';
   const timer = el('span', { class: 'tag' }, '0초');
   const slots = el('div', { class: 'slots' });
   const block = el('div', { class: 'req' },
     el('div', { class: 'rh' }, el('span', { class: 'ttl' }, `요청 #${req.id}`), gradeTag(req.grade),
-      el('span', { class: 'meta' }, `${skillTxt}${req.engrave && req.skills.length ? ' · 🔱각인' : ''}${fxList(req).length ? ' · ' + fxList(req).map(id => BASE_FX.find(f => f.id === id)?.label || '').join('+') : ''} · ${req.concept ? '“' + req.concept + '”' : '컨셉 없음'} · ${ENGINES[req.engine].label}${ENGINES[req.engine].model ? ' · ' + state.settings[ENGINES[req.engine].model] : ''}`),
+      el('span', { class: 'meta' }, `${req.king ? '👑왕알 · ' : ''}${skillTxt}${req.engrave && req.skills.length ? ' · 🔱각인' : ''}${fxList(req).length ? ' · ' + fxList(req).map(id => BASE_FX.find(f => f.id === id)?.label || '').join('+') : ''} · ${req.concept ? '“' + req.concept + '”' : '컨셉 없음'} · ${ENGINES[req.engine].label}${ENGINES[req.engine].model ? ' · ' + state.settings[ENGINES[req.engine].model] : ''}`),
       timer,
       el('button', { class: 'btn sm', onclick: () => $$('.slot.done:not(.saved)', block).forEach(s => s._save()) }, '모두 저장'),
       el('button', { class: 'btn sm danger', onclick: () => { $$('.slot:not(.pending)', block).forEach(s => s._discard(true)); } }, '모두 버리기')),
@@ -804,12 +805,33 @@ function initSaveBox() {
   const api = async (path, body) => { const r = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error?.message || r.status); return j; };
   $('#svPick').onclick = async () => { try { const j = await api('/api/pick-folder', { start: $('#svFolder').value }); if (j.folder) $('#svFolder').value = j.folder; } catch (e) { toast('⚠ ' + e.message); } };
   $('#svOpen').onclick = async () => { const f = $('#svFolder').value.trim(); if (!f) return toast('저장 폴더를 먼저 정해 주세요'); try { await api('/api/open-folder', { folder: f }); } catch (e) { toast('⚠ ' + e.message); } };
+  const sub = (f, d) => f.replace(/[\\/]+$/, '') + (f.includes('/') && !f.includes('\\') ? '/' : '\\') + d;
+  // 저장: card(프레임 조합) + cardonly(프레임 없는 그림, 같은 위치·확대)
   $('#svSave').onclick = async () => {
     const f = $('#svFolder').value.trim(); if (!f) return toast('저장 폴더를 먼저 정해 주세요');
-    const cv = composeCard({ ...cmbOptions(), art: await currentArt() });
-    const data = cv.toDataURL('image/png').split(',')[1];
-    try { const j = await api('/api/save-file', { folder: f, name: cmbFileName(), data }); $('#svFolder').value = j.folder; remember(j.folder); toast('💾 저장했습니다: ' + j.path); }
-    catch (e) { toast('⚠ 저장 실패: ' + e.message); }
+    const art = await currentArt(); if (!art) return toast('카드 그림을 먼저 고르세요');
+    const o = cmbOptions(), name = cmbFileName(), png = cv => cv.toDataURL('image/png').split(',')[1];
+    const only = mk(), z = o.zoom || 1; only.getContext('2d').drawImage(art, (W - W * z) / 2 + (o.ox || 0), (H - H * z) / 2 + (o.oy || 0), W * z, H * z);
+    try {
+      const a = await api('/api/save-file', { folder: sub(f, 'card'), name, data: png(composeCard({ ...o, art })) });
+      await api('/api/save-file', { folder: sub(f, 'cardonly'), name, data: png(only) });
+      remember(f); toast('💾 저장했습니다: ' + a.path.split(/[\\/]/).pop() + ' (card + cardonly)');
+    } catch (e) { toast('⚠ 저장 실패: ' + e.message); }
+  };
+  // 프레임 저장: 지금 프레임 × 등급 5 × 역할 5 = 25장 (그림·이름·스킬 없이)
+  $('#svFrames').onclick = async () => {
+    const f = $('#svFolder').value.trim(); if (!f) return toast('저장 폴더를 먼저 정해 주세요');
+    const C = state.cmb, base = cmbOptions(), fname = (state.frameGroups.find(x => x.id === C.frameId)?.name || 'frame').replace(/[\\/:*?"<>|]+/g, '').replace(/\s+/g, '_');
+    const btn = $('#svFrames'), label = btn.textContent; btn.disabled = true; let n = 0;
+    try {
+      for (let t = 0; t < 5; t++) for (const r of ROLES) {
+        const cv = composeCard({ ...cmbOptions(t), art: null, role: r.id, iconSet: currentIconSet(C.iconId), showName: false, showSkills: false, layout: { ...base.layout, icon: C.layout['icon:' + t] } });
+        await api('/api/save-file', { folder: sub(f, 'frame'), name: `${fname}_${GRADES[t]}_${r.ko}`, data: cv.toDataURL('image/png').split(',')[1], overwrite: true });
+        btn.textContent = `저장 중… ${++n}/25`;
+      }
+      remember(f); toast(`🖼 프레임 ${n}장을 frame 폴더에 저장했습니다`);
+    } catch (e) { toast('⚠ 프레임 저장 실패: ' + e.message); }
+    finally { btn.disabled = false; btn.textContent = label; }
   };
   renderExtras(); renderRecent();
 }
