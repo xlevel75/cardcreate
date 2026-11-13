@@ -780,7 +780,7 @@ function cmbFileName() {
   const C = state.cmb, art = C.artId === '__temp' ? C.temp : state.arts.find(a => a.id === C.artId);
   const role = ROLES.find(r => r.id === C.role)?.ko, concept = (art?.concept || '').trim().slice(0, 24);
   const skills = (C.skills || []).map(id => SKILLS.find(s => s.id === id)?.ko).filter(Boolean).join('+');
-  return [GRADES[C.t], cmbKing() ? '왕' : '', role, concept, skills, C.name.trim(), ...(C.saveExtras || []).map(x => x.trim()), C.saveNum ? String(C.saveNum) : '', C.savePlus ? 'plus' : ''].filter(Boolean).map(x => x.replace(/[\\/:*?"<>|]+/g, '').replace(/\s+/g, '_')).filter(Boolean).join('_');
+  return [GRADES[C.t], cmbKing() ? '왕' : '', role, concept, skills, C.name.trim(), ...(C.saveExtras || []).map(x => x.trim()), C.saveNum ? String(C.saveNum) : '', C.savePlus ? 'plus' : ''].filter(Boolean).map(x => x.replace(/[\\/:*?"<>|]+/g, '').replace(/[\s_]+/g, '')).filter(Boolean).join('_');
 }
 function initSaveBox() {
   const C = state.cmb; C.saveExtras ??= [];
@@ -834,7 +834,7 @@ function initSaveBox() {
   // 프레임 저장: 지금 프레임 × 등급 5 × 역할 5 = 25장 (그림·이름·스킬 없이)
   $('#svFrames').onclick = async () => {
     const f = $('#svFolder').value.trim(); if (!f) return toast('저장 폴더를 먼저 정해 주세요');
-    const C = state.cmb, base = cmbOptions(), fname = (state.frameGroups.find(x => x.id === C.frameId)?.name || 'frame').replace(/[\\/:*?"<>|]+/g, '').replace(/\s+/g, '_');
+    const C = state.cmb, base = cmbOptions(), fname = (state.frameGroups.find(x => x.id === C.frameId)?.name || 'frame').replace(/[\\/:*?"<>|]+/g, '').replace(/[\s_]+/g, '');
     const btn = $('#svFrames'), label = btn.textContent; btn.disabled = true; let n = 0;
     try {
       for (let t = 0; t < 5; t++) for (const r of ROLES) {
