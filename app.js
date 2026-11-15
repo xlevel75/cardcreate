@@ -129,7 +129,7 @@ const state = {
   gen: Object.assign({ grade: 'A', skills: ['pierce'], stone: 'black', count: 2, engine: 'gemini', concept: '' }, LS.get('gen', {})),
   reqSeq: 0, pending: 0,
   cmb: { frameId: null, t: 2, iconId: null, role: 'atk', artId: null, temp: null, name: '', showName: true, showSkills: true, zoom: 100, ox: 0, oy: 0,
-    ...LS.get('cmbStyle', { layout: {}, font: { family: '"Black Han Sans"', size: 36, color: '#ffffff', stroke: '#000000', strokeW: 6 } }), sel: null, boxes: {} },
+    ...LS.get('cmbStyle', { layout: {}, font: { family: '"Black Han Sans"', size: 36, color: '#ffffff', stroke: '#000000', strokeW: 6 } }), ...LS.get('cmbView', {}), sel: null, boxes: {} },
 };
 const artBitmaps = new Map(); // id -> ImageBitmap
 
@@ -601,7 +601,7 @@ function fillSlot(req, slot, canvas, ctx = {}) {
     if (slot.classList.contains('saved')) return;
     const name = nameIn.value.trim() || defaultArtName(req);
     const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', .92)); // 카드 원본 그림은 투명 영역이 없어 JPG로 보관 (알 텍스처는 투명이 필요해 PNG 유지)
-    const art = { id: uid(), name, grade: req.grade, skills: req.skills, concept: req.concept, stone: req.stone, king: !!req.king, engine: req.engine, created: Date.now(), blob, texture: ctx.texture ? await canvasToBlob(ctx.texture) : null, thumb: thumbOf(canvas, 240).toDataURL('image/jpeg', .85) };
+    const art = { id: uid(), name, grade: req.grade, skills: req.skills, concept: req.concept, stone: req.stone, fx: fxList(req), king: !!req.king, engine: req.engine, created: Date.now(), blob, texture: ctx.texture ? await canvasToBlob(ctx.texture) : null, thumb: thumbOf(canvas, 240).toDataURL('image/jpeg', .85) };
     await DB.put('arts', art); state.arts.unshift(art); artBitmaps.set(art.id, canvas);
     slot.classList.add('saved'); slot._artId = art.id; imgBox.append(el('span', { class: 'savedTag' }, '저장됨 ✓'));
     saveBtn.disabled = true; saveBtn.textContent = '저장됨'; nameIn.disabled = true; updateHint(); toast(`💾 “${name}” 보관함에 저장`);
@@ -616,7 +616,7 @@ function fillSlot(req, slot, canvas, ctx = {}) {
       el('button', { class: 'btn', title: '같은 등급·스킬·컨셉으로 그림을 처음부터 새로 만들기 (↶ 로 되돌리기 가능)', onclick: () => regenSlot(req, slot, canvas, ctx) }, '🔄 새로 만들기'),
       el('button', { class: 'btn', title: '이 그림을 바탕으로 수정 요청', onclick: () => { editRow.hidden = !editRow.hidden; if (!editRow.hidden) editIn.focus(); } }, '✏ 편집'),
       ctx.history.length ? el('button', { class: 'btn', title: '편집 전 그림으로 되돌리기', onclick: () => fillSlot(req, slot, ctx.history.at(-1), { name: ctx.name, history: ctx.history.slice(0, -1), edits: ctx.edits.slice(0, -1) }) }, '↶') : null,
-      el('button', { class: 'btn', onclick: () => { if (slot._artId) openCombine({ artId: slot._artId }); else openCombine({ temp: { canvas, skills: req.skills, grade: req.grade, king: !!req.king, name: nameIn.value } }); } }, '🧩 조합'),
+      el('button', { class: 'btn', onclick: () => { if (slot._artId) openCombine({ artId: slot._artId }); else openCombine({ temp: { canvas, skills: req.skills, grade: req.grade, king: !!req.king, name: nameIn.value, concept: req.concept, stone: req.stone, fx: fxList(req) } }); } }, '🧩 조합'),
       el('button', { class: 'btn danger', onclick: () => slot._discard() }, '🗑')));
   if (ctx.error && !ctx.errTitle) editIn.focus();
 }
@@ -632,6 +632,34 @@ function initVault() {
   $('#vSkill').append(...SKILLS.map(s => el('option', { value: s.id }, s.ko)));
   for (const id of ['vSearch', 'vGrade', 'vSkill']) $('#' + id).oninput = renderVault;
 }
+// ④ 조합에서 카드로 저장한 기록: 그림마다 최대 4개 (등급 + 이름 앞 4글자), 최근 것이 위
+const MAX_CARD_SAVES = 4;
+function cardSaves(a) {
+  if (a && a.saved && !a.saves) { a.saves = [a.saved]; } // 예전 기록(하나) → 목록
+  if (a) delete a.saved;
+  return a?.saves || [];
+}
+async function postApi(path, body) {
+  const r = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error?.message || r.status); return j;
+}
+function rerenderSaves() { renderVault(); if ($('#tab-combine').classList.contains('on')) renderCombine(); }
+async function deleteCardSave(a, s) {
+  if (!confirm(`저장한 카드 “${s.grade} ${s.name || '(이름 없음)'}”을(를) 삭제하시겠습니까?\n(card · cardonly 폴더의 PNG 2장도 함께 지웁니다)`)) return;
+  try {
+    const paths = [s.card, s.only].filter(Boolean);
+    const j = paths.length ? await postApi('/api/delete-files', { paths }) : { removed: [] };
+    a.saves = cardSaves(a).filter(x => x !== s); await DB.put('arts', a);
+    toast(`🗑 저장 카드 삭제 (파일 ${j.removed.length}장)`); rerenderSaves();
+  } catch (e) { toast('⚠ 삭제 실패: ' + e.message); }
+}
+function savedTag(a) {
+  const list = cardSaves(a); if (!list.length) return null;
+  return el('div', { class: 'cardSaves' }, ...[...list].reverse().map(s => {
+    const short = [...(s.name || '').replace(/\s+/g, '')].slice(0, 4).join('');
+    return el('div', { class: 'cardSave', title: `카드 저장됨 · ${s.grade} ${s.name || '(이름 없음)'}${s.at ? ' · ' + new Date(s.at).toLocaleString() : ''}\n클릭하면 삭제`, onclick: e => { e.stopPropagation(); deleteCardSave(a, s); } }, gradeTag(s.grade), short || '저장됨');
+  }));
+}
 function renderVault() {
   const q = $('#vSearch').value.trim().toLowerCase(), gr = $('#vGrade').value, sk = $('#vSkill').value, box = $('#vault');
   const list = state.arts.filter(a => (!gr || a.grade === gr) && (!sk || a.skills.includes(sk)) && (!q || (a.name + ' ' + a.concept).toLowerCase().includes(q)));
@@ -642,7 +670,7 @@ function renderVault() {
     const skills = a.skills.map(id => SKILLS.find(s => s.id === id)?.ko).join(' + ') || '스킬 없음';
     box.append(el('div', { class: 'vcard' },
       el('div', { class: 'imgWrap' }, el('img', { src: a.thumb, loading: 'lazy', onclick: async () => lightbox(canvasCopy(await artCanvas(a.id))) }),
-        a.texture ? el('img', { class: 'vtex', src: texUrl(a), title: '알 텍스처 크게 보기', onclick: () => lightbox(el('img', { class: 'sq', src: texUrl(a) })) }) : null),
+        a.texture ? el('img', { class: 'vtex', src: texUrl(a), title: '알 텍스처 크게 보기', onclick: () => lightbox(el('img', { class: 'sq', src: texUrl(a) })) }) : null, savedTag(a)),
       el('div', { class: 'vb' }, el('div', { class: 'vn' }, gradeTag(a.grade), ' ', a.name), el('div', { class: 'vm' }, skills), el('div', { class: 'vm' }, a.concept || '')),
       el('div', { class: 'acts' },
         el('button', { class: 'btn sm primary', onclick: () => openCombine({ artId: a.id }) }, '🧩 조합'),
@@ -674,10 +702,9 @@ async function artCanvas(id) {
    ================================================================= */
 function openCombine({ artId, temp }) {
   const C = state.cmb;
-  C.saveKing = undefined;
-  if (artId) { C.artId = artId; C.temp = null; const a = state.arts.find(x => x.id === artId); if (a) { C.t = GRADES.indexOf(a.grade); C.skills = a.skills; if (!C.nameTouched) C.name = ''; } }
-  if (temp) { C.temp = temp; C.artId = '__temp'; C.t = GRADES.indexOf(temp.grade); C.skills = temp.skills; }
-  C.zoom = 100; C.ox = 0; C.oy = 0; state.cmbRefreshSuffix?.();
+  if (artId) { C.artId = artId; C.temp = null; const a = state.arts.find(x => x.id === artId); if (a) { C.skills = a.skills; if (!C.nameTouched) C.name = ''; } }
+  if (temp) { C.temp = temp; C.artId = '__temp'; C.skills = temp.skills; }
+  state.cmbRefreshSuffix?.(); // 확대·좌우·상하는 그림을 바꿔도 마지막 설정 유지
   showTab('combine');
 }
 function cmbOptions(t) {
@@ -691,96 +718,148 @@ function renderCombine() {
   if (!state.frameGroups.length) fs.append(el('option', { value: '' }, '(미등록) 현재 제안 프레임'));
   state.frameGroups.forEach(f => fs.append(el('option', { value: f.id }, f.name)));
   fs.value = C.frameId && state.frameGroups.some(f => f.id === C.frameId) ? C.frameId : (state.activeFrame || ''); C.frameId = fs.value || null;
-  fs.onchange = e => { C.frameId = e.target.value || null; drawCombine(); };
+  fs.onchange = e => { C.frameId = e.target.value || null; saveCmbView(); drawCombine(); };
   const is = $('#cIconSet'); is.innerHTML = '';
   if (!state.iconSets.length) is.append(el('option', { value: '' }, '(미등록) 현재 제안 아이콘'));
   state.iconSets.forEach(s => is.append(el('option', { value: s.id }, s.name)));
   is.value = C.iconId && state.iconSets.some(s => s.id === C.iconId) ? C.iconId : (state.activeIcon || ''); C.iconId = is.value || null;
-  is.onchange = e => { C.iconId = e.target.value || null; drawCombine(); };
-  seg($('#cGrade'), GRADE_INFO.map((x, i) => ({ label: x.g, value: i, color: x.col })), C.t, v => { C.t = v; drawCombine(); });
-  seg($('#cRole'), [...ROLES.map(r => ({ label: r.ko, value: r.id, color: r.color })), { label: '없음', value: null }], C.role, v => { C.role = v; drawCombine(); });
+  is.onchange = e => { C.iconId = e.target.value || null; saveCmbView(); drawCombine(); };
+  seg($('#cGrade'), GRADE_INFO.map((x, i) => ({ label: x.g, value: i, color: x.col })), C.t, v => { C.t = v; saveCmbView(); drawCombine(); });
+  seg($('#cRole'), [...ROLES.map(r => ({ label: r.ko, value: r.id, color: r.color })), { label: '없음', value: null }], C.role, v => { C.role = v; saveCmbView(); drawCombine(); });
   const ap = $('#cArts'); ap.innerHTML = '';
-  const pick = (id, node) => { node.onclick = () => { C.artId = id; C.saveKing = undefined; if (id && id !== '__temp') { const a = state.arts.find(x => x.id === id); C.skills = a.skills; C.t = GRADES.indexOf(a.grade); } else if (id === '__temp') { C.skills = C.temp.skills; } else C.skills = []; C.zoom = 100; C.ox = 0; C.oy = 0; renderCombine(); state.cmbRefreshSuffix?.(); }; if ((C.artId || null) === id) node.classList.add('on'); ap.append(node); };
+  const pick = (id, node) => { node.onclick = () => { C.artId = id; if (id && id !== '__temp') { const a = state.arts.find(x => x.id === id); C.skills = a.skills; } else if (id === '__temp') { C.skills = C.temp.skills; } else C.skills = []; renderCombine(); state.cmbRefreshSuffix?.(); }; if ((C.artId || null) === id) node.classList.add('on'); ap.append(node); };
   pick(null, el('div', { class: 'ap none' }, '빈 프레임'));
   if (C.temp) { const tn = thumbOf(C.temp.canvas, 64); tn.style.cssText = 'width:100%;display:block'; pick('__temp', el('div', { class: 'ap', title: '대기열에서 가져온 임시 그림 (미저장)' }, tn, el('span', { style: 'position:absolute;top:2px;left:2px;background:#ffc83d;color:#000;font-size:9px;padding:0 4px;border-radius:4px;font-weight:900' }, '임시'))); }
-  state.arts.forEach(a => pick(a.id, el('div', { class: 'ap', title: a.name }, el('img', { src: a.thumb }))));
+  state.arts.forEach(a => pick(a.id, el('div', { class: 'ap', title: a.name }, el('img', { src: a.thumb }), savedTag(a))));
   $('#cName').value = C.name; $('#cName').oninput = e => { C.name = e.target.value; C.nameTouched = true; $('#cNameStyle').textContent = ''; drawCombine(); };
   $('#cNameGen').onclick = () => {
     const art = C.artId === '__temp' ? C.temp : state.arts.find(a => a.id === C.artId);
-    let g; for (let i = 0; i < 6; i++) { g = autoCardName(art?.concept || '', C.skills || [], C.t, cmbKing()); if (g.name !== C.name) break; }
-    C.name = g.name; C.nameTouched = true; $('#cName').value = g.name; $('#cNameStyle').textContent = `스타일: ${g.style}${art?.concept ? ` · 컨셉 “${art.concept}”` : ' · 컨셉 없음'}`; drawCombine();
+    const g = autoCardName({ concept: art?.concept || '', skills: C.skills || [], t: C.t, king: cmbKing(), role: C.role, stone: art?.stone, fx: fxList(art) }, [C.name]);
+    const ko = id => NAME_MOOD_KO[id] || SKILLS.find(s => s.id === id)?.ko || ROLES.find(r => r.id === id)?.ko || id;
+    C.name = g.name; C.nameTouched = true; $('#cName').value = g.name; $('#cNameStyle').textContent = `스타일: ${g.style} · 분위기: ${g.moods.map(ko).join('·')} · 핵심: ${g.cores.map(ko).join('·')}`; drawCombine();
   };
   $('#cShowName').checked = C.showName; $('#cShowName').onchange = e => { C.showName = e.target.checked; drawCombine(); };
   $('#cShowSkills').checked = C.showSkills; $('#cShowSkills').onchange = e => { C.showSkills = e.target.checked; drawCombine(); };
   for (const [id, key, fmt] of [['cZoom', 'zoom', v => v + '%'], ['cOx', 'ox', v => v], ['cOy', 'oy', v => v]]) {
     $('#' + id).value = C[key]; $('#' + id + 'V').textContent = fmt(C[key]);
-    $('#' + id).oninput = e => { C[key] = +e.target.value; $('#' + id + 'V').textContent = fmt(C[key]); drawCombine(true); };
+    $('#' + id).oninput = e => { C[key] = +e.target.value; $('#' + id + 'V').textContent = fmt(C[key]); saveCmbView(); drawCombine(true); };
   }
   initFontControls();
   initSaveBox();
   drawCombine();
 }
-/* ---- 카드 이름 자동 생성 (LLM 없이 단어장 조합) ---- */
-const NAME_THEME = {
-  ice: { en: ['프로스트', '아이스', '블리자드', '글래셜', '크리스탈'], gr: ['크리오스', '키오네', '보레아스'], la: ['글라키에스', '니베우스', '프리고르'], ko: ['빙결', '서리', '설원', '얼음꽃'] },
-  fire: { en: ['블레이즈', '인페르노', '플레어', '버닝', '스칼렛'], gr: ['헬리오스', '파이로스', '헤파이스토스', '프로메테우스'], la: ['이그니스', '플라마', '아르덴스'], ko: ['업화', '화염', '홍련', '불꽃'] },
-  nature: { en: ['그린', '블룸', '와일드', '리프', '에메랄드'], gr: ['가이아', '데메테르', '드리아스', '페르세포네'], la: ['테라', '플로라', '실바', '비타'], ko: ['초록', '생명', '새싹', '치유'] },
-  divine: { en: ['홀리', '세이크리드', '골든', '글로리', '로열'], gr: ['제우스', '아폴론', '아테나', '올림포스', '헤라'], la: ['디비누스', '루멘', '솔', '아우레우스'], ko: ['천상', '황금', '영광', '성역'], ka: ['성스러운', '찬란한'] },
-  dark: { en: ['섀도우', '다크', '나이트', '커스드', '보이드'], gr: ['하데스', '타나토스', '닉스', '에레보스'], la: ['움브라', '녹스', '모르스', '테네브라'], ko: ['암흑', '그림자', '칠흑', '심연'], ka: ['저주받은', '어두운'] },
-  storm: { en: ['썬더', '스톰', '볼트', '테슬라'], gr: ['제우스', '브론테스', '아스트라페', '케라우노스'], la: ['풀구르', '토니트루스', '템페스타스'], ko: ['뇌전', '폭풍', '번개', '천둥'] },
-  deep: { en: ['어비스', '딥', '타이달', '아비살'], gr: ['포세이돈', '오케아노스', '트리톤', '카리브디스'], la: ['아비수스', '프로푼두스', '마리스'], ko: ['심해', '심연', '해류', '물밑'] },
-  sea: { en: ['오션', '웨이브', '타이드', '마린'], gr: ['포세이돈', '네레우스', '테티스'], la: ['아쿠아', '마레', '운다'], ko: ['파도', '바다', '물결'] },
-  cosmic: { en: ['스타', '코스믹', '노바', '아스트랄', '메테오'], gr: ['우라노스', '아스트라이아', '크로노스', '헬리오스'], la: ['스텔라', '코스모스', '시데리스', '루나'], ko: ['별빛', '성운', '우주', '유성'] },
-  arcane: { en: ['아케인', '미스틱', '룬', '오리진'], gr: ['헤카테', '헤르메스', '아이온'], la: ['아르카나', '마기아', '프리무스'], ko: ['신비', '마력', '태초'] },
+/* ---- 카드 이름 자동 생성 (LLM 없이 단어장 조합) ----
+   분위기 단어(컨셉 주제·기본 이펙트·알 색·고귀함) + 핵심 단어(스킬 전부·역할)를 섞고,
+   최근에 나온 이름·저장한 카드 이름은 피해서 매번 다른 이름이 나오게 함 */
+// 분위기 단어장: en 영어식, gr 그리스 신화, la 라틴어, ko 한글 명사, ka 한글 꾸밈말
+const NAME_MOOD = {
+  ice: { en: ['프로스트', '아이스', '블리자드', '글래셜', '크리스탈', '폴라', '윈터', '스노우', '프리즘'], gr: ['크리오스', '키오네', '보레아스', '킬레네'], la: ['글라키에스', '니베우스', '프리고르', '히엠스', '크리스탈룸'], ko: ['빙결', '서리', '설원', '얼음꽃', '눈보라', '빙하', '한기', '수정'], ka: ['얼어붙은', '차가운', '시린', '맑은'] },
+  fire: { en: ['블레이즈', '인페르노', '플레어', '버닝', '스칼렛', '이그나이트', '애쉬', '마그마', '솔라'], gr: ['헬리오스', '파이로스', '헤파이스토스', '프로메테우스', '히페리온'], la: ['이그니스', '플라마', '아르덴스', '칼로르', '판빌라'], ko: ['업화', '화염', '홍련', '불꽃', '용암', '잿불', '열화', '태양'], ka: ['타오르는', '불타는', '이글거리는', '뜨거운'] },
+  nature: { en: ['그린', '블룸', '와일드', '리프', '에메랄드', '버던트', '그로브', '스프링'], gr: ['가이아', '데메테르', '드리아스', '페르세포네', '판'], la: ['테라', '플로라', '실바', '비타', '비리디스'], ko: ['초록', '생명', '새싹', '치유', '풀잎', '봄빛', '대지', '이슬'], ka: ['푸르른', '싱그러운', '자라나는', '따스한'] },
+  divine: { en: ['홀리', '세이크리드', '골든', '글로리', '헤일로', '셀레스티얼', '에테르', '래디언트'], gr: ['제우스', '아폴론', '아테나', '올림포스', '헤라', '니케', '아레스'], la: ['디비누스', '루멘', '솔', '아우레우스', '글로리아', '상투스'], ko: ['천상', '황금', '영광', '성역', '신성', '후광', '영웅', '광휘'], ka: ['성스러운', '찬란한', '눈부신', '영광스러운'] },
+  dark: { en: ['섀도우', '다크', '나이트', '커스드', '보이드', '그림', '헥스', '둠', '나이트메어'], gr: ['하데스', '타나토스', '닉스', '에레보스', '헤카테', '케르베로스'], la: ['움브라', '녹스', '모르스', '테네브라', '말룸', '오브스쿠라'], ko: ['암흑', '그림자', '칠흑', '심연', '저주', '흑요', '망령', '어스름'], ka: ['저주받은', '어두운', '불길한', '잠식하는'] },
+  storm: { en: ['썬더', '스톰', '볼트', '테슬라', '스파크', '템페스트', '플래시', '볼티지'], gr: ['제우스', '브론테스', '아스트라페', '케라우노스', '아이올로스'], la: ['풀구르', '토니트루스', '템페스타스', '풀멘'], ko: ['뇌전', '폭풍', '번개', '천둥', '섬광', '뇌광', '전격'], ka: ['번뜩이는', '요동치는', '내리꽂는'] },
+  deep: { en: ['어비스', '딥', '타이달', '아비살', '크라켄', '다이브', '리바이어선'], gr: ['포세이돈', '오케아노스', '트리톤', '카리브디스', '스킬라'], la: ['아비수스', '프로푼두스', '마리스', '파토스'], ko: ['심해', '심연', '해류', '물밑', '해저', '청흑'], ka: ['깊은', '고요한', '신비로운', '가라앉은'] },
+  sea: { en: ['오션', '웨이브', '타이드', '마린', '코럴', '스프레이', '아쿠아'], gr: ['포세이돈', '네레우스', '테티스', '암피트리테'], la: ['아쿠아', '마레', '운다', '플루크투스'], ko: ['파도', '바다', '물결', '물보라', '해일', '조류'], ka: ['출렁이는', '푸른', '밀려오는'] },
+  cosmic: { en: ['스타', '코스믹', '노바', '아스트랄', '메테오', '갤럭시', '오빗', '퀘이사', '스텔라'], gr: ['우라노스', '아스트라이아', '크로노스', '헬리오스', '셀레네', '오리온'], la: ['스텔라', '코스모스', '시데리스', '루나', '오르비스', '카엘룸'], ko: ['별빛', '성운', '우주', '유성', '혜성', '은하', '월광'], ka: ['별이 된', '빛나는', '아득한', '영원한'] },
+  arcane: { en: ['아케인', '미스틱', '룬', '오리진', '에코', '레거시', '이클립스'], gr: ['헤카테', '헤르메스', '아이온', '카오스'], la: ['아르카나', '마기아', '프리무스', '오리고'], ko: ['신비', '마력', '태초', '비전', '운명', '전설'], ka: ['신비로운', '오래된', '잊혀진'] },
+  metal: { en: ['스틸', '아이언', '크롬', '티타늄', '메탈', '코발트', '실버', '블레이드'], gr: ['헤파이스토스', '탈로스', '키클롭스'], la: ['페룸', '아르겐툼', '칼립스', '메탈룸'], ko: ['강철', '무쇠', '은빛', '철벽', '쇳빛', '청강'], ka: ['단단한', '번쩍이는', '세련된', '차가운'] },
+  arena: { en: ['아레나', '그리드', '챔피언', '매치', '스트라이크', '골드컵', '빅토리'], gr: ['니케', '아곤', '올림피아'], la: ['아레나', '빅토리아', '코로나', '루두스'], ko: ['결투', '승부', '경기장', '판', '격전', '승리'], ka: ['당당한', '거침없는', '노련한'] },
+  humble: { en: ['그레이', '스톤', '퓨어', '심플', '애쉬', '더스크', '모스'], gr: ['헤스티아', '데미오스'], la: ['푸루스', '시플렉스', '그리세우스', '파우페르'], ko: ['잿빛', '돌', '고요', '소박', '바위', '이끼', '묵향'], ka: ['담담한', '조용한', '소박한', '꾸밈없는', '겸손한'] },
+  wind: { en: ['게일', '윈드', '스위프트', '제피르', '에어', '스트림', '사이클론', '스톰라이더'], gr: ['아이올로스', '제피로스', '보레아스', '노토스'], la: ['벤투스', '아우라', '켈레르', '플라투스'], ko: ['질풍', '바람', '돌풍', '회오리', '순풍', '선풍'], ka: ['날렵한', '스치는', '빠른', '휘몰아치는'] },
+  light: { en: ['화이트', '샤인', '브라이트', '퓨어', '루미너스', '오로라', '던'], gr: ['에오스', '헤메라', '포이베'], la: ['알부스', '룩스', '칸디두스', '아우로라'], ko: ['백광', '여명', '새벽', '순백', '눈부심', '햇살'], ka: ['새하얀', '밝은', '순결한', '맑은'] },
+  sparkle: { en: ['글리터', '트윙클', '스파클', '샤인', '스타더스트', '지르콘'], gr: ['아스트라이아', '이리스'], la: ['스킨틸라', '미칸스', '스텔룰라'], ko: ['반짝임', '별가루', '윤슬', '광채', '빛가루'], ka: ['반짝이는', '영롱한', '눈부신'] },
+  aura: { en: ['오라', '헤일로', '래디언스', '글로우', '스피릿', '에센스'], gr: ['프시케', '아이테르'], la: ['아니마', '스피리투스', '아우라', '눔멘'], ko: ['기운', '투기', '영기', '광륜', '혼'], ka: ['감도는', '일렁이는', '타오르는'] },
+  heavy: { en: ['타이탄', '골렘', '모놀리스', '헤비', '그래나이트', '보울더', '퀘이크'], gr: ['아틀라스', '타이탄', '기가스', '크로노스'], la: ['그라비스', '몰레스', '삭숨', '포데루스'], ko: ['반석', '거암', '무게', '지진', '태산', '굉음'], ka: ['묵직한', '거대한', '흔들림 없는', '단단한'] },
+  black: { en: ['블랙', '오닉스', '오브시디언', '젯', '미드나잇'], gr: ['닉스', '에레보스'], la: ['니게르', '아테르', '녹스'], ko: ['흑요', '먹빛', '칠흑', '흑진주', '흑요석'], ka: ['검은', '새까만', '깊은'] },
+  white: { en: ['화이트', '펄', '아이보리', '스노우', '문스톤'], gr: ['셀레네', '레우코스'], la: ['알부스', '니베우스', '마르가리타'], ko: ['진주', '설백', '백옥', '순백', '흰눈'], ka: ['하얀', '새하얀', '희디흰'] },
+  noble: { en: ['로열', '골든', '노블', '임페리얼', '그레이스'], gr: ['헤라', '아테나'], la: ['노빌리스', '아우레우스', '레갈리스'], ko: ['황금', '귀족', '기품', '왕관'], ka: ['고귀한', '기품 있는', '황금빛'] },
 };
-const NAME_SKILL = {
-  pierce: { en: ['피어서', '랜서', '스피어', '드릴'], la: ['하스타', '쿠스피스'], ko: ['관통자', '창', '꿰뚫는 자'] },
-  accel: { en: ['블리츠', '대셔', '러너', '제트'], la: ['벨록스', '켈레르'], ko: ['질주자', '바람', '섬광'] },
-  explode: { en: ['버스터', '블라스트', '봄버', '노바'], la: ['프라고르', '루프투라'], ko: ['폭렬', '파괴자', '폭군'] },
-  shield: { en: ['가디언', '이지스', '월', '센티널'], la: ['스쿠툼', '쿠스토스'], ko: ['수호자', '방패', '방벽'] },
-  thorns: { en: ['쏜', '스파이크', '리벤저'], la: ['스피나', '울토르'], ko: ['가시', '응징자', '가시덤불'] },
-  revive: { en: ['피닉스', '리버스', '이터널'], la: ['레낙투스', '이모르탈리스'], ko: ['불사조', '부활자', '영원'] },
-  split: { en: ['트윈', '스플리터', '미러'], la: ['게미누스', '디비시오'], ko: ['쌍둥이', '분신', '분열자'] },
-  magnet: { en: ['매그넷', '그래비티', '보텍스'], la: ['마그네스', '트락투스'], ko: ['인력', '자력', '소용돌이'] },
-  mark: { en: ['헥서', '커스', '실러'], la: ['시길룸', '말레딕투스'], ko: ['낙인', '봉인자', '저주'] },
-  cloak: { en: ['팬텀', '고스트', '베일', '셰이드'], la: ['라텐스', '움브라'], ko: ['유령', '은둔자', '그림자'] },
-  scout: { en: ['오라클', '워처', '시커', '아이'], la: ['오쿨루스', '스페쿨라토르'], ko: ['천리안', '감시자', '눈'] },
-  support: { en: ['세이지', '커맨더', '바드', '헤럴드'], la: ['두크스', '아욱실리움'], ko: ['인도자', '지휘관', '축복'] },
-  none: { en: ['챔피언', '나이트', '워리어'], la: ['빅토르', '헤로스'], ko: ['전사', '용사', '영웅'] },
+const NAME_MOOD_KO = { ice: '얼음', fire: '불꽃', nature: '자연', divine: '신화', dark: '어둠', storm: '번개', deep: '심해', sea: '바다', cosmic: '우주', arcane: '신비', metal: '메탈', arena: '경기장', humble: '소박', wind: '바람', light: '빛', sparkle: '반짝', aura: '오라', heavy: '묵직', black: '흑돌', white: '백돌', noble: '고귀', none: '기본' };
+// 컨셉 글에서 주제 찾기 (render.js 의 그림 주제 + 이름 전용 주제)
+const NAME_KW = {
+  metal: ['메탈', '매탈', '금속', '강철', '철', '쇠', '크롬', '은색', 'metal', 'steel'],
+  arena: ['경기장', '그리드', '알까기판', '대결', '승부', 'arena'],
+  humble: ['심플', '겸손', '평범', '회색', '소박', '수수', '단순', 'simple', 'gray', 'grey'],
+  wind: ['바람', '가속', '질주', '속도', '돌풍', 'wind', 'speed'],
+  light: ['밝은', '흰색', '하얀', '빛', '백색', 'white', 'light', 'bright'],
 };
-const NAME_TITLE = { 2: ['프라임', '알파'], 3: ['렉스', '오메가', '아르케'], 4: ['렉스', '엠페러', '오메가', '임페라토르', '아스트라'] };
-const NAME_STYLES = [
-  { ko: '영어식', make: (T, K, p) => `${p(T.en)} ${p(K.en)}` },
-  { ko: '그리스 신화풍', make: (T, K, p) => p([`${p(T.gr)}의 ${p(K.ko)}`, `${p(T.gr)} ${p(K.en)}`, `${p(K.en)} ${p(T.gr)}`]) },
-  { ko: '라틴어 섞기', make: (T, K, p) => p([`${p(T.la)} ${p(K.en)}`, `${p(K.la)} ${p(T.la)}`, `${p(T.en)} ${p(K.la)}`]) },
-  { ko: '한글 시적 표현', plain: true, make: (T, K, p) => p([`${p(T.ko)}의 ${p(K.ko)}`, `${p(T.ko)}의 ${p(K.ko)}`, T.ka ? `${p(T.ka)} ${p(K.ko)}` : `${p(T.ko)} ${p(K.ko)}`]) },
-  { ko: '신화 + 한글', plain: true, make: (T, K, p) => `${p(T.gr)}, ${p(T.ko)}의 ${p(K.ko)}` },
-];
-// 왕: 왕·제왕 느낌 단어를 섞고, 이름에 반드시 왕을 뜻하는 말이 들어가게 함
+// 핵심 단어장: 스킬·역할
+const NAME_CORE = {
+  pierce: { en: ['피어서', '랜서', '스피어', '드릴', '애로우', '니들', '스팅어'], la: ['하스타', '쿠스피스', '사기타', '필룸'], ko: ['관통자', '창', '꿰뚫는 자', '화살', '창끝', '일격'] },
+  accel: { en: ['블리츠', '대셔', '러너', '제트', '로켓', '스프린터', '코멧'], la: ['벨록스', '켈레르', '쿠르소르'], ko: ['질주자', '바람', '섬광', '유성', '총알', '쾌속'] },
+  explode: { en: ['버스터', '블라스트', '봄버', '노바', '버스트', '쇼크', '디토네이터'], la: ['프라고르', '루프투라', '엑스플로시오'], ko: ['폭렬', '파괴자', '폭군', '폭풍', '충격', '굉음'] },
+  shield: { en: ['가디언', '이지스', '월', '센티널', '바스티온', '포트리스', '워든'], la: ['스쿠툼', '쿠스토스', '무루스', '프라이시디움'], ko: ['수호자', '방패', '방벽', '성벽', '파수꾼', '보루'] },
+  thorns: { en: ['쏜', '스파이크', '리벤저', '브램블', '로즈', '레이저'], la: ['스피나', '울토르', '로사', '아쿨레우스'], ko: ['가시', '응징자', '가시덤불', '가시장미', '보복자'] },
+  revive: { en: ['피닉스', '리버스', '이터널', '라자루스', '세컨드라이프'], la: ['레낙투스', '이모르탈리스', '레수르겐스'], ko: ['불사조', '부활자', '영원', '환생', '불멸'] },
+  split: { en: ['트윈', '스플리터', '미러', '제미니', '에코', '도플'], la: ['게미누스', '디비시오', '스페쿨룸'], ko: ['쌍둥이', '분신', '분열자', '거울', '쌍성'] },
+  magnet: { en: ['매그넷', '그래비티', '보텍스', '폴라리스', '어트랙터'], la: ['마그네스', '트락투스', '그라비타스'], ko: ['인력', '자력', '소용돌이', '중력', '끌개'] },
+  mark: { en: ['헥서', '커스', '실러', '브랜드', '스티그마'], la: ['시길룸', '말레딕투스', '스티그마'], ko: ['낙인', '봉인자', '저주', '각인', '주술사'] },
+  cloak: { en: ['팬텀', '고스트', '베일', '셰이드', '미라주', '스펙터'], la: ['라텐스', '움브라', '팔리둠', '스펙트룸'], ko: ['유령', '은둔자', '그림자', '신기루', '환영'] },
+  scout: { en: ['오라클', '워처', '시커', '아이', '레이더', '스카우트'], la: ['오쿨루스', '스페쿨라토르', '비덴스'], ko: ['천리안', '감시자', '눈', '파수꾼', '예언자'] },
+  support: { en: ['세이지', '커맨더', '바드', '헤럴드', '캡틴', '케어러'], la: ['두크스', '아욱실리움', '사나토르'], ko: ['인도자', '지휘관', '축복', '수호천사', '치유사'] },
+  atk: { en: ['워리어', '버서커', '슬레이어', '헌터', '스트라이커'], la: ['벨라토르', '글라디우스', '빅토르'], ko: ['전사', '투사', '사냥꾼', '검객', '돌격대장'] },
+  def: { en: ['나이트', '팔라딘', '키퍼', '워든', '홀더'], la: ['데펜소르', '쿠스토스', '카스텔룸'], ko: ['기사', '수문장', '수호기사', '철벽', '방패병'] },
+  dis: { en: ['트릭스터', '조커', '일루저니스트', '로그', '위치'], la: ['돌루스', '프락스', '말레피쿠스'], ko: ['책략가', '마술사', '교란자', '여우', '요술사'] },
+  sup: { en: ['힐러', '세인트', '프리스트', '뮤즈', '엔젤'], la: ['사나토르', '안겔루스', '사케르도스'], ko: ['치유사', '성자', '사제', '천사', '조력자'] },
+  king: { en: ['킹', '로드', '소버린', '모나크', '엠페러'], la: ['렉스', '임페라토르', '도미누스', '레기나'], ko: ['왕', '제왕', '군주', '패왕', '대왕'] },
+  none: { en: ['챔피언', '나이트', '워리어', '히어로'], la: ['빅토르', '헤로스', '파틴'], ko: ['전사', '용사', '영웅', '도전자'] },
+};
+const NAME_TITLE = { 2: ['프라임', '알파', '마크 II'], 3: ['렉스', '오메가', '아르케', '엑스'], 4: ['렉스', '엠페러', '오메가', '임페라토르', '아스트라', '제로'] };
 const NAME_KING = { en: ['킹', '로열', '임페리얼', '소버린'], la: ['렉스', '임페라토르', '도미누스'], ko: ['왕', '제왕', '군주', '패왕'], ka: ['위대한', '고귀한'], title: ['킹', '렉스', '엠페러', '임페라토르', '로드', '소버린'] };
-function autoCardName(concept, skills, t, king) {
-  const r = Math.random, p = a => a[Math.floor(r() * a.length)];
-  const ths = pickThemes(concept || ''), th = r() < .75 || !ths[1] ? ths[0] : ths[1];
-  const T = { ...NAME_THEME[th.id] || NAME_THEME.arcane };
-  if (isNoble(concept)) { T.en = [...T.en, '로열', '골든']; T.ko = [...T.ko, '황금']; T.ka = [...(T.ka || []), '고귀한']; }
-  if (king) { T.en = [...T.en, ...NAME_KING.en]; T.ka = [...(T.ka || []), ...NAME_KING.ka]; }
-  const sk = skills?.length ? (r() < .7 ? skills[0] : p(skills)) : 'none';
-  let K = NAME_SKILL[sk] || NAME_SKILL.none;
-  if (king) K = { ...K, ko: NAME_KING.ko, la: [...K.la, ...NAME_KING.la] };
-  const st = p(NAME_STYLES);
-  let name = st.make(T, K, p);
-  if (king) { if (!st.plain && !NAME_KING.title.concat(NAME_KING.en, NAME_KING.la, NAME_KING.ko).some(w => name.includes(w))) name += ' ' + p(NAME_KING.title); }
-  else if (!st.plain && t >= 2 && r() < [0, 0, .3, .45, .6][t]) name += ' ' + p(NAME_TITLE[t]);
-  return { name, style: st.ko };
+const NAME_STYLES = [
+  { ko: '영어식', make: (M, K, p) => p([`${p(M.en)} ${p(K.en)}`, `${p(K.en)} 오브 ${p(M.en)}`]) },
+  { ko: '그리스 신화풍', make: (M, K, p) => p([`${p(M.gr || M.en)}의 ${p(K.ko)}`, `${p(M.gr || M.en)} ${p(K.en)}`, `${p(K.en)} ${p(M.gr || M.en)}`]) },
+  { ko: '라틴어 섞기', make: (M, K, p) => p([`${p(M.la)} ${p(K.en)}`, `${p(K.la)} ${p(M.la)}`, `${p(M.en)} ${p(K.la)}`]) },
+  { ko: '한글 시적 표현', plain: true, make: (M, K, p) => p([`${p(M.ko)}의 ${p(K.ko)}`, `${p(M.ka || M.ko)} ${p(K.ko)}`, `${p(M.ko)} ${p(K.ko)}`]) },
+  { ko: '신화 + 한글', plain: true, make: (M, K, p) => `${p(M.gr || M.en)}, ${p(M.ko)}의 ${p(K.ko)}` },
+  { ko: '한글 + 영어', make: (M, K, p) => p([`${p(M.ka || M.ko)} ${p(K.en)}`, `${p(M.ko)}의 ${p(K.en)}`]) },
+];
+// 카드 정보에서 분위기·핵심 단어장 고르기
+function namePools({ concept = '', skills = [], role, stone, fx = [], king }) {
+  const s = concept.toLowerCase(), moods = [];
+  for (const th of pickThemes(concept)) if (th.kw.length) moods.push(th.id);              // 그림 주제 (얼음·불꽃·…)
+  for (const [id, kw] of Object.entries(NAME_KW)) if (kw.some(k => s.includes(k))) moods.push(id); // 이름 전용 주제
+  for (const f of fx) if (NAME_MOOD[f]) moods.push(f); else if (f === 'spark') moods.push('storm');
+  if (isNoble(concept)) moods.push('noble');
+  if (!moods.length) moods.push('arcane');
+  if (stone === 'black' || stone === 'white') moods.push(stone);                            // 알 색은 보조로
+  const cores = [...skills.filter(id => NAME_CORE[id]), ...(role && NAME_CORE[role] ? [role] : [])];
+  if (king && !cores.includes('king')) cores.push('king');
+  if (!cores.length) cores.push('none');
+  return { moods: [...new Set(moods)], cores: [...new Set(cores)] };
+}
+const NAME_HIST_MAX = 300;
+function autoCardName(info, avoid = []) {
+  const r = Math.random, p = a => a[Math.floor(r() * a.length)], t = info.t ?? 0, king = !!info.king;
+  const { moods, cores } = namePools(info);
+  const used = new Set([...LS.get('nameHist', []), ...state.arts.flatMap(a => cardSaves(a).map(s => s.name)).filter(Boolean), ...avoid]);
+  let out;
+  for (let tries = 0; tries < 40; tries++) {
+    // 분위기: 컨셉 주제가 앞쪽이라 조금 더 자주, 알 색 같은 보조 단어도 가끔
+    const M = { ...NAME_MOOD[r() < .5 ? moods[0] : p(moods)] };
+    // 핵심: 스킬·역할 중 하나 (왕이면 왕 단어가 꼭 들어가게)
+    const kc = king && r() < .5 ? 'king' : p(cores), K = NAME_CORE[kc];
+    if (king && kc !== 'king') { M.en = [...M.en, ...NAME_KING.en]; M.ka = [...(M.ka || []), ...NAME_KING.ka]; } // 왕 단어가 두 번 겹치지 않게
+    const st = p(NAME_STYLES);
+    let name = st.make(M, K, p);
+    if (king) { if (!NAME_KING.title.concat(NAME_KING.en, NAME_KING.la, NAME_KING.ko, NAME_CORE.king.en, NAME_CORE.king.ko, NAME_CORE.king.la).some(w => name.includes(w))) name += ' ' + p(NAME_KING.title); }
+    else if (!st.plain && t >= 2 && r() < [0, 0, .3, .45, .6][t]) name += ' ' + p(NAME_TITLE[t]);
+    out = { name, style: st.ko, moods, cores };
+    if (!used.has(name)) break;
+  }
+  LS.set('nameHist', [out.name, ...LS.get('nameHist', []).filter(x => x !== out.name)].slice(0, NAME_HIST_MAX));
+  return out;
 }
 /* ---- 폴더에 저장: 등급_역할_컨셉_스킬_이름(+덧붙인 이름) ---- */
-// 왕 덧붙이기: 직접 켜고 끈 값이 우선, 손대지 않았으면 왕알 그림일 때 자동으로 붙음
-function cmbKing() { const C = state.cmb, art = C.artId === '__temp' ? C.temp : state.arts.find(a => a.id === C.artId); return C.saveKing ?? !!art?.king; }
+// 왕 카드 여부(이름 자동 생성용): 왕알 그림이거나 역할이 왕
+function cmbKing() { const C = state.cmb, art = C.artId === '__temp' ? C.temp : state.arts.find(a => a.id === C.artId); return !!art?.king || C.role === 'king'; }
 function cmbFileName() {
   const C = state.cmb, art = C.artId === '__temp' ? C.temp : state.arts.find(a => a.id === C.artId);
   const role = ROLES.find(r => r.id === C.role)?.ko, concept = (art?.concept || '').trim().slice(0, 24);
   const skills = (C.skills || []).map(id => SKILLS.find(s => s.id === id)?.ko).filter(Boolean).join('+');
-  return [GRADES[C.t], cmbKing() ? '왕' : '', role, concept, skills, C.name.trim(), ...(C.saveExtras || []).map(x => x.trim()), C.saveNum ? String(C.saveNum) : '', C.savePlus ? 'plus' : ''].filter(Boolean).map(x => x.replace(/[\\/:*?"<>|]+/g, '').replace(/[\s_]+/g, ' ').trim()).filter(Boolean).join('_');
+  // 왕은 역할 칸에서만 나옴 (같은 항목이 두 번 연달아 들어가지 않게 함: 왕_왕 방지)
+  return [GRADES[C.t], role, concept, skills, C.name.trim(), ...(C.saveExtras || []).map(x => x.trim()), C.saveNum ? String(C.saveNum) : '', C.savePlus ? 'plus' : ''].filter(Boolean).map(x => x.replace(/[\\/:*?"<>|]+/g, '').replace(/[\s_]+/g, ' ').trim()).filter((x, i, a) => x && x !== a[i - 1]).join('_');
 }
 function initSaveBox() {
   const C = state.cmb; C.saveExtras ??= [];
@@ -802,12 +881,10 @@ function initSaveBox() {
   };
   const remember = f => { recent = [f, ...recent.filter(x => x.toLowerCase() !== f.toLowerCase())].slice(0, 5); LS.set('saveFolders', recent); renderRecent(); };
   const renderSuffix = () => {
-    $('#svKing').classList.toggle('on', cmbKing()); $('#svKing').textContent = cmbKing() ? '✓ _왕_ 붙음' : '👑 왕 덧붙이기';
     $('#svPlus').classList.toggle('on', !!C.savePlus); $('#svPlus').textContent = C.savePlus ? '✓ _plus 붙음' : 'plus 덧붙이기';
     $('#svNum').classList.toggle('on', !!C.saveNum); $('#svNum').textContent = C.saveNum ? `숫자 ${C.saveNum} → ${C.saveNum + 1}` : '숫자 덧붙이기';
     $('#svNumReset').hidden = !C.saveNum; showName();
   };
-  $('#svKing').onclick = () => { C.saveKing = !cmbKing(); renderSuffix(); };
   $('#svPlus').onclick = () => { C.savePlus = !C.savePlus; renderSuffix(); };
   $('#svNum').onclick = () => { C.saveNum = (C.saveNum || 0) + 1; renderSuffix(); };
   $('#svNumReset').onclick = () => { C.saveNum = 0; renderSuffix(); };
@@ -823,13 +900,30 @@ function initSaveBox() {
   $('#svSave').onclick = async () => {
     const f = $('#svFolder').value.trim(); if (!f) return toast('저장 폴더를 먼저 정해 주세요');
     const art = await currentArt(); if (!art) return toast('카드 그림을 먼저 고르세요');
+    const rec = state.arts.find(x => x.id === C.artId);
+    if (rec && cardSaves(rec).length >= MAX_CARD_SAVES) return alert(`이 그림은 이미 카드로 ${MAX_CARD_SAVES}번 저장했습니다.\n더 이상 저장할 수 없습니다. 저장 표시를 눌러 하나를 지운 뒤 다시 저장하세요.`);
     const o = cmbOptions(), name = cmbFileName(), png = cv => cv.toDataURL('image/png').split(',')[1];
     const only = mk(), z = o.zoom || 1; only.getContext('2d').drawImage(art, (W - W * z) / 2 + (o.ox || 0), (H - H * z) / 2 + (o.oy || 0), W * z, H * z);
     try {
       const a = await api('/api/save-file', { folder: sub(f, 'card'), name, data: png(composeCard({ ...o, art, showSkills: false })) });
-      await api('/api/save-file', { folder: sub(f, 'cardonly'), name, data: png(only) });
+      const b = await api('/api/save-file', { folder: sub(f, 'cardonly'), name, data: png(only) });
       remember(f); toast('💾 저장했습니다: ' + a.path.split(/[\\/]/).pop() + ' (card + cardonly)');
+      if (rec) { // 보관함 그림에 '카드 저장됨' 표시 추가 (지울 때 쓰려고 두 파일 경로도 기록)
+        rec.saves = [...cardSaves(rec), { grade: GRADES[C.t], name: C.name.trim(), at: Date.now(), folder: f, card: a.path, only: b.path }];
+        DB.put('arts', rec).catch(() => { }); rerenderSaves();
+      }
     } catch (e) { toast('⚠ 저장 실패: ' + e.message); }
+  };
+  // 클리어: 저장 폴더 밑 card · cardonly 의 PNG 전부 삭제 + 모든 그림의 저장 표시 초기화
+  $('#svClear').onclick = async () => {
+    const f = $('#svFolder').value.trim(); if (!f) return toast('저장 폴더를 먼저 정해 주세요');
+    if (!confirm(`정말 클리어할까요?\n\n${sub(f, 'card')}\n${sub(f, 'cardonly')}\n\n위 두 폴더의 카드 그림(PNG)을 모두 지우고, 보관함 그림의 저장 표시도 모두 초기화합니다.\n되돌릴 수 없습니다.`)) return;
+    try {
+      const j = await postApi('/api/clear-cards', { folder: f });
+      const marked = state.arts.filter(x => cardSaves(x).length);
+      for (const x of marked) { x.saves = []; await DB.put('arts', x); }
+      toast(`🧹 카드 그림 ${j.count}장 삭제 · 저장 표시 ${marked.length}개 그림 초기화`); rerenderSaves();
+    } catch (e) { toast('⚠ 클리어 실패: ' + e.message); }
   };
   // 프레임 저장: 지금 프레임 × 등급 5 × 역할 5 = 25장 (그림·이름·스킬 없이)
   $('#svFrames').onclick = async () => {
@@ -861,7 +955,7 @@ function drawStrip(art) {
   const box = $('#cStrip'); box.innerHTML = '';
   GRADES.forEach((gname, t) => {
     const cv = thumbOf(composeCard({ ...cmbOptions(t), art }), 260);
-    cv.onclick = () => { state.cmb.t = t; drawCombine(); };
+    cv.onclick = () => { state.cmb.t = t; saveCmbView(); drawCombine(); };
     box.append(el('div', {}, cv, el('div', {}, `${gname} · ${GRADE_INFO[t].ko}`)));
   });
 }
@@ -874,6 +968,8 @@ const FONTS = [
 const LAYER_NAME = { icon: '역할 아이콘', name: '이름', skills: '스킬' };
 for (const k of Object.keys(state.cmb.layout)) if (k === 'icon' || /^icon:[a-z]/.test(k)) delete state.cmb.layout[k];
 function saveCmbStyle() { LS.set('cmbStyle', { layout: state.cmb.layout, font: state.cmb.font }); }
+// 다른 그림을 골라도 마지막에 쓴 프레임 그룹·등급·역할 아이콘·확대·위치를 유지 (새로고침해도 남음)
+function saveCmbView() { const C = state.cmb; LS.set('cmbView', { frameId: C.frameId, t: C.t, iconId: C.iconId, role: C.role, zoom: C.zoom, ox: C.ox, oy: C.oy }); }
 async function setFont(patch) {
   const F = state.cmb.font; Object.assign(F, patch);
   if (patch.family) { try { await document.fonts.load(`400 40px ${F.family}`, state.cmb.name || '가나다'); } catch { } }

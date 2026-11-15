@@ -134,6 +134,10 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                     return self._json(200, {"ok": True})
                 if parts[2:3] == ["save-file"]:
                     return self._save_file(json.loads(self._body() or b"{}"))
+                if parts[2:3] == ["delete-files"]:
+                    return self._delete_files(json.loads(self._body() or b"{}"))
+                if parts[2:3] == ["clear-cards"]:
+                    return self._clear_cards(json.loads(self._body() or b"{}"))
                 if parts[2:3] == ["open-folder"]:
                     return self._open_folder(json.loads(self._body() or b"{}"))
                 if parts[2:3] == ["pick-folder"]:
@@ -160,6 +164,30 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         with open(path, "wb") as f:
             f.write(base64.b64decode(d.get("data", "")))
         return self._json(200, {"ok": True, "path": path, "folder": folder})
+
+    def _delete_files(self, d):
+        """조합에서 저장한 카드 PNG 지우기 (.png 파일만)"""
+        removed = []
+        for p in d.get("paths") or []:
+            p = os.path.abspath(os.path.expanduser(str(p)))
+            if p.lower().endswith(".png") and os.path.isfile(p):
+                os.remove(p); removed.append(p)
+        return self._json(200, {"ok": True, "removed": removed})
+
+    def _clear_cards(self, d):
+        """저장 폴더 밑 card / cardonly 폴더의 PNG 전부 지우기"""
+        base = (d.get("folder") or "").strip()
+        if not base:
+            return self._json(400, {"error": {"message": "저장 폴더를 정해 주세요"}})
+        base, n = os.path.abspath(os.path.expanduser(base)), 0
+        for sub in ("card", "cardonly"):
+            folder = os.path.join(base, sub)
+            if os.path.isdir(folder):
+                for f in os.listdir(folder):
+                    p = os.path.join(folder, f)
+                    if f.lower().endswith(".png") and os.path.isfile(p):
+                        os.remove(p); n += 1
+        return self._json(200, {"ok": True, "count": n})
 
     def _open_folder(self, d):
         folder = os.path.abspath(os.path.expanduser((d.get("folder") or "").strip()))
