@@ -373,7 +373,7 @@ function initGenForm() {
   G.fx = fxList(G); renderFxChips();
   seg($('#gCount'), [1, 2, 3, 4, 6].map(n => ({ label: n + '장', value: n })), G.count, v => { G.count = v; saveGen(); });
   renderSkillChips();
-  $('#gConcept').value = G.concept; $('#gConcept').oninput = e => { G.concept = e.target.value; saveGen(); };
+  $('#gConcept').value = G.concept; $('#gConcept').oninput = e => { G.concept = e.target.value; saveGen(); renderFxChips(); };
   $('#gExamples').append(...EXAMPLES.map(x => el('span', { class: 'chip ex', onclick: () => { $('#gConcept').value = x; G.concept = x; saveGen(); } }, x)));
   const S = state.settings;
   const renderEngine = () => {
@@ -430,7 +430,9 @@ function renderFxChips() {
       saveGen(); renderFxChips();
     } }, f.label));
   }
-  $('#gFxInfo').textContent = !G.fx.length ? '자동: 등급에 맞는 기본 이펙트가 들어갑니다' : G.fx[0] === 'none' ? '이펙트 없이 알만 깔끔하게' : '조합: ' + G.fx.map(id => BASE_FX.find(f => f.id === id)?.label).join(' + ');
+  const cf = G.fx[0] === 'none' ? [] : conceptFx(G.concept).filter(id => !G.fx.includes(id)), lab = id => BASE_FX.find(f => f.id === id)?.label;
+  $('#gFxInfo').textContent = (!G.fx.length ? (cf.length ? '' : '자동: 등급에 맞는 기본 이펙트가 들어갑니다') : G.fx[0] === 'none' ? '이펙트 없이 알만 깔끔하게' : '조합: ' + G.fx.map(lab).join(' + '))
+    + (cf.length ? `${G.fx.length ? ' · ' : ''}컨셉 글에서 더함: ${cf.map(lab).join(' + ')}` : '');
 }
 function renderSkillChips() {
   const G = state.gen, box = $('#gSkills'); box.innerHTML = '';
@@ -467,7 +469,7 @@ function submitRequest() {
   const slots = el('div', { class: 'slots' });
   const block = el('div', { class: 'req' },
     el('div', { class: 'rh' }, el('span', { class: 'ttl' }, `요청 #${req.id}`), gradeTag(req.grade),
-      el('span', { class: 'meta' }, `${req.king ? '👑왕알 · ' : ''}${skillTxt}${req.engrave && req.skills.length ? ' · 🔱각인' : ''}${fxList(req).length ? ' · ' + fxList(req).map(id => BASE_FX.find(f => f.id === id)?.label || '').join('+') : ''} · ${req.concept ? '“' + req.concept + '”' : '컨셉 없음'} · ${ENGINES[req.engine].label}${ENGINES[req.engine].model ? ' · ' + state.settings[ENGINES[req.engine].model] : ''}`),
+      el('span', { class: 'meta' }, `${req.king ? '👑왕알 · ' : ''}${skillTxt}${req.engrave && req.skills.length ? ' · 🔱각인' : ''}${effFx(req).length ? ' · ' + effFx(req).map(id => BASE_FX.find(f => f.id === id)?.label || '').join('+') : ''} · ${req.concept ? '“' + req.concept + '”' : '컨셉 없음'} · ${ENGINES[req.engine].label}${ENGINES[req.engine].model ? ' · ' + state.settings[ENGINES[req.engine].model] : ''}`),
       timer,
       el('button', { class: 'btn sm', onclick: () => $$('.slot.done:not(.saved)', block).forEach(s => s._save()) }, '모두 저장'),
       el('button', { class: 'btn sm danger', onclick: () => { $$('.slot:not(.pending)', block).forEach(s => s._discard(true)); } }, '모두 버리기')),
@@ -734,7 +736,7 @@ function renderCombine() {
   $('#cName').value = C.name; $('#cName').oninput = e => { C.name = e.target.value; C.nameTouched = true; $('#cNameStyle').textContent = ''; drawCombine(); };
   $('#cNameGen').onclick = () => {
     const art = C.artId === '__temp' ? C.temp : state.arts.find(a => a.id === C.artId);
-    const g = autoCardName({ concept: art?.concept || '', skills: C.skills || [], t: C.t, king: cmbKing(), role: C.role, stone: art?.stone, fx: fxList(art) }, [C.name]);
+    const g = autoCardName({ concept: art?.concept || '', skills: C.skills || [], t: C.t, king: cmbKing(), role: C.role, stone: art?.stone, fx: effFx(art) }, [C.name]);
     const ko = id => NAME_MOOD_KO[id] || SKILLS.find(s => s.id === id)?.ko || ROLES.find(r => r.id === id)?.ko || id;
     C.name = g.name; C.nameTouched = true; $('#cName').value = g.name; $('#cNameStyle').textContent = `스타일: ${g.style} · 등급: ${g.grade} · 분위기: ${g.moods.map(ko).join('·')} · 핵심: ${g.cores.map(ko).join('·')}`; drawCombine();
   };
@@ -774,6 +776,9 @@ const NAME_MOOD = {
   black: { en: ['블랙', '오닉스', '오브시디언', '젯', '미드나잇'], gr: ['닉스', '에레보스'], la: ['니게르', '아테르', '녹스'], ko: ['흑요', '먹빛', '칠흑', '흑진주', '흑요석'], ka: ['검은', '새까만', '깊은'] },
   white: { en: ['화이트', '펄', '아이보리', '스노우', '문스톤'], gr: ['셀레네', '레우코스'], la: ['알부스', '니베우스', '마르가리타'], ko: ['진주', '설백', '백옥', '순백', '흰눈'], ka: ['하얀', '새하얀', '희디흰'] },
   noble: { en: ['로열', '골든', '노블', '임페리얼', '그레이스'], gr: ['헤라', '아테나'], la: ['노빌리스', '아우레우스', '레갈리스'], ko: ['황금', '귀족', '기품', '왕관'], ka: ['고귀한', '기품 있는', '황금빛'] },
+  gray: { en: ['그레이', '애쉬', '실버', '스모크', '더스크', '미스트'], gr: ['헤스티아', '모이라'], la: ['그리세우스', '키네레우스', '네불라'], ko: ['잿빛', '은회색', '안개', '연기', '먹구름', '회색빛'], ka: ['잿빛', '희뿌연', '차분한', '은은한'] },
+  navy: { en: ['네이비', '미드나잇', '사파이어', '인디고', '딥블루', '애드미럴'], gr: ['닉스', '오케아노스', '우라노스'], la: ['카이룰레우스', '녹스', '인디쿠스'], ko: ['남빛', '감청', '군청', '한밤', '쪽빛', '심청'], ka: ['짙푸른', '깊은', '고요한', '단정한'] },
+  gold: { en: ['골드', '골든', '오리', '선라이즈', '길디드', '앰버'], gr: ['헬리오스', '크리세오스', '미다스'], la: ['아우룸', '아우레우스', '플라부스', '솔'], ko: ['금빛', '황금', '금결', '노을', '햇금', '호박빛'], ka: ['금빛', '눈부신', '찬란한', '황금빛'] },
   dragon: { en: ['드래곤', '와이번', '드레이크', '스케일', '팽'], gr: ['라돈', '피톤', '티폰'], la: ['드라코', '세르펜스', '스콰마'], ko: ['용', '비룡', '용린', '역린', '용아'], ka: ['용맹한', '포효하는', '비늘 돋친'] },
   beast: { en: ['울프', '팽', '타이거', '레오', '하울', '클로', '비스트'], gr: ['케르베로스', '네메아', '리카온'], la: ['루푸스', '레오', '티그리스', '페라'], ko: ['늑대', '맹수', '호랑이', '사자', '야수', '발톱', '송곳니'], ka: ['굶주린', '사나운', '울부짖는', '야성의'] },
   bird: { en: ['이글', '호크', '팔콘', '레이븐', '윙', '페더', '스카이'], gr: ['피닉스', '그리핀', '아이톤'], la: ['아퀼라', '코르부스', '알라', '아비스'], ko: ['매', '독수리', '날개', '깃털', '까마귀', '봉황'], ka: ['날아오르는', '비상하는', '하늘을 가르는'] },
@@ -784,7 +789,7 @@ const NAME_MOOD = {
   gem: { en: ['루비', '사파이어', '다이아', '에메랄드', '오팔', '토파즈', '쥬얼'], gr: ['아다마스', '크리스탈로스'], la: ['겜마', '아다만투스', '루베우스'], ko: ['보석', '홍옥', '청옥', '금강', '보옥', '진주'], ka: ['영롱한', '빛나는', '값진'] },
   machine: { en: ['메카', '사이버', '네온', '기어', '코어', '넥서스', '프로토'], gr: ['탈로스', '헤파이스토스'], la: ['마키나', '메카니카', '누클레우스'], ko: ['기계', '태엽', '강철심장', '동력', '회로'], ka: ['정밀한', '가동하는', '차가운'] },
 };
-const NAME_MOOD_KO = { ice: '얼음', fire: '불꽃', nature: '자연', divine: '신화', dark: '어둠', storm: '번개', deep: '심해', sea: '바다', cosmic: '우주', arcane: '신비', metal: '메탈', arena: '경기장', humble: '소박', wind: '바람', light: '빛', sparkle: '반짝', aura: '오라', heavy: '묵직', black: '흑돌', white: '백돌', noble: '고귀', dragon: '용', beast: '야수', bird: '새', serpent: '뱀', blossom: '꽃', moon: '달', blade: '검', gem: '보석', machine: '기계', none: '기본' };
+const NAME_MOOD_KO = { ice: '얼음', fire: '불꽃', nature: '자연', divine: '신화', dark: '어둠', storm: '번개', deep: '심해', sea: '바다', cosmic: '우주', arcane: '신비', metal: '메탈', arena: '경기장', humble: '소박', wind: '바람', light: '빛', sparkle: '반짝', aura: '오라', heavy: '묵직', black: '흑돌', white: '백돌', noble: '고귀', gray: '회색빛', navy: '네이비빛', gold: '금빛', dragon: '용', beast: '야수', bird: '새', serpent: '뱀', blossom: '꽃', moon: '달', blade: '검', gem: '보석', machine: '기계', none: '기본' };
 // 컨셉 글에서 주제 찾기 (render.js 의 그림 주제 + 이름 전용 주제)
 const NAME_KW = {
   metal: ['메탈', '매탈', '금속', '강철', '철', '쇠', '크롬', '은색', 'metal', 'steel'],

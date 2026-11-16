@@ -541,6 +541,9 @@ const THEMES = [
   { id: 'deep', ko: '심해', kw: ['심해', '깊은 바다', '해저', 'abyss', 'deep sea'], sky: ['#000510', '#021a33', '#06486b'], floor: ['#04263a', '#00060c'], grid: 'rgba(90,200,255,.16)', accent: '#5fe8ff', part: 'bubble', env: 'abyss', ai: 'BACKGROUND RULE: the DEEP SEA abyss — dark, deep navy and blue darkness, mysterious and silent, faint shafts of light falling from far above, bioluminescent glows and drifting particles in the depths, NO beach, NO sky, NO surface waves. EFFECTS: every skill effect is shaped with streams of rising air bubbles, swirling underwater currents and flowing ribbons of water around the stone.' },
   { id: 'sea', ko: '바다', kw: ['바다', '물', '파도', '해양', '인어', 'sea', 'ocean', 'water'], sky: ['#021a24', '#0b5a6e', '#59e0d6'], floor: ['#0f5566', '#04202a'], grid: 'rgba(160,255,240,.25)', accent: '#9ffcf0', part: 'bubble', env: 'waves' },
   { id: 'cosmic', ko: '우주', kw: ['우주', '별', '은하', '성운', '행성', '달', 'cosmic', 'galaxy', 'space', 'star'], sky: ['#03020c', '#1d0f4a', '#7b3fd0'], floor: ['#1a1040', '#05030f'], grid: 'rgba(200,160,255,.3)', accent: '#ffd6ff', part: 'star', env: 'nebula', ai: 'BACKGROUND RULE (very important): deep space WITHOUT any galaxies — NO galaxies, NO spiral shapes, NO planets, NO black hole, NO landscape. Instead the space is filled with thick, TANGLED COSMIC DUST: swirling, intertwined clouds and ribbons of colourful nebula gas and dark dust lanes twisting through each other in a rich chaotic pattern, with a field of ASTEROIDS — rugged rocky asteroids of many sizes floating and tumbling around the stone, some near and big, some far and small, lit by rim light. EFFECTS: INTENSE LIGHT everywhere — blinding light bursts, brilliant starburst flares, lens flares and beams of light piercing through the dust, glowing hot edges on the asteroids.' },
+  { id: 'gray', ko: '회색빛', kw: ['회색', '잿빛', '그레이', '은회색', '은빛', '실버', 'gray', 'grey', 'silver'], sky: ['#0d0f12', '#3a3f46', '#9aa3ad'], floor: ['#6b7178', '#24272b'], grid: 'rgba(220,225,232,.25)', accent: '#e6ebf0', part: 'mote', env: 'tone', ai: 'COLOUR THEME: GREYISH — the whole scene uses a refined, muted palette of ash grey, silver grey and charcoal with soft cool highlights and a misty grey haze, elegant and calm; the effects glow in pale silver-white.' },
+  { id: 'navy', ko: '네이비빛', kw: ['네이비', '남색', '감청', '군청', '곤색', 'navy', 'indigo'], sky: ['#02040e', '#0b1a44', '#2c4a9a'], floor: ['#14244f', '#040a1c'], grid: 'rgba(120,160,255,.22)', accent: '#8fb4ff', part: 'mote', env: 'tone', ai: 'COLOUR THEME: NAVY — deep navy blue and midnight blue tones dominate the whole scene, rich dark indigo shadows with crisp cool-blue highlights, sophisticated and calm; the effects glow in cool sapphire blue and silver.' },
+  { id: 'gold', ko: '금빛', kw: ['금빛', '금색', '황금빛', '황금', '골드', 'gold', 'golden'], sky: ['#140c02', '#5a3c0c', '#e3b04a'], floor: ['#8a6420', '#2a1a05'], grid: 'rgba(255,215,120,.3)', accent: '#ffd66b', part: 'mote', env: 'tone', ai: 'COLOUR THEME: GOLDEN — warm radiant gold light floods the whole scene: shimmering golden haze, gilded highlights, rich amber and honey tones and glittering gold dust in the air; the effects glow in brilliant gold.' },
   { id: 'arcane', ko: '알까기판', kw: [], sky: ['#0a0c1e', '#23306b', '#6b86e0'], floor: ['#d7a45a', '#7a4f22'], grid: 'rgba(80,40,0,.45)', accent: '#ffd88a', part: 'mote', env: 'arcane' },
 ];
 function pickThemes(concept) {
@@ -866,6 +869,13 @@ function drawEnv(c, layer) {
       }
       g.restore();
     }
+  } else if (env === 'tone') {
+    if (layer === 'back') {
+      g.save(); g.globalCompositeOperation = 'lighter';
+      for (let i = 0; i < 6 + t; i++) { const a = -Math.PI / 2 + (i - 3) * .2; g.fillStyle = rgba(th.accent, .04 + t * .01); g.beginPath(); g.moveTo(400, -40); g.lineTo(400 + Math.cos(a - .05) * 1400, -40 + Math.sin(a - .05) * 1400); g.lineTo(400 + Math.cos(a + .05) * 1400, -40 + Math.sin(a + .05) * 1400); g.closePath(); g.fill(); }
+      g.restore();
+      for (let i = 0; i < 10; i++) radial(g, rnd() * W, 120 + rnd() * (HZ - 80), 120 + rnd() * 160, i % 2 ? th.sky[2] : th.accent, .12, 'lighter');
+    } else for (let i = 0; i < 8; i++) radial(g, rnd() * W, H - rnd() * 160, 90 + rnd() * 80, th.accent, .14, 'lighter');
   } else if (env === 'arcane') {
     if (layer === 'back') {
       g.save(); g.globalCompositeOperation = 'lighter'; g.strokeStyle = rgba(th.accent, .22); g.lineWidth = 2;
@@ -1426,7 +1436,7 @@ function renderArt(req, seed) {
   const mainCol = skills[0] ? colFor(skills[0]) : th.accent;
   drawSky(ctx); drawEnv(ctx, 'back'); drawFloor(ctx);
   const cloaked = skills.some(s => s.id === 'cloak'); // 은신: 알 뒤 후광을 줄여야 비쳐 보임
-  const fxs = fxList(req), noFx = fxs[0] === 'none' && !skills.length; ctx.noFx = noFx;
+  const fxs = effFx(req), noFx = fxs[0] === 'none' && !skills.length; ctx.noFx = noFx;
   if (t >= 3 && !noFx) { radial(g, 400, 620, 360, mainCol, (th.bright ? .22 : .42) * (cloaked ? .3 : 1), 'lighter'); if (isNoble(req.concept)) radial(g, 400, 560, 300, '#ffd76a', th.bright ? .15 : .3, 'lighter'); }
   for (const s of skills) SKFX[s.id].back?.(ctx, colFor(s));
   if (fxs.includes('aura') && !cloaked) BASEFX_DRAW.aura(ctx, mainCol);
@@ -1474,7 +1484,17 @@ const TIER_PROMPT = [
   'EPIC hero grade: explosive dramatic skill effects filling the scene, intense cinematic lighting and light rays, energy swirling around the stone, epic background',
   'LEGENDARY grade: the most spectacular version — overwhelming radiant aura, god rays, iridescent highlights, vortex of particles and magic, breathtaking epic background, masterpiece splash-art quality',
 ];
-const fxOf = req => fxList(req).map(id => BASE_FX.find(f => f.id === id)).filter(f => f?.ai);
+const FX_KW = {
+  wind: ['바람', '돌풍', '질풍', '회오리', 'wind'],
+  sparkle: ['반짝', '빛가루', '글리터', 'sparkle', 'glitter'],
+  aura: ['오라', '아우라', '기운', 'aura'],
+  heavy: ['묵직', '무거운', '무게감', '단단한', 'heavy'],
+  spark: ['스파크', '불똥', '전기 불꽃', 'spark'],
+};
+const conceptFx = concept => { const s = (concept || '').toLowerCase(); return Object.keys(FX_KW).filter(id => FX_KW[id].some(k => s.includes(k))); };
+// 실제로 쓰는 이펙트 = 고른 이펙트 + 컨셉 글에 나온 이펙트
+function effFx(o) { const a = fxList(o); return a[0] === 'none' ? a : [...new Set([...a, ...conceptFx(o?.concept)])]; }
+const fxOf = req => effFx(req).map(id => BASE_FX.find(f => f.id === id)).filter(f => f?.ai);
 function buildPrompt(req) {
   const t = Math.max(0, GRADES.indexOf(req.grade));
   const sk = (req.skills || []).map(id => SKILLS.find(s => s.id === id)).filter(Boolean);
@@ -1487,11 +1507,11 @@ function buildPrompt(req) {
     sk.length ? `Its power${sk.length > 1 ? 's (fused into one combined effect) radiate' : ' radiates'} around it: ${sk.map(s => s.en).join('; ')}.` : '',
     req.concept ? `Theme, world and colour mood of the background and effects (Korean): "${req.concept}".` : '',
     'Background: an atmospheric, painterly environment that matches the theme, with depth and bokeh — not a game board diagram, not a flat straight-down top view, no tutorial or explanation style.',
-    req.concept ? pickThemes(req.concept).slice(0, 2).map(th => th.ai).filter(Boolean).join(' ') : '',
+    req.concept ? pickThemes(req.concept).slice(0, 3).map(th => th.ai).filter(Boolean).join(' ') : '',
     req.engrave && sk.length ? `STONE ENGRAVING: the top face of the go stone is deeply ENGRAVED with a glowing emblem that clearly depicts its skill — ${sk.map(s => `${s.ko}/${s.id}: ${s.eng}`).join('; combined with ')} — framed by a simple thin ring made only of plain lines and dots. The engraving must obviously represent this skill. NO runes, NO letters, NO numbers, NO glyphs or symbols that look like writing anywhere on the stone.` : '',
     fxOf(req).length > 1 ? `COMBINE ALL OF THESE BASE EFFECTS around the stone at the same time, blended into one cohesive look (show every one of them clearly): ${fxOf(req).map((f, i) => `(${i + 1}) ${f.ai.replace(/^BASE EFFECT( around the stone)?: /, '')}`).join(' ')}` : fxOf(req)[0] ? `${fxOf(req)[0].ai} ${fxOf(req)[0].only || ''}` : '',
     `${(fxOf(req).length && !sk.length ? TIER_PROMPT_BG : TIER_PROMPT)[t]}.`,
-    `Style: high-end fantasy card game splash art, painterly digital illustration, rich colours, ${fxList(req)[0] === 'none' && !sk.length ? '' : 'glowing VFX, '}high contrast.`,
+    `Style: high-end fantasy card game splash art, painterly digital illustration, rich colours, ${effFx(req)[0] === 'none' && !sk.length ? '' : 'glowing VFX, '}high contrast.`,
     'Vertical 2:3, full-bleed edge to edge (no white margin, no border, no frame). Keep the very top-left corner, top-center and bottom-center slightly calmer because a card frame will be overlaid.',
     'Absolutely no text, letters, numbers or logos. No hands, no people.',
   ].filter(Boolean).join(' ');
