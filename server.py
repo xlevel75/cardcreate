@@ -136,6 +136,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                     return self._save_file(json.loads(self._body() or b"{}"))
                 if parts[2:3] == ["delete-files"]:
                     return self._delete_files(json.loads(self._body() or b"{}"))
+                if parts[2:3] == ["convert-cards"]:
+                    return self._convert_cards(json.loads(self._body() or b"{}"))
                 if parts[2:3] == ["clear-cards"]:
                     return self._clear_cards(json.loads(self._body() or b"{}"))
                 if parts[2:3] == ["open-folder"]:
@@ -159,23 +161,23 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             return self._json(400, {"error": {"message": "저장 폴더를 정해 주세요"}})
         os.makedirs(folder, exist_ok=True)
         path, n = os.path.join(folder, name + ".png"), 2
-        while os.path.exists(path) and not d.get("overwrite"):
+        while not d.get("overwrite") and (os.path.exists(path) or os.path.exists(path[:-4] + ".jpg")):
             path = os.path.join(folder, f"{name} ({n}).png"); n += 1
         with open(path, "wb") as f:
             f.write(base64.b64decode(d.get("data", "")))
         return self._json(200, {"ok": True, "path": path, "folder": folder})
 
     def _delete_files(self, d):
-        """조합에서 저장한 카드 PNG 지우기 (.png 파일만)"""
+        """조합에서 저장한 카드 그림 지우기 (.png · .jpg 파일만)"""
         removed = []
         for p in d.get("paths") or []:
             p = os.path.abspath(os.path.expanduser(str(p)))
-            if p.lower().endswith(".png") and os.path.isfile(p):
+            if p.lower().endswith((".png", ".jpg")) and os.path.isfile(p):
                 os.remove(p); removed.append(p)
         return self._json(200, {"ok": True, "removed": removed})
 
     def _clear_cards(self, d):
-        """저장 폴더 밑 card / cardonly 폴더의 PNG 전부 지우기"""
+        """저장 폴더 밑 card / cardonly 폴더의 카드 그림(PNG · JPG) 전부 지우기"""
         base = (d.get("folder") or "").strip()
         if not base:
             return self._json(400, {"error": {"message": "저장 폴더를 정해 주세요"}})
@@ -185,9 +187,70 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             if os.path.isdir(folder):
                 for f in os.listdir(folder):
                     p = os.path.join(folder, f)
-                    if f.lower().endswith(".png") and os.path.isfile(p):
+                    if f.lower().endswith((".png", ".jpg")) and os.path.isfile(p):
                         os.remove(p); n += 1
         return self._json(200, {"ok": True, "count": n})
+
+    def _convert_cards(self, d):
+        """저장 폴더 밑 card / cardonly 의 카드 그림을 JPG로 바꾸고, 가로·세로를 4의 배수로 맞춤
+        - PNG → JPG (투명한 곳은 bg 색으로 채움), 원래 PNG는 지움
+        - 이미 JPG인데 크기가 4의 배수가 아니면 크기만 맞춰 다시 저장"""
+        base = (d.get("folder") or "").strip()
+        if not base:
+            return self._json(400, {"error": {"message": "저장 폴더를 정해 주세요"}})
+        try:
+            from PIL import Image
+        except ImportError:
+            return self._json(500, {"error": {"message": "그림 변환 도구(Pillow)가 없습니다. 명령 창에서  pip install pillow  를 실행한 뒤 서버를 다시 켜 주세요"}})
+        bg = (d.get("bg") or "#000000").lstrip("#")
+        bg = tuple(int(bg[i:i + 2], 16) for i in (0, 2, 4)) if re.fullmatch(r"[0-9a-fA-F]{6}", bg) else (0, 0, 0)
+        quality = max(60, min(100, int(d.get("quality") or 92)))
+        base = os.path.abspath(os.path.expanduser(base))
+        out = {"ok": True, "converted": 0, "resized": 0, "skipped": 0, "before": 0, "after": 0, "renamed": {}, "errors": []}
+        for sub in ("card", "cardonly"):
+            folder = os.path.join(base, sub)
+            if not os.path.isdir(folder):
+                continue
+            for f in sorted(os.listdir(folder)):
+                p, low = os.path.join(folder, f), f.lower()
+                if not os.path.isfile(p) or not low.endswith((".png", ".jpg", ".jpeg")):
+                    continue
+                try:
+                    size0 = os.path.getsize(p)
+                    with Image.open(p) as im:
+                        im.load()
+                        w, h = im.size
+                        w4, h4 = max(4, round(w / 4) * 4), max(4, round(h / 4) * 4)
+                        is_png = low.endswith(".png")
+                        if not is_png and (w4, h4) == (w, h):
+                            out["skipped"] += 1; out["before"] += size0; out["after"] += size0
+                            continue
+                        if im.mode in ("RGBA", "LA", "P", "PA"):
+                            im = im.convert("RGBA")
+                            flat = Image.new("RGB", im.size, bg)
+                            flat.paste(im, mask=im.getchannel("A"))
+                            im = flat
+                        else:
+                            im = im.convert("RGB")
+                        if (w4, h4) != (w, h):
+                            im = im.resize((w4, h4), Image.LANCZOS); out["resized"] += 1
+                        stem = os.path.splitext(f)[0]
+                        dst = os.path.join(folder, stem + ".jpg")
+                        if is_png:  # 같은 이름의 JPG가 이미 있으면 (2) (3) … 붙임
+                            n = 2
+                            while os.path.exists(dst):
+                                dst = os.path.join(folder, f"{stem} ({n}).jpg"); n += 1
+                        tmp = dst + ".tmp"
+                        im.save(tmp, "JPEG", quality=quality, optimize=True)
+                    os.replace(tmp, dst)
+                    if os.path.abspath(dst) != os.path.abspath(p):
+                        os.remove(p); out["renamed"][p] = dst
+                    if is_png:
+                        out["converted"] += 1
+                    out["before"] += size0; out["after"] += os.path.getsize(dst)
+                except Exception as e:
+                    out["errors"].append(f"{f}: {type(e).__name__}: {e}")
+        return self._json(200, out)
 
     def _open_folder(self, d):
         folder = os.path.abspath(os.path.expanduser((d.get("folder") or "").strip()))
