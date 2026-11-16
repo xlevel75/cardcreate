@@ -174,15 +174,20 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             p = os.path.abspath(os.path.expanduser(str(p)))
             if p.lower().endswith((".png", ".jpg")) and os.path.isfile(p):
                 os.remove(p); removed.append(p)
+            folder, f = os.path.split(p)
+            if os.path.basename(folder).lower() == "cardonly":  # jpg 폴더에 만든 JPG도 함께 지움
+                j = os.path.join(os.path.dirname(folder), "jpg", os.path.splitext(f)[0] + ".jpg")
+                if os.path.isfile(j):
+                    os.remove(j); removed.append(j)
         return self._json(200, {"ok": True, "removed": removed})
 
     def _clear_cards(self, d):
-        """저장 폴더 밑 card / cardonly 폴더의 카드 그림(PNG · JPG) 전부 지우기"""
+        """저장 폴더 밑 card / cardonly / jpg 폴더의 카드 그림(PNG · JPG) 전부 지우기"""
         base = (d.get("folder") or "").strip()
         if not base:
             return self._json(400, {"error": {"message": "저장 폴더를 정해 주세요"}})
         base, n = os.path.abspath(os.path.expanduser(base)), 0
-        for sub in ("card", "cardonly"):
+        for sub in ("card", "cardonly", "jpg"):
             folder = os.path.join(base, sub)
             if os.path.isdir(folder):
                 for f in os.listdir(folder):
@@ -192,9 +197,9 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         return self._json(200, {"ok": True, "count": n})
 
     def _convert_cards(self, d):
-        """저장 폴더 밑 card / cardonly 의 카드 그림을 JPG로 바꾸고, 가로·세로를 4의 배수로 맞춤
-        - PNG → JPG (투명한 곳은 bg 색으로 채움), 원래 PNG는 지움
-        - 이미 JPG인데 크기가 4의 배수가 아니면 크기만 맞춰 다시 저장"""
+        """cardonly 의 그림을 JPG로 만들어 저장 폴더 밑 jpg 폴더에 저장 (cardonly 원본은 그대로 둠)
+        - 둘레의 투명한 테두리는 잘라 내고 카드 그림 부분만 남김
+        - 남은 크기가 4의 배수가 아니면 가운데 기준으로 조금 더 잘라 4의 배수로 맞춤"""
         base = (d.get("folder") or "").strip()
         if not base:
             return self._json(400, {"error": {"message": "저장 폴더를 정해 주세요"}})
@@ -202,54 +207,39 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             from PIL import Image
         except ImportError:
             return self._json(500, {"error": {"message": "그림 변환 도구(Pillow)가 없습니다. 명령 창에서  pip install pillow  를 실행한 뒤 서버를 다시 켜 주세요"}})
-        bg = (d.get("bg") or "#000000").lstrip("#")
-        bg = tuple(int(bg[i:i + 2], 16) for i in (0, 2, 4)) if re.fullmatch(r"[0-9a-fA-F]{6}", bg) else (0, 0, 0)
         quality = max(60, min(100, int(d.get("quality") or 92)))
         base = os.path.abspath(os.path.expanduser(base))
-        out = {"ok": True, "converted": 0, "resized": 0, "skipped": 0, "before": 0, "after": 0, "renamed": {}, "errors": []}
-        for sub in ("card", "cardonly"):
-            folder = os.path.join(base, sub)
-            if not os.path.isdir(folder):
+        src, dst_dir = os.path.join(base, "cardonly"), os.path.join(base, "jpg")
+        if not os.path.isdir(src):
+            return self._json(404, {"error": {"message": "cardonly 폴더가 없습니다: " + src}})
+        os.makedirs(dst_dir, exist_ok=True)
+        out = {"ok": True, "count": 0, "trimmed": 0, "before": 0, "after": 0, "folder": dst_dir, "errors": [], "sizes": {}}
+        for f in sorted(os.listdir(src)):
+            p, low = os.path.join(src, f), f.lower()
+            if not os.path.isfile(p) or not low.endswith((".png", ".jpg", ".jpeg")):
                 continue
-            for f in sorted(os.listdir(folder)):
-                p, low = os.path.join(folder, f), f.lower()
-                if not os.path.isfile(p) or not low.endswith((".png", ".jpg", ".jpeg")):
-                    continue
-                try:
-                    size0 = os.path.getsize(p)
-                    with Image.open(p) as im:
-                        im.load()
-                        w, h = im.size
-                        w4, h4 = max(4, round(w / 4) * 4), max(4, round(h / 4) * 4)
-                        is_png = low.endswith(".png")
-                        if not is_png and (w4, h4) == (w, h):
-                            out["skipped"] += 1; out["before"] += size0; out["after"] += size0
-                            continue
-                        if im.mode in ("RGBA", "LA", "P", "PA"):
-                            im = im.convert("RGBA")
-                            flat = Image.new("RGB", im.size, bg)
-                            flat.paste(im, mask=im.getchannel("A"))
-                            im = flat
-                        else:
-                            im = im.convert("RGB")
-                        if (w4, h4) != (w, h):
-                            im = im.resize((w4, h4), Image.LANCZOS); out["resized"] += 1
-                        stem = os.path.splitext(f)[0]
-                        dst = os.path.join(folder, stem + ".jpg")
-                        if is_png:  # 같은 이름의 JPG가 이미 있으면 (2) (3) … 붙임
-                            n = 2
-                            while os.path.exists(dst):
-                                dst = os.path.join(folder, f"{stem} ({n}).jpg"); n += 1
-                        tmp = dst + ".tmp"
-                        im.save(tmp, "JPEG", quality=quality, optimize=True)
-                    os.replace(tmp, dst)
-                    if os.path.abspath(dst) != os.path.abspath(p):
-                        os.remove(p); out["renamed"][p] = dst
-                    if is_png:
-                        out["converted"] += 1
-                    out["before"] += size0; out["after"] += os.path.getsize(dst)
-                except Exception as e:
-                    out["errors"].append(f"{f}: {type(e).__name__}: {e}")
+            try:
+                with Image.open(p) as im:
+                    im.load()
+                    im = im.convert("RGBA")
+                    alpha = im.getchannel("A")
+                    box = alpha.point(lambda v: 255 if v > 0 else 0).getbbox() or (0, 0) + im.size
+                    l, t, r, b = box
+                    w, h = r - l, b - t
+                    w4, h4 = max(4, w // 4 * 4), max(4, h // 4 * 4)  # 4의 배수로 (넘치는 만큼 가운데 기준으로 더 자름)
+                    if (w4, h4) != (w, h):
+                        out["trimmed"] += 1
+                    l += (w - w4) // 2; t += (h - h4) // 2
+                    im = im.crop((l, t, l + w4, t + h4))
+                    flat = Image.new("RGB", im.size, (0, 0, 0))  # 반투명 가장자리가 남으면 검정 위에 합침
+                    flat.paste(im, mask=im.getchannel("A"))
+                    dst = os.path.join(dst_dir, os.path.splitext(f)[0] + ".jpg")
+                    flat.save(dst + ".tmp", "JPEG", quality=quality, optimize=True)
+                os.replace(dst + ".tmp", dst)
+                out["count"] += 1; out["before"] += os.path.getsize(p); out["after"] += os.path.getsize(dst)
+                k = f"{w4}x{h4}"; out["sizes"][k] = out["sizes"].get(k, 0) + 1
+            except Exception as e:
+                out["errors"].append(f"{f}: {type(e).__name__}: {e}")
         return self._json(200, out)
 
     def _open_folder(self, d):

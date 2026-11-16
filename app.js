@@ -647,7 +647,7 @@ async function postApi(path, body) {
 }
 function rerenderSaves() { renderVault(); if ($('#tab-combine').classList.contains('on')) renderCombine(); }
 async function deleteCardSave(a, s) {
-  if (!confirm(`저장한 카드 “${s.grade} ${s.name || '(이름 없음)'}”을(를) 삭제하시겠습니까?\n(card · cardonly 폴더의 그림 파일 2장도 함께 지웁니다)`)) return;
+  if (!confirm(`저장한 카드 “${s.grade} ${s.name || '(이름 없음)'}”을(를) 삭제하시겠습니까?\n(card · cardonly 폴더의 그림 파일과 jpg 폴더의 JPG도 함께 지웁니다)`)) return;
   try {
     const paths = [s.card, s.only].filter(Boolean);
     const j = paths.length ? await postApi('/api/delete-files', { paths }) : { removed: [] };
@@ -974,7 +974,7 @@ function initSaveBox() {
   // 클리어: 저장 폴더 밑 card · cardonly 의 PNG 전부 삭제 + 모든 그림의 저장 표시 초기화
   $('#svClear').onclick = async () => {
     const f = $('#svFolder').value.trim(); if (!f) return toast('저장 폴더를 먼저 정해 주세요');
-    if (!confirm(`정말 클리어할까요?\n\n${sub(f, 'card')}\n${sub(f, 'cardonly')}\n\n위 두 폴더의 카드 그림(PNG · JPG)을 모두 지우고, 보관함 그림의 저장 표시도 모두 초기화합니다.\n되돌릴 수 없습니다.`)) return;
+    if (!confirm(`정말 클리어할까요?\n\n${sub(f, 'card')}\n${sub(f, 'cardonly')}\n${sub(f, 'jpg')}\n\n위 세 폴더의 카드 그림(PNG · JPG)을 모두 지우고, 보관함 그림의 저장 표시도 모두 초기화합니다.\n되돌릴 수 없습니다.`)) return;
     try {
       const j = await postApi('/api/clear-cards', { folder: f });
       const marked = state.arts.filter(x => cardSaves(x).length);
@@ -982,23 +982,23 @@ function initSaveBox() {
       toast(`🧹 카드 그림 ${j.count}장 삭제 · 저장 표시 ${marked.length}개 그림 초기화`); rerenderSaves();
     } catch (e) { toast('⚠ 클리어 실패: ' + e.message); }
   };
-  // JPG로 전환: card · cardonly 의 그림을 모두 JPG로 (가로·세로는 4의 배수로), 보관함의 저장 기록 경로도 .jpg로 고침
+  // JPG로 전환: cardonly 그림 → 투명한 테두리를 잘라 내고 JPG로 jpg 폴더에 저장 (크기는 4의 배수로 자름, 원본은 그대로)
   $('#svJpg').onclick = async () => {
     const f = $('#svFolder').value.trim(); if (!f) return toast('저장 폴더를 먼저 정해 주세요');
-    const bg = $('#svJpgBg').value;
-    if (!confirm(`카드 이미지를 JPG로 전환할까요?\n\n${sub(f, 'card')}\n${sub(f, 'cardonly')}\n\n· 위 두 폴더의 PNG를 모두 JPG로 바꾸고 원래 PNG는 지웁니다.\n· 가로·세로가 4의 배수가 아니면 4의 배수로 맞춥니다.\n· 투명했던 곳은 ${bg} 색으로 채워집니다.\n되돌릴 수 없습니다.`)) return;
+    if (!confirm(`cardonly 그림을 JPG로 전환할까요?
+
+${sub(f, 'cardonly')}
+→ ${sub(f, 'jpg')}
+
+· 둘레의 투명한 테두리를 잘라 내고 카드 그림 부분만 JPG로 저장합니다.
+· 크기가 4의 배수가 아니면 4의 배수로 맞게 조금 더 잘라 냅니다.
+· cardonly 원본은 그대로 두고, jpg 폴더의 같은 이름 파일은 새로 덮어씁니다.`)) return;
     const btn = $('#svJpg'), label = btn.textContent; btn.disabled = true; btn.textContent = '전환 중…';
     try {
-      const j = await postApi('/api/convert-cards', { folder: f, bg });
-      const ren = j.renamed || {}, fix = p => ren[p] || p;
-      for (const x of state.arts) {
-        const list = cardSaves(x); if (!list.some(s => ren[s.card] || ren[s.only])) continue;
-        x.saves = list.map(s => ({ ...s, card: fix(s.card), only: fix(s.only) })); await DB.put('arts', x);
-      }
-      const mb = n => (n / 1048576).toFixed(1) + 'MB';
-      toast(`🗜 JPG로 ${j.converted}장 전환 · 크기 맞춤 ${j.resized}장 · ${mb(j.before)} → ${mb(j.after)}${j.errors.length ? ` · ⚠ 실패 ${j.errors.length}장` : ''}`);
+      const j = await postApi('/api/convert-cards', { folder: f });
+      const mb = n => (n / 1048576).toFixed(1) + 'MB', sizes = Object.entries(j.sizes || {}).map(([k, n]) => `${k}${Object.keys(j.sizes).length > 1 ? ` ${n}장` : ''}`).join(', ');
+      toast(`🗜 jpg 폴더에 ${j.count}장 저장${sizes ? ` (${sizes})` : ''} · ${mb(j.before)} → ${mb(j.after)}${j.errors.length ? ` · ⚠ 실패 ${j.errors.length}장` : ''}`);
       if (j.errors.length) console.warn('JPG 전환 실패', j.errors);
-      rerenderSaves();
     } catch (e) { toast('⚠ JPG 전환 실패: ' + e.message); }
     finally { btn.disabled = false; btn.textContent = label; }
   };
