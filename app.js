@@ -736,7 +736,7 @@ function renderCombine() {
     const art = C.artId === '__temp' ? C.temp : state.arts.find(a => a.id === C.artId);
     const g = autoCardName({ concept: art?.concept || '', skills: C.skills || [], t: C.t, king: cmbKing(), role: C.role, stone: art?.stone, fx: fxList(art) }, [C.name]);
     const ko = id => NAME_MOOD_KO[id] || SKILLS.find(s => s.id === id)?.ko || ROLES.find(r => r.id === id)?.ko || id;
-    C.name = g.name; C.nameTouched = true; $('#cName').value = g.name; $('#cNameStyle').textContent = `스타일: ${g.style} · 분위기: ${g.moods.map(ko).join('·')} · 핵심: ${g.cores.map(ko).join('·')}`; drawCombine();
+    C.name = g.name; C.nameTouched = true; $('#cName').value = g.name; $('#cNameStyle').textContent = `스타일: ${g.style} · 등급: ${g.grade} · 분위기: ${g.moods.map(ko).join('·')} · 핵심: ${g.cores.map(ko).join('·')}`; drawCombine();
   };
   $('#cShowName').checked = C.showName; $('#cShowName').onchange = e => { C.showName = e.target.checked; drawCombine(); };
   $('#cShowSkills').checked = C.showSkills; $('#cShowSkills').onchange = e => { C.showSkills = e.target.checked; drawCombine(); };
@@ -774,8 +774,17 @@ const NAME_MOOD = {
   black: { en: ['블랙', '오닉스', '오브시디언', '젯', '미드나잇'], gr: ['닉스', '에레보스'], la: ['니게르', '아테르', '녹스'], ko: ['흑요', '먹빛', '칠흑', '흑진주', '흑요석'], ka: ['검은', '새까만', '깊은'] },
   white: { en: ['화이트', '펄', '아이보리', '스노우', '문스톤'], gr: ['셀레네', '레우코스'], la: ['알부스', '니베우스', '마르가리타'], ko: ['진주', '설백', '백옥', '순백', '흰눈'], ka: ['하얀', '새하얀', '희디흰'] },
   noble: { en: ['로열', '골든', '노블', '임페리얼', '그레이스'], gr: ['헤라', '아테나'], la: ['노빌리스', '아우레우스', '레갈리스'], ko: ['황금', '귀족', '기품', '왕관'], ka: ['고귀한', '기품 있는', '황금빛'] },
+  dragon: { en: ['드래곤', '와이번', '드레이크', '스케일', '팽'], gr: ['라돈', '피톤', '티폰'], la: ['드라코', '세르펜스', '스콰마'], ko: ['용', '비룡', '용린', '역린', '용아'], ka: ['용맹한', '포효하는', '비늘 돋친'] },
+  beast: { en: ['울프', '팽', '타이거', '레오', '하울', '클로', '비스트'], gr: ['케르베로스', '네메아', '리카온'], la: ['루푸스', '레오', '티그리스', '페라'], ko: ['늑대', '맹수', '호랑이', '사자', '야수', '발톱', '송곳니'], ka: ['굶주린', '사나운', '울부짖는', '야성의'] },
+  bird: { en: ['이글', '호크', '팔콘', '레이븐', '윙', '페더', '스카이'], gr: ['피닉스', '그리핀', '아이톤'], la: ['아퀼라', '코르부스', '알라', '아비스'], ko: ['매', '독수리', '날개', '깃털', '까마귀', '봉황'], ka: ['날아오르는', '비상하는', '하늘을 가르는'] },
+  serpent: { en: ['서펀트', '바이퍼', '코브라', '히드라', '베놈'], gr: ['히드라', '메두사', '에키드나'], la: ['앙귀스', '베네눔', '세르펜스'], ko: ['뱀', '독사', '맹독', '이무기'], ka: ['독을 품은', '휘감는', '서늘한'] },
+  blossom: { en: ['블로섬', '로즈', '로터스', '페탈', '사쿠라', '릴리'], gr: ['클로리스', '안테아'], la: ['로사', '플로스', '로투스', '릴리움'], ko: ['벚꽃', '장미', '연꽃', '꽃잎', '꽃비', '매화'], ka: ['흩날리는', '피어나는', '향기로운'] },
+  moon: { en: ['문', '루나', '크레센트', '이클립스', '나이트폴'], gr: ['셀레네', '아르테미스', '닉스'], la: ['루나', '녹스', '크레스켄스'], ko: ['달빛', '초승달', '보름달', '월광', '밤'], ka: ['달빛 어린', '고요한', '은은한'] },
+  blade: { en: ['블레이드', '소드', '엣지', '세이버', '카타나', '슬래시'], gr: ['아레스', '아킬레우스', '아이아스'], la: ['글라디우스', '엔시스', '아키에스'], ko: ['검', '칼날', '검무', '일섬', '무사', '검기'], ka: ['예리한', '벼려진', '번뜩이는'] },
+  gem: { en: ['루비', '사파이어', '다이아', '에메랄드', '오팔', '토파즈', '쥬얼'], gr: ['아다마스', '크리스탈로스'], la: ['겜마', '아다만투스', '루베우스'], ko: ['보석', '홍옥', '청옥', '금강', '보옥', '진주'], ka: ['영롱한', '빛나는', '값진'] },
+  machine: { en: ['메카', '사이버', '네온', '기어', '코어', '넥서스', '프로토'], gr: ['탈로스', '헤파이스토스'], la: ['마키나', '메카니카', '누클레우스'], ko: ['기계', '태엽', '강철심장', '동력', '회로'], ka: ['정밀한', '가동하는', '차가운'] },
 };
-const NAME_MOOD_KO = { ice: '얼음', fire: '불꽃', nature: '자연', divine: '신화', dark: '어둠', storm: '번개', deep: '심해', sea: '바다', cosmic: '우주', arcane: '신비', metal: '메탈', arena: '경기장', humble: '소박', wind: '바람', light: '빛', sparkle: '반짝', aura: '오라', heavy: '묵직', black: '흑돌', white: '백돌', noble: '고귀', none: '기본' };
+const NAME_MOOD_KO = { ice: '얼음', fire: '불꽃', nature: '자연', divine: '신화', dark: '어둠', storm: '번개', deep: '심해', sea: '바다', cosmic: '우주', arcane: '신비', metal: '메탈', arena: '경기장', humble: '소박', wind: '바람', light: '빛', sparkle: '반짝', aura: '오라', heavy: '묵직', black: '흑돌', white: '백돌', noble: '고귀', dragon: '용', beast: '야수', bird: '새', serpent: '뱀', blossom: '꽃', moon: '달', blade: '검', gem: '보석', machine: '기계', none: '기본' };
 // 컨셉 글에서 주제 찾기 (render.js 의 그림 주제 + 이름 전용 주제)
 const NAME_KW = {
   metal: ['메탈', '매탈', '금속', '강철', '철', '쇠', '크롬', '은색', 'metal', 'steel'],
@@ -783,7 +792,22 @@ const NAME_KW = {
   humble: ['심플', '겸손', '평범', '회색', '소박', '수수', '단순', 'simple', 'gray', 'grey'],
   wind: ['바람', '가속', '질주', '속도', '돌풍', 'wind', 'speed'],
   light: ['밝은', '흰색', '하얀', '빛', '백색', 'white', 'light', 'bright'],
+  dragon: ['용', '드래곤', '비룡', '와이번', 'dragon'],
+  beast: ['늑대', '호랑이', '사자', '야수', '맹수', '곰', '여우', '표범', 'wolf', 'tiger', 'lion', 'beast'],
+  bird: ['독수리', '까마귀', '봉황', '날개', '깃털', '그리핀', 'bird', 'eagle', 'wing'],
+  serpent: ['뱀', '독사', '히드라', '이무기', '코브라', 'snake', 'serpent'],
+  blossom: ['벚꽃', '장미', '연꽃', '꽃잎', '매화', 'blossom', 'rose', 'sakura', 'lotus'],
+  moon: ['달빛', '초승달', '보름', '월광', '밤하늘', 'moon', 'lunar'],
+  blade: ['검객', '검사', '장검', '칼', '무사', '사무라이', '기사', '검객', 'sword', 'blade', 'knight'],
+  gem: ['보석', '루비', '사파이어', '다이아', '에메랄드', '오팔', '진주', 'gem', 'jewel', 'ruby'],
+  machine: ['기계', '로봇', '사이버', '네온', '메카', '미래', '태엽', 'robot', 'cyber', 'neon', 'mecha'],
 };
+// 컨셉 글에 직접 쓴 낱말 (예: '얼음 용' → 얼음·용) — 한글 1~4자, 조사·흔한 말은 뺌
+const NAME_STOP = new Set(['느낌', '스타일', '배경', '이펙트', '효과', '모양', '알', '돌', '카드', '이미지', '그림', '같은', '있는', '그리고', '많이', '조금', '아주', '매우', '색', '색깔', '주위', '위', '아래', '컨셉', '속', '안', '밖', '옆', '앞', '뒤', '것', '등', '때', '중']);
+function conceptWords(concept) {
+  return [...new Set((concept || '').split(/[\s,·.!?/()\[\]~"'“”]+/).filter(w => !(w.length > 1 && /(는|운|한|던|된|른|얀|란|은|ㄴ)$/.test(w))).map(w => w.length > 1 ? w.replace(/(의|을|를|이|가|은|는|에|와|과|로|으로|처럼|같은)$/, '') : w)
+    .filter(w => /^[가-힣]{1,4}$/.test(w) && !NAME_STOP.has(w)))];
+}
 // 핵심 단어장: 스킬·역할
 const NAME_CORE = {
   pierce: { en: ['피어서', '랜서', '스피어', '드릴', '애로우', '니들', '스팅어'], la: ['하스타', '쿠스피스', '사기타', '필룸'], ko: ['관통자', '창', '꿰뚫는 자', '화살', '창끝', '일격'] },
@@ -798,13 +822,29 @@ const NAME_CORE = {
   cloak: { en: ['팬텀', '고스트', '베일', '셰이드', '미라주', '스펙터'], la: ['라텐스', '움브라', '팔리둠', '스펙트룸'], ko: ['유령', '은둔자', '그림자', '신기루', '환영'] },
   scout: { en: ['오라클', '워처', '시커', '아이', '레이더', '스카우트'], la: ['오쿨루스', '스페쿨라토르', '비덴스'], ko: ['천리안', '감시자', '눈', '파수꾼', '예언자'] },
   support: { en: ['세이지', '커맨더', '바드', '헤럴드', '캡틴', '케어러'], la: ['두크스', '아욱실리움', '사나토르'], ko: ['인도자', '지휘관', '축복', '수호천사', '치유사'] },
-  atk: { en: ['워리어', '버서커', '슬레이어', '헌터', '스트라이커'], la: ['벨라토르', '글라디우스', '빅토르'], ko: ['전사', '투사', '사냥꾼', '검객', '돌격대장'] },
-  def: { en: ['나이트', '팔라딘', '키퍼', '워든', '홀더'], la: ['데펜소르', '쿠스토스', '카스텔룸'], ko: ['기사', '수문장', '수호기사', '철벽', '방패병'] },
-  dis: { en: ['트릭스터', '조커', '일루저니스트', '로그', '위치'], la: ['돌루스', '프락스', '말레피쿠스'], ko: ['책략가', '마술사', '교란자', '여우', '요술사'] },
-  sup: { en: ['힐러', '세인트', '프리스트', '뮤즈', '엔젤'], la: ['사나토르', '안겔루스', '사케르도스'], ko: ['치유사', '성자', '사제', '천사', '조력자'] },
+  atk: { en: ['워리어', '버서커', '슬레이어', '헌터', '스트라이커', '브레이커', '레이더', '챔피언'], la: ['벨라토르', '글라디우스', '빅토르', '페르쿠소르'], ko: ['전사', '투사', '사냥꾼', '검객', '돌격대장', '파괴자', '선봉', '정복자'] },
+  def: { en: ['나이트', '팔라딘', '키퍼', '워든', '홀더', '가드', '타워', '바리케이드'], la: ['데펜소르', '쿠스토스', '카스텔룸', '프로텍토르'], ko: ['기사', '수문장', '수호기사', '철벽', '방패병', '성채', '버팀목', '보루'] },
+  dis: { en: ['트릭스터', '조커', '일루저니스트', '로그', '위치', '팬텀', '퍼펫티어', '미믹'], la: ['돌루스', '프락스', '말레피쿠스', '일루시오'], ko: ['책략가', '마술사', '교란자', '여우', '요술사', '도깨비', '꼭두각시', '훼방꾼'] },
+  sup: { en: ['힐러', '세인트', '프리스트', '뮤즈', '엔젤', '오라클', '가이드', '서포터'], la: ['사나토르', '안겔루스', '사케르도스', '아우실리아'], ko: ['치유사', '성자', '사제', '천사', '조력자', '길잡이', '등불', '수호령'] },
   king: { en: ['킹', '로드', '소버린', '모나크', '엠페러'], la: ['렉스', '임페라토르', '도미누스', '레기나'], ko: ['왕', '제왕', '군주', '패왕', '대왕'] },
   none: { en: ['챔피언', '나이트', '워리어', '히어로'], la: ['빅토르', '헤로스', '파틴'], ko: ['전사', '용사', '영웅', '도전자'] },
 };
+// 역할 꾸밈말: 분위기 단어에 섞어 역할 성격이 이름에 묻어나게
+const NAME_ROLE_KA = {
+  atk: { ka: ['맹렬한', '거침없는', '날카로운', '사나운', '돌진하는'], en: ['레이지', '퓨리', '스트라이크', '크림슨', '블러드'] },
+  def: { ka: ['굳건한', '흔들림 없는', '든든한', '버티는', '꺾이지 않는'], en: ['아이언', '스톤월', '스테디', '포트리스', '불워크'] },
+  dis: { ka: ['교활한', '변덕스러운', '알 수 없는', '장난스러운', '뒤틀린'], en: ['트릭', '미스트', '카오스', '퍼즐', '와일드카드'] },
+  sup: { ka: ['다정한', '따스한', '헌신적인', '온화한', '빛을 나누는'], en: ['그레이스', '블레스', '하모니', '케어', '헤븐리'] },
+  king: { ka: ['위대한', '군림하는', '고귀한', '절대적인'], en: ['로열', '임페리얼', '소버린', '그랜드'] },
+};
+// 등급 단어: C(일반)는 소박·풋풋하게, SS(전설)로 갈수록 웅장하게. pre = 앞에 붙는 확률
+const NAME_GRADE = [
+  { ka: ['작은', '새내기', '풋내기', '어린', '수수한', '꼬마'], en: ['리틀', '루키', '주니어', '미니', '베이비'], pre: .4, mood: 'humble' },
+  { ka: ['씩씩한', '다부진', '재빠른', '숙련된', '당찬'], en: ['브레이브', '에이스', '스마트', '볼드'], pre: .3 },
+  { ka: ['빛나는', '명예로운', '뛰어난', '이름난', '드높은'], en: ['엘리트', '프라임', '노블', '하이'], pre: .3 },
+  { ka: ['영웅의', '불굴의', '용맹한', '위대한', '천하무적'], en: ['히어로', '그랜드', '슈프림', '마스터'], pre: .35 },
+  { ka: ['전설의', '신화 속', '태초의', '불멸의', '절대'], en: ['레전드', '얼티밋', '이터널', '레전더리', '디바인'], pre: .45 },
+];
 const NAME_TITLE = { 2: ['프라임', '알파', '마크 II'], 3: ['렉스', '오메가', '아르케', '엑스'], 4: ['렉스', '엠페러', '오메가', '임페라토르', '아스트라', '제로'] };
 const NAME_KING = { en: ['킹', '로열', '임페리얼', '소버린'], la: ['렉스', '임페라토르', '도미누스'], ko: ['왕', '제왕', '군주', '패왕'], ka: ['위대한', '고귀한'], title: ['킹', '렉스', '엠페러', '임페라토르', '로드', '소버린'] };
 const NAME_STYLES = [
@@ -816,36 +856,46 @@ const NAME_STYLES = [
   { ko: '한글 + 영어', make: (M, K, p) => p([`${p(M.ka || M.ko)} ${p(K.en)}`, `${p(M.ko)}의 ${p(K.en)}`]) },
 ];
 // 카드 정보에서 분위기·핵심 단어장 고르기
-function namePools({ concept = '', skills = [], role, stone, fx = [], king }) {
+function namePools({ concept = '', skills = [], role, stone, fx = [], king, t = 0 }) {
   const s = concept.toLowerCase(), moods = [];
   for (const th of pickThemes(concept)) if (th.kw.length) moods.push(th.id);              // 그림 주제 (얼음·불꽃·…)
   for (const [id, kw] of Object.entries(NAME_KW)) if (kw.some(k => s.includes(k))) moods.push(id); // 이름 전용 주제
   for (const f of fx) if (NAME_MOOD[f]) moods.push(f); else if (f === 'spark') moods.push('storm');
   if (isNoble(concept)) moods.push('noble');
   if (!moods.length) moods.push('arcane');
+  if (t === 0 && !moods.includes('humble')) moods.push('humble');                           // 일반 등급은 소박한 단어도 가끔
   if (stone === 'black' || stone === 'white') moods.push(stone);                            // 알 색은 보조로
   const cores = [...skills.filter(id => NAME_CORE[id]), ...(role && NAME_CORE[role] ? [role] : [])];
   if (king && !cores.includes('king')) cores.push('king');
   if (!cores.length) cores.push('none');
-  return { moods: [...new Set(moods)], cores: [...new Set(cores)] };
+  return { moods: [...new Set(moods)], cores: [...new Set(cores)], words: conceptWords(concept) };
 }
 const NAME_HIST_MAX = 300;
 function autoCardName(info, avoid = []) {
   const r = Math.random, p = a => a[Math.floor(r() * a.length)], t = info.t ?? 0, king = !!info.king;
-  const { moods, cores } = namePools(info);
+  const { moods, cores, words } = namePools(info), role = info.role, RK = NAME_ROLE_KA[king ? 'king' : role], GR = NAME_GRADE[Math.min(4, Math.max(0, t))];
   const used = new Set([...LS.get('nameHist', []), ...state.arts.flatMap(a => cardSaves(a).map(s => s.name)).filter(Boolean), ...avoid]);
   let out;
   for (let tries = 0; tries < 40; tries++) {
     // 분위기: 컨셉 주제가 앞쪽이라 조금 더 자주, 알 색 같은 보조 단어도 가끔
     const M = { ...NAME_MOOD[r() < .5 ? moods[0] : p(moods)] };
-    // 핵심: 스킬·역할 중 하나 (왕이면 왕 단어가 꼭 들어가게)
-    const kc = king && r() < .5 ? 'king' : p(cores), K = NAME_CORE[kc];
+    // 컨셉에 직접 쓴 낱말을 가끔 그대로 씀 (예: '얼음 용' → '용의 관통자')
+    if (words.length && r() < .35) M.ko = words;
+    // 역할·등급 꾸밈말을 분위기 단어에 섞음
+    if (RK) { M.ka = [...(M.ka || []), ...RK.ka]; M.en = [...M.en, ...RK.en]; }
+    M.ka = [...(M.ka || []), ...GR.ka];
+    // 핵심: 스킬·역할 중 하나 (역할은 조금 더 자주, 왕이면 왕 단어가 꼭 들어가게)
+    const kc = king && r() < .5 ? 'king' : role && NAME_CORE[role] && cores.length > 1 && r() < .4 ? role : p(cores), K = NAME_CORE[kc];
     if (king && kc !== 'king') { M.en = [...M.en, ...NAME_KING.en]; M.ka = [...(M.ka || []), ...NAME_KING.ka]; } // 왕 단어가 두 번 겹치지 않게
     const st = p(NAME_STYLES);
     let name = st.make(M, K, p);
+    // 등급 말머리: C는 '새내기·리틀', SS는 '전설의·레전드' 같은 말을 앞에 (한글 이름엔 한글, 외래어 이름엔 외래어)
+    const pre = r() < GR.pre ? p(st.plain ? GR.ka : r() < .5 ? GR.ka : GR.en) : '';
+    // 이미 꾸밈말로 시작하거나 '~의'가 겹치면 말머리는 생략 (작은 어린 …, 태초의 …의 … 방지)
+    if (pre && !name.includes(pre) && !(M.ka || []).some(k => name.startsWith(k)) && !(pre.endsWith('의') && name.includes('의 '))) name = `${pre} ${name}`;
     if (king) { if (!NAME_KING.title.concat(NAME_KING.en, NAME_KING.la, NAME_KING.ko, NAME_CORE.king.en, NAME_CORE.king.ko, NAME_CORE.king.la).some(w => name.includes(w))) name += ' ' + p(NAME_KING.title); }
-    else if (!st.plain && t >= 2 && r() < [0, 0, .3, .45, .6][t]) name += ' ' + p(NAME_TITLE[t]);
-    out = { name, style: st.ko, moods, cores };
+    else if (!pre && !st.plain && t >= 2 && r() < [0, 0, .3, .45, .6][t]) name += ' ' + p(NAME_TITLE[t]);
+    out = { name, style: st.ko, moods, cores, grade: GRADE_INFO[t]?.ko || '' };
     if (!used.has(name)) break;
   }
   LS.set('nameHist', [out.name, ...LS.get('nameHist', []).filter(x => x !== out.name)].slice(0, NAME_HIST_MAX));
