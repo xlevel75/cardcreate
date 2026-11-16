@@ -462,7 +462,7 @@ function submitRequest() {
   if (!G.skills.length && !G.concept.trim()) { toast('스킬이나 컨셉 중 하나는 입력해 주세요'); return; }
   const eng = ENGINES[G.engine];
   if (eng.key && !state.settings[eng.key]) { $('#apiBox').open = true; toast(`${eng.label} API 키를 설정에 입력해 주세요`); return; }
-  const req = { id: ++state.reqSeq, grade: G.grade, skills: [...G.skills], stone: G.stone, concept: G.concept.trim(), count: G.count, engine: G.engine, texture: G.texture !== false, engrave: !!G.engrave, king: !!G.king, fx: [...fxList(G)], created: Date.now() };
+  const req = { id: ++state.reqSeq, grade: G.grade, skills: [...new Set([...G.skills, ...conceptSkills(G.concept)])], stone: G.stone, concept: G.concept.trim(), count: G.count, engine: G.engine, texture: G.texture !== false, engrave: !!G.engrave, king: !!G.king, fx: [...fxList(G)], created: Date.now() };
   $('#queue .empty')?.remove();
   const skillTxt = req.skills.map(id => SKILLS.find(s => s.id === id).ko).join(' + ') || '스킬 없음';
   const timer = el('span', { class: 'tag' }, '0초');
@@ -775,6 +775,7 @@ const NAME_MOOD = {
   heavy: { en: ['타이탄', '골렘', '모놀리스', '헤비', '그래나이트', '보울더', '퀘이크'], gr: ['아틀라스', '타이탄', '기가스', '크로노스'], la: ['그라비스', '몰레스', '삭숨', '포데루스'], ko: ['반석', '거암', '무게', '지진', '태산', '굉음'], ka: ['묵직한', '거대한', '흔들림 없는', '단단한'] },
   black: { en: ['블랙', '오닉스', '오브시디언', '젯', '미드나잇'], gr: ['닉스', '에레보스'], la: ['니게르', '아테르', '녹스'], ko: ['흑요', '먹빛', '칠흑', '흑진주', '흑요석'], ka: ['검은', '새까만', '깊은'] },
   white: { en: ['화이트', '펄', '아이보리', '스노우', '문스톤'], gr: ['셀레네', '레우코스'], la: ['알부스', '니베우스', '마르가리타'], ko: ['진주', '설백', '백옥', '순백', '흰눈'], ka: ['하얀', '새하얀', '희디흰'] },
+  brown: { en: ['브라운', '오크', '월넛', '앰버', '어스', '코퍼'], gr: ['가이아', '데메테르'], la: ['브루누스', '테라', '쿠프룸'], ko: ['갈빛', '밤빛', '흙빛', '고목', '호박', '구릿빛'], ka: ['따스한', '묵묵한', '오래된', '포근한'] },
   noble: { en: ['로열', '골든', '노블', '임페리얼', '그레이스'], gr: ['헤라', '아테나'], la: ['노빌리스', '아우레우스', '레갈리스'], ko: ['황금', '귀족', '기품', '왕관'], ka: ['고귀한', '기품 있는', '황금빛'] },
   gray: { en: ['그레이', '애쉬', '실버', '스모크', '더스크', '미스트'], gr: ['헤스티아', '모이라'], la: ['그리세우스', '키네레우스', '네불라'], ko: ['잿빛', '은회색', '안개', '연기', '먹구름', '회색빛'], ka: ['잿빛', '희뿌연', '차분한', '은은한'] },
   navy: { en: ['네이비', '미드나잇', '사파이어', '인디고', '딥블루', '애드미럴'], gr: ['닉스', '오케아노스', '우라노스'], la: ['카이룰레우스', '녹스', '인디쿠스'], ko: ['남빛', '감청', '군청', '한밤', '쪽빛', '심청'], ka: ['짙푸른', '깊은', '고요한', '단정한'] },
@@ -789,7 +790,8 @@ const NAME_MOOD = {
   gem: { en: ['루비', '사파이어', '다이아', '에메랄드', '오팔', '토파즈', '쥬얼'], gr: ['아다마스', '크리스탈로스'], la: ['겜마', '아다만투스', '루베우스'], ko: ['보석', '홍옥', '청옥', '금강', '보옥', '진주'], ka: ['영롱한', '빛나는', '값진'] },
   machine: { en: ['메카', '사이버', '네온', '기어', '코어', '넥서스', '프로토'], gr: ['탈로스', '헤파이스토스'], la: ['마키나', '메카니카', '누클레우스'], ko: ['기계', '태엽', '강철심장', '동력', '회로'], ka: ['정밀한', '가동하는', '차가운'] },
 };
-const NAME_MOOD_KO = { ice: '얼음', fire: '불꽃', nature: '자연', divine: '신화', dark: '어둠', storm: '번개', deep: '심해', sea: '바다', cosmic: '우주', arcane: '신비', metal: '메탈', arena: '경기장', humble: '소박', wind: '바람', light: '빛', sparkle: '반짝', aura: '오라', heavy: '묵직', black: '흑돌', white: '백돌', noble: '고귀', gray: '회색빛', navy: '네이비빛', gold: '금빛', dragon: '용', beast: '야수', bird: '새', serpent: '뱀', blossom: '꽃', moon: '달', blade: '검', gem: '보석', machine: '기계', none: '기본' };
+NAME_MOOD.simple = NAME_MOOD.humble; NAME_MOOD.diamond = NAME_MOOD.gem;
+const NAME_MOOD_KO = { ice: '얼음', fire: '불꽃', nature: '자연', divine: '신화', dark: '어둠', storm: '번개', deep: '심해', sea: '바다', cosmic: '우주', arcane: '신비', metal: '메탈', arena: '경기장', humble: '소박', wind: '바람', light: '빛', sparkle: '반짝', aura: '오라', heavy: '묵직', black: '흑돌', white: '백돌', noble: '고귀', brown: '갈색', simple: '심플', diamond: '다이아몬드', gray: '회색빛', navy: '네이비빛', gold: '금빛', dragon: '용', beast: '야수', bird: '새', serpent: '뱀', blossom: '꽃', moon: '달', blade: '검', gem: '보석', machine: '기계', none: '기본' };
 // 컨셉 글에서 주제 찾기 (render.js 의 그림 주제 + 이름 전용 주제)
 const NAME_KW = {
   metal: ['메탈', '매탈', '금속', '강철', '철', '쇠', '크롬', '은색', 'metal', 'steel'],
@@ -870,7 +872,7 @@ function namePools({ concept = '', skills = [], role, stone, fx = [], king, t = 
   if (!moods.length) moods.push('arcane');
   if (t === 0 && !moods.includes('humble')) moods.push('humble');                           // 일반 등급은 소박한 단어도 가끔
   if (stone === 'black' || stone === 'white') moods.push(stone);                            // 알 색은 보조로
-  const cores = [...skills.filter(id => NAME_CORE[id]), ...(role && NAME_CORE[role] ? [role] : [])];
+  const cores = [...skills.filter(id => NAME_CORE[id]), ...(role && NAME_CORE[role] ? [role] : []), ...conceptSkills(concept).filter(id => NAME_CORE[id]), ...conceptRoles(concept).filter(id => NAME_CORE[id])];
   if (king && !cores.includes('king')) cores.push('king');
   if (!cores.length) cores.push('none');
   return { moods: [...new Set(moods)], cores: [...new Set(cores)], words: conceptWords(concept) };
@@ -878,7 +880,7 @@ function namePools({ concept = '', skills = [], role, stone, fx = [], king, t = 
 const NAME_HIST_MAX = 300;
 function autoCardName(info, avoid = []) {
   const r = Math.random, p = a => a[Math.floor(r() * a.length)], t = info.t ?? 0, king = !!info.king;
-  const { moods, cores, words } = namePools(info), role = info.role, RK = NAME_ROLE_KA[king ? 'king' : role], GR = NAME_GRADE[Math.min(4, Math.max(0, t))];
+  const { moods, cores, words } = namePools(info), role = info.role, RK = NAME_ROLE_KA[king ? 'king' : role || conceptRoles(info.concept)[0]], GR = NAME_GRADE[Math.min(4, Math.max(0, t))];
   const used = new Set([...LS.get('nameHist', []), ...state.arts.flatMap(a => cardSaves(a).map(s => s.name)).filter(Boolean), ...avoid]);
   let out;
   for (let tries = 0; tries < 40; tries++) {
