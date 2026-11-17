@@ -201,6 +201,30 @@ async function aiIconOne(guideSet, role, style, engine, prevRaw) {
   return { icon: autoFit(k.image, 512), raw };
 }
 
+/* -------- AI 스킬 아이콘 ------------------------------------------------- */
+function skillIconGuide(set, skill) {
+  const c = mk(1024, 1024), g = c.getContext('2d'); g.fillStyle = KEY_GREEN; g.fillRect(0, 0, 1024, 1024);
+  g.drawImage(renderSkillIcon(set, skill, 860), 82, 82); return c;
+}
+function skillIconPrompt(skill, style, withPrev) {
+  const S = SKILLS.find(s => s.id === skill);
+  return [
+    `Redesign the game UI skill icon shown in the first image for the skill ${S.en.split(' — ')[0]} ("${S.ko}": ${S.desc}) in the card game "Super Alkkagi" (flicking go stones).`,
+    `The symbol must clearly show: ${S.eng}. Keep one centered badge with the symbol, bold and readable at small size. Main color: ${S.color}.`,
+    `Visual style: ${style || 'polished fantasy game skill icon'}.`,
+    withPrev ? 'The second image is another icon from the SAME skill icon set: match its badge shape, rim material, lighting and rendering style exactly; only the symbol and main color change.' : 'All twelve skill icons of this set will share this badge shape and rim, so make the badge design clean and reusable.',
+    'No text, no letters, no numbers. The background must be perfectly flat pure chroma green (#00FF00), with no shadow, glow or objects on it. Square 1:1.',
+  ].join(' ');
+}
+async function aiSkillIconOne(guideSet, skill, style, engine, prevRaw) {
+  const guide = skillIconGuide(guideSet, skill);
+  const img = await aiImage({ engine, prompt: skillIconPrompt(skill, style, !!prevRaw), refs: prevRaw ? [guide, prevRaw] : [guide], aspect: '1:1' });
+  const raw = coverTo(img, 512, 512);
+  const S = [[1, 1], [510, 1], [1, 510], [510, 510], [256, 1], [256, 510], [1, 256], [510, 256]];
+  const k = chromaKey(raw, { outerSeeds: S });
+  return { icon: autoFit(k.image, 512), raw };
+}
+
 /* -------- 알 텍스처 (위에서 본 동그란 알 윗면 + 가운데 엠블럼) ------------ */
 const TEX_TIER_PROMPT = [
   'COMMON grade: a simple clean emblem, flat colours, plain thin rim, no glow',

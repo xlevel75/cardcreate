@@ -30,7 +30,7 @@ UPSTREAMS = {
     "vertex": "https://aiplatform.googleapis.com",
 }
 FORWARD_HEADERS = ("authorization", "content-type", "x-goog-api-key")
-STORES = {"iconSets", "frameGroups", "arts"}
+STORES = {"iconSets", "skillIcons", "frameGroups", "arts"}
 SAFE = re.compile(r"^[A-Za-z0-9_-]{1,80}$")
 EXT = {"image/png": "png", "image/jpeg": "jpg", "image/webp": "webp"}
 SECRET_KEYS = {"openaiKey", "geminiKey"}

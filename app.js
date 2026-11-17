@@ -37,7 +37,7 @@ function seg(container, items, value, onChange) {
 /* ---------------- 저장소 ----------------
    로컬 서버(server.py)로 열면: 프로젝트의 data/ 폴더에 파일로 저장 → git·폴더 복사에 함께 포함
    파일을 직접 열면: 브라우저(IndexedDB)에만 저장 */
-const STORE_NAMES = ['iconSets', 'frameGroups', 'arts'];
+const STORE_NAMES = ['iconSets', 'skillIcons', 'frameGroups', 'arts'];
 const blobToB64 = b => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1]); r.onerror = rej; r.readAsDataURL(b); });
 async function encodeRec(v) {
   if (v instanceof Blob) return { $blob: await blobToB64(v), type: v.type || 'image/png' };
@@ -87,8 +87,8 @@ const IDB = {
   db: null,
   open() {
     return new Promise((res, rej) => {
-      const r = indexedDB.open('alkkagi-card-studio', 1);
-      r.onupgradeneeded = () => { const d = r.result; for (const s of ['iconSets', 'frameGroups', 'arts']) if (!d.objectStoreNames.contains(s)) d.createObjectStore(s, { keyPath: 'id' }); };
+      const r = indexedDB.open('alkkagi-card-studio', 2);
+      r.onupgradeneeded = () => { const d = r.result; for (const s of STORE_NAMES) if (!d.objectStoreNames.contains(s)) d.createObjectStore(s, { keyPath: 'id' }); };
       r.onsuccess = () => { this.db = r.result; res(); }; r.onerror = () => rej(r.error);
     });
   },
@@ -123,7 +123,8 @@ const LS = {
 const state = {
   iconProp: randomIconDesign(Date.now() & 0xffff),
   frameProp: randomFrameDesign((Date.now() >> 4) & 0xffff),
-  iconSets: [], frameGroups: [], arts: [],
+  iconSets: [], skillIcons: [], frameGroups: [], arts: [],
+  skillProp: (({ seed, style, rim }) => ({ seed, style, rim }))(randomIconDesign((Date.now() >> 2) & 0xffff)),
   activeIcon: LS.get('activeIcon', null), activeFrame: LS.get('activeFrame', null),
   settings: Object.assign({ openaiKey: '', openaiModel: 'gpt-image-2', openaiQuality: 'medium', geminiKey: '', geminiModel: 'gemini-2.5-flash-image' }, LS.get('settings', {})),
   gen: Object.assign({ grade: 'A', skills: ['pierce'], stone: 'black', count: 2, engine: 'gemini', concept: '' }, LS.get('gen', {})),
@@ -183,6 +184,55 @@ function renderIconSets() {
       el('button', { class: 'btn sm', onclick: () => { state.iconProp = structuredClone({ seed: s.seed, style: s.style, rim: s.rim, variant: s.variant }); renderIconProposal(); window.scrollTo({ top: 0, behavior: 'smooth' }); } }, '불러와 수정'),
       el('button', { class: 'btn sm', onclick: async () => { for (const R of ROLES) { downloadCanvas(s.kind === 'ai' ? getIconCanvas(s, R.id) : renderRoleIcon(s, R.id, 512), `icon_${safeName(s.name)}_${R.ko}.png`); await sleep(350); } } }, 'PNG 5장'),
       el('button', { class: 'btn sm danger', onclick: async () => { if (!confirm(`“${s.name}” 아이콘 세트를 삭제할까요?`)) return; await DB.del('iconSets', s.id); aiAssets.delete(s.id); state.iconSets = state.iconSets.filter(x => x.id !== s.id); if (state.activeIcon === s.id) state.activeIcon = state.iconSets[0]?.id || null; LS.set('activeIcon', state.activeIcon); renderIconSets(); updateHint(); } }, '삭제')));
+  }
+}
+
+/* =================================================================
+   ① 스킬 아이콘 (관통 · 가속 · … · 지원 12종)
+   ================================================================= */
+function renderSkillProposal() {
+  const p = state.skillProp, box = $('#skIconPreview'); box.innerHTML = '';
+  $('#skStyle').value = p.style; $('#skRim').value = p.rim;
+  for (const S of SKILLS) box.append(el('div', { class: 'iconCell', style: 'cursor:default' }, renderSkillIcon(p, S.id, 300), el('b', {}, S.ko)));
+  $('#skIconStatus').textContent = state.skillIcons.length ? `등록 ${state.skillIcons.length}세트` : '미등록'; $('#skIconStatus').classList.toggle('ok', !!state.skillIcons.length);
+}
+$('#skStyle').innerHTML = Object.entries(ICON_STYLES).map(([k, v]) => `<option value="${k}">${v}</option>`).join('');
+$('#skStyle').onchange = e => { state.skillProp.style = e.target.value; renderSkillProposal(); };
+$('#skRim').onchange = e => { state.skillProp.rim = e.target.value; renderSkillProposal(); };
+$('#skShuffle').onclick = () => { const d = randomIconDesign((Math.random() * 1e9) | 0); state.skillProp = { seed: d.seed, style: d.style, rim: d.rim }; renderSkillProposal(); };
+$('#skApprove').onclick = async () => {
+  const name = $('#skName').value.trim() || `스킬 아이콘 ${state.skillIcons.length + 1}`;
+  const set = { id: uid(), name, created: Date.now(), ...structuredClone(state.skillProp) };
+  await DB.put('skillIcons', set); state.skillIcons.push(set);
+  $('#skName').value = ''; renderSkillIconSets(); renderSkillProposal(); toast(`✅ 스킬 아이콘 세트 “${name}” 등록 완료`);
+};
+// 저장 폴더(④ 조합에서 정한 폴더) 밑 skillicon 폴더에 PNG로 저장
+function saveFolder() { return ($('#svFolder')?.value || '').trim() || LS.get('saveFolders', [])[0] || ''; }
+async function saveSkillIconsToFolder(setName, canvasOf) {
+  const f = saveFolder(); if (!f) return toast('④ 조합 › 저장 폴더를 먼저 정해 주세요');
+  const folder = f.replace(/[\\/]+$/, '') + (f.includes('/') && !f.includes('\\') ? '/' : '\\') + 'skillicon', base = (setName || 'skill').replace(/[\\/:*?"<>|]+/g, '').replace(/[\s_]+/g, ' ').trim();
+  let n = 0;
+  try {
+    for (const S of SKILLS) {
+      const cv = canvasOf(S.id); if (!cv) continue;
+      await postApi('/api/save-file', { folder, name: `${base}_${S.ko}`, data: cv.toDataURL('image/png').split(',')[1], overwrite: true }); n++;
+    }
+    toast(`📁 스킬 아이콘 ${n}장을 저장했습니다: ${folder}`);
+  } catch (e) { toast('⚠ 스킬 아이콘 저장 실패: ' + e.message); }
+}
+function renderSkillIconSets() {
+  const box = $('#skillIconSets'); box.innerHTML = '';
+  if (!state.skillIcons.length) { box.append(el('div', { class: 'empty' }, '아직 등록된 스킬 아이콘 세트가 없습니다.')); return; }
+  for (const s of state.skillIcons) {
+    const thumbs = el('div', { class: 'thumbs sk' }, SKILLS.map(S => { const c = mk(96, 96); c.getContext('2d').drawImage(getSkillIconCanvas(s, S.id, 256), 0, 0, 96, 96); c.style.background = 'none'; c.title = S.ko; return c; }));
+    const desc = s.kind === 'ai' ? `🤖 AI · ${s.aiStyle || '기본 스타일'}` : `${ICON_STYLES[s.style]} · ${s.rim === 'gold' ? '금' : '은'} 테두리`;
+    const big = id => s.kind === 'ai' ? getSkillIconCanvas(s, id) : renderSkillIcon(s, id, 512);
+    box.append(el('div', { class: 'item' }, thumbs,
+      el('div', { class: 'nm' }, s.name, el('small', {}, desc)),
+      el('button', { class: 'btn sm', title: '④ 조합의 저장 폴더 밑 skillicon 폴더에 PNG 12장 저장', onclick: () => saveSkillIconsToFolder(s.name, big) }, '📁 폴더에 저장'),
+      s.kind === 'ai' ? null : el('button', { class: 'btn sm', onclick: () => { state.skillProp = { seed: s.seed, style: s.style, rim: s.rim }; renderSkillProposal(); $('#skIconPreview').scrollIntoView({ behavior: 'smooth', block: 'center' }); } }, '불러와 수정'),
+      el('button', { class: 'btn sm', onclick: async () => { for (const S of SKILLS) { downloadCanvas(big(S.id), `skillicon_${safeName(s.name)}_${S.ko}.png`); await sleep(350); } } }, 'PNG 12장'),
+      el('button', { class: 'btn sm danger', onclick: async () => { if (!confirm(`“${s.name}” 스킬 아이콘 세트를 삭제할까요?`)) return; await DB.del('skillIcons', s.id); aiAssets.delete(s.id); state.skillIcons = state.skillIcons.filter(x => x.id !== s.id); renderSkillIconSets(); renderSkillProposal(); } }, '삭제')));
   }
 }
 
@@ -338,6 +388,54 @@ $('#aiIcApprove').onclick = async () => {
   await DB.put('iconSets', set); aiAssets.set(id, cvs); state.iconSets.push(set); state.activeIcon = id; LS.set('activeIcon', id);
   $('#aiIcName').value = ''; renderIconSets(); updateHint(); toast(`✅ AI 아이콘 세트 “${name}” 등록 완료`);
 };
+// AI 스킬 아이콘 12종
+state.aiSkEngine = LS.get('aiSkEngine', 'gemini');
+const aiSk = { cells: {}, running: 0, guide: null, style: '', engine: 'gemini' };
+async function aiSkillCell(id) {
+  const first = SKILLS[0].id, prev = aiSk.chain && id !== first ? aiSk.cells[first]?.raw || null : null;
+  aiSk.cells[id] = { status: 'pending' }; renderAiSkills();
+  try { aiSk.cells[id] = { status: 'done', ...(await aiSkillIconOne(aiSk.guide, id, aiSk.style, aiSk.engine, prev)) }; }
+  catch (e) { aiSk.cells[id] = { status: 'err', err: e.message }; }
+  renderAiSkills(); return aiSk.cells[id];
+}
+async function runAiSkills() {
+  if (aiSk.running || !checkKey(state.aiSkEngine)) return;
+  Object.assign(aiSk, { guide: structuredClone(state.skillProp), style: $('#aiSkStyle').value.trim(), engine: state.aiSkEngine, chain: $('#aiSkChain').checked, cells: Object.fromEntries(SKILLS.map(s => [s.id, { status: 'pending' }])) });
+  aiSk.running = 1; $('#aiSkGo').disabled = true; renderAiSkills();
+  let ids = SKILLS.map(s => s.id);
+  if (aiSk.chain) { await aiSkillCell(ids[0]); ids = ids.slice(1); }
+  const queue = [...ids]; // 한꺼번에 12장을 보내지 않고 4장씩 차례로
+  await Promise.all(Array.from({ length: 4 }, async () => { while (queue.length) await aiSkillCell(queue.shift()); }));
+  aiSk.running = 0; $('#aiSkGo').disabled = false; renderAiSkills();
+}
+function renderAiSkills() {
+  const box = $('#aiSkPreview'); box.innerHTML = '';
+  if (!Object.keys(aiSk.cells).length) return;
+  for (const S of SKILLS) {
+    const c = aiSk.cells[S.id] || { status: 'pending' };
+    const body = c.status === 'done' ? canvasCopy(c.icon) : c.status === 'err' ? el('div', { class: 'errMsg', style: 'aspect-ratio:1' }, '⚠ ' + c.err) : el('div', { style: 'aspect-ratio:1;display:grid;place-items:center' }, el('div', { class: 'spinner' }));
+    box.append(el('div', { class: 'iconCell aiCell', style: 'cursor:default' }, body, el('b', {}, S.ko),
+      el('div', { style: 'display:flex;gap:4px;justify-content:center;margin-top:4px' },
+        el('button', { class: 'btn sm', disabled: c.status === 'pending', title: '이 아이콘만 다시 생성', onclick: () => aiSkillCell(S.id) }, '↻'),
+        c.status === 'done' ? el('button', { class: 'btn sm', onclick: () => downloadCanvas(c.icon, `aiskillicon_${S.ko}.png`) }, 'PNG') : null)));
+  }
+  $('#aiSkApproveRow').hidden = !SKILLS.some(S => aiSk.cells[S.id]?.status === 'done');
+  $('#aiSkApprove').disabled = !SKILLS.every(S => aiSk.cells[S.id]?.status === 'done');
+}
+$('#aiSkGo').onclick = runAiSkills;
+$('#aiSkSave').onclick = () => saveSkillIconsToFolder($('#aiSkName').value.trim() || 'AI 스킬 아이콘', id => aiSk.cells[id]?.status === 'done' ? aiSk.cells[id].icon : null);
+$('#aiSkApprove').onclick = async () => {
+  if (!SKILLS.every(S => aiSk.cells[S.id]?.status === 'done' && aiSk.cells[S.id].icon)) return toast('먼저 12개 스킬 아이콘을 모두 생성해 주세요');
+  const name = $('#aiSkName').value.trim() || `AI 스킬 아이콘 ${state.skillIcons.length + 1}`, id = uid(), images = {}, cvs = {};
+  const btn = $('#aiSkApprove'), label = btn.textContent; btn.disabled = true; btn.textContent = '등록 중…';
+  try {
+    for (const S of SKILLS) { cvs[S.id] = aiSk.cells[S.id].icon; images[S.id] = await canvasToBlob(cvs[S.id]); }
+    const set = { ...aiSk.guide, id, name, created: Date.now(), kind: 'ai', aiStyle: aiSk.style, engine: aiSk.engine, images };
+    await DB.put('skillIcons', set); aiAssets.set(id, cvs); state.skillIcons.push(set);
+  } catch (e) { return toast('⚠ 등록 실패: ' + e.message); }
+  finally { btn.disabled = false; btn.textContent = label; }
+  $('#aiSkName').value = ''; renderSkillIconSets(); renderSkillProposal(); toast(`✅ AI 스킬 아이콘 세트 “${name}” 등록 완료`);
+};
 // 그림이 빠진 AI 그룹(예전 버그로 빈 채 등록된 것)은 목록에서 빼고 따로 보여 줌
 const aiBroken = { frames: [], icons: [] };
 function splitBrokenAi() {
@@ -354,6 +452,7 @@ function brokenRows(list, store, label, rerender) {
 async function loadAiAssets() {
   for (const f of state.frameGroups) if (f.kind === 'ai') aiAssets.set(f.id, await Promise.all(f.frames.map(async (b, i) => ({ frame: await blobCanvas(b), mask: await blobCanvas(f.masks[i]) }))));
   for (const s of state.iconSets) if (s.kind === 'ai') { const o = {}; for (const R of ROLES) o[R.id] = await blobCanvas(s.images[R.id]); aiAssets.set(s.id, o); }
+  for (const s of state.skillIcons) if (s.kind === 'ai') { const o = {}; for (const S of SKILLS) if (s.images?.[S.id]) o[S.id] = await blobCanvas(s.images[S.id]); aiAssets.set(s.id, o); }
 }
 
 /* =================================================================
@@ -1122,14 +1221,15 @@ function layerOf(id) { const L = state.cmb.layout, k = layoutKey(id); return (L[
 (async function init() {
   try { await Promise.race([Promise.all(['900 40px Cinzel', '400 30px "Black Han Sans"', '700 20px "Noto Sans KR"'].map(f => document.fonts.load(f))), sleep(2500)]); } catch { }
   await detectProxy(); await DB.open();
-  [state.iconSets, state.frameGroups, state.arts] = await Promise.all([DB.all('iconSets'), DB.all('frameGroups'), DB.all('arts')]);
+  [state.iconSets, state.frameGroups, state.arts, state.skillIcons] = await Promise.all([DB.all('iconSets'), DB.all('frameGroups'), DB.all('arts'), DB.all('skillIcons')]);
+  state.skillIcons.sort((a, b) => a.created - b.created);
   splitBrokenAi();
   try { await loadAiAssets(); } catch (e) { console.warn(e); toast('⚠ AI 프레임·아이콘 그림 일부를 불러오지 못했습니다'); }
-  aiEngineSeg($('#aiFrEngine'), 'aiFrEngine'); aiEngineSeg($('#aiIcEngine'), 'aiIcEngine');
+  aiEngineSeg($('#aiFrEngine'), 'aiFrEngine'); aiEngineSeg($('#aiIcEngine'), 'aiIcEngine'); aiEngineSeg($('#aiSkEngine'), 'aiSkEngine');
   state.iconSets.sort((a, b) => a.created - b.created); state.frameGroups.sort((a, b) => a.created - b.created); state.arts.sort((a, b) => b.created - a.created);
   if (state.activeIcon && !state.iconSets.some(s => s.id === state.activeIcon)) state.activeIcon = state.iconSets[0]?.id || null;
   if (state.activeFrame && !state.frameGroups.some(s => s.id === state.activeFrame)) state.activeFrame = state.frameGroups[0]?.id || null;
-  for (const f of [renderIconProposal, renderIconSets, renderFrameProposal, renderFrameGroups, initGenForm, initVault, updateQueueStatus, updateHint]) {
+  for (const f of [renderIconProposal, renderIconSets, renderSkillProposal, renderSkillIconSets, renderFrameProposal, renderFrameGroups, initGenForm, initVault, updateQueueStatus, updateHint]) {
     try { f(); } catch (e) { console.error(f.name, e); toast(`⚠ 화면 일부(${f.name})를 그리지 못했습니다: ${e.message}`); }
   }
 })();

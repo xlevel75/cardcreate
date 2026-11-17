@@ -453,8 +453,16 @@ function rimGrad(g, rim, r) {
   st.forEach((c, i) => gr.addColorStop(i / (st.length - 1), c)); return gr;
 }
 function renderRoleIcon(set, roleId, size = 256) {
+  const R = ROLES.find(r => r.id === roleId), v = (set.variant || {})[roleId] || 0;
+  return renderBadge(set, R.color, size, (g, fg, bg) => drawGlyph(g, roleId, v, fg, bg));
+}
+// 스킬 아이콘: 역할 아이콘과 같은 배지(스타일·테두리)에 스킬 색과 스킬 문양
+function renderSkillIcon(set, skillId, size = 256) {
+  const S = SKILLS.find(s => s.id === skillId);
+  return renderBadge(set, darken(S.color, .28), size, (g, fg, bg) => drawSkillGlyph(g, skillId, fg, bg));
+}
+function renderBadge(set, col, size, glyph) {
   const c = mk(size, size), g = c.getContext('2d'); g.scale(size / 256, size / 256); g.translate(128, 128);
-  const R = ROLES.find(r => r.id === roleId), col = R.color, v = (set.variant || {})[roleId] || 0;
   g.save(); g.shadowColor = 'rgba(0,0,0,.45)'; g.shadowBlur = 10; g.shadowOffsetY = 4;
   if (set.style === 'gem') {
     g.beginPath(); polyPath(g, 0, 0, 118, 6, -Math.PI / 2); g.fillStyle = rimGrad(g, set.rim, 118); g.fill(); g.shadowColor = 'transparent';
@@ -478,7 +486,7 @@ function renderRoleIcon(set, roleId, size = 256) {
   g.save();
   const glow = set.style === 'rune', fg = glow ? lighten(col, .5) : '#ffffff';
   g.shadowColor = glow ? col : 'rgba(0,0,0,.5)'; g.shadowBlur = glow ? 22 : 6; g.shadowOffsetY = glow ? 0 : 3;
-  g.scale(1.25, 1.25); drawGlyph(g, roleId, v, fg, glow ? '#141a30' : darken(col, .35));
+  g.scale(1.25, 1.25); glyph(g, fg, glow ? '#141a30' : darken(col, .35));
   g.restore();
   if (set.style !== 'rune') { g.save(); g.beginPath(); g.ellipse(-8, -52, 70, 32, -.2, 0, 7); const gl = g.createLinearGradient(0, -84, 0, -20); gl.addColorStop(0, 'rgba(255,255,255,.35)'); gl.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gl; g.fill(); g.restore(); }
   return c;
@@ -525,6 +533,66 @@ function drawGlyph(g, id, v, fg, bg) {
     const tips = v === 0 ? [[-47, -27, 6], [0, -40, 7], [47, -27, 6]] : [[-48, -21, 5], [-22, -33, 5], [0, -44, 6], [22, -33, 5], [48, -21, 5]];
     for (const [x, y, r] of tips) { g.beginPath(); g.arc(x, y, r, 0, 7); g.fill(); }
     g.shadowColor = 'transparent'; g.fillStyle = bg; g.beginPath(); g.arc(0, 32.5, 4.5, 0, 7); g.arc(-24, 32.5, 3.5, 0, 7); g.fill(); g.beginPath(); g.arc(24, 32.5, 3.5, 0, 7); g.fill();
+  }
+}
+
+// 스킬 문양 (±50 안쪽에 그림)
+function arrowHead(g, x, y, a, s) { g.beginPath(); g.moveTo(x + Math.cos(a) * s, y + Math.sin(a) * s); g.lineTo(x + Math.cos(a + 2.4) * s, y + Math.sin(a + 2.4) * s); g.lineTo(x + Math.cos(a - 2.4) * s, y + Math.sin(a - 2.4) * s); g.closePath(); g.fill(); }
+function eyePath(g, w, h) { g.beginPath(); g.moveTo(-w, 0); g.quadraticCurveTo(0, -h, w, 0); g.quadraticCurveTo(0, h, -w, 0); g.closePath(); }
+function drawSkillGlyph(g, id, fg, bg) {
+  g.fillStyle = fg; g.strokeStyle = fg; g.lineCap = 'round'; g.lineJoin = 'round';
+  if (id === 'pierce') { // 고리를 꿰뚫는 창
+    g.lineWidth = 7; g.beginPath(); g.ellipse(0, 0, 30, 30, 0, 0, 7); g.stroke();
+    g.save(); g.shadowColor = 'transparent'; g.lineWidth = 15; g.strokeStyle = bg; g.beginPath(); g.moveTo(-44, 44); g.lineTo(30, -30); g.stroke(); g.restore();
+    g.lineWidth = 9; g.beginPath(); g.moveTo(-46, 46); g.lineTo(26, -26); g.stroke(); arrowHead(g, 34, -34, -Math.PI / 4, 24);
+    g.lineWidth = 4; for (const k of [-1, 1]) { g.beginPath(); g.moveTo(-46 + k * 8, 46 + k * 8); g.lineTo(-30 + k * 8, 30 + k * 8); g.stroke(); }
+  } else if (id === 'accel') { // 겹친 화살 >>> + 속도선
+    g.lineWidth = 11; for (const x of [-28, -2, 24]) { g.beginPath(); g.moveTo(x - 12, -28); g.lineTo(x + 12, 0); g.lineTo(x - 12, 28); g.stroke(); }
+    g.lineWidth = 4; for (const [y, l] of [[-40, 30], [40, 30], [-46, 16], [46, 16]]) { g.beginPath(); g.moveTo(-50, y * .9); g.lineTo(-50 + l, y * .9); g.stroke(); }
+  } else if (id === 'explode') { // 터지는 별
+    g.beginPath(); starPath(g, 0, 0, 52, 24, 10, -Math.PI / 2); g.fill();
+    g.save(); g.shadowColor = 'transparent'; g.fillStyle = bg; g.beginPath(); starPath(g, 0, 0, 24, 12, 8, -Math.PI / 8); g.fill(); g.restore();
+    for (const [x, y, r] of [[-46, -40, 5], [44, 38, 4], [48, -30, 3.5], [-40, 44, 3.5]]) { g.beginPath(); g.arc(x, y, r, 0, 7); g.fill(); }
+  } else if (id === 'shield') { // 방패 + 육각 무늬
+    g.beginPath(); g.moveTo(0, -48); g.quadraticCurveTo(24, -38, 42, -40); g.lineTo(40, 2); g.quadraticCurveTo(34, 34, 0, 50); g.quadraticCurveTo(-34, 34, -40, 2); g.lineTo(-42, -40); g.quadraticCurveTo(-24, -38, 0, -48); g.fill();
+    g.save(); g.shadowColor = 'transparent'; g.strokeStyle = bg; g.lineWidth = 3.5;
+    for (const [x, y] of [[0, -8], [-17, 2], [17, 2], [0, 20], [-17, -18], [17, -18]]) { g.beginPath(); polyPath(g, x, y, 10, 6, 0); g.stroke(); }
+    g.restore();
+  } else if (id === 'thorns') { // 가시 고리
+    for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2; g.beginPath(); g.moveTo(Math.cos(a - .22) * 24, Math.sin(a - .22) * 24); g.lineTo(Math.cos(a) * 52, Math.sin(a) * 52); g.lineTo(Math.cos(a + .22) * 24, Math.sin(a + .22) * 24); g.closePath(); g.fill(); }
+    g.beginPath(); g.arc(0, 0, 26, 0, 7); g.fill();
+    g.save(); g.shadowColor = 'transparent'; g.fillStyle = bg; g.beginPath(); g.arc(0, 0, 13, 0, 7); g.fill(); g.restore();
+  } else if (id === 'revive') { // 되살아나는 원형 화살 + 불꽃
+    g.lineWidth = 8; g.beginPath(); g.arc(0, 0, 40, -Math.PI * .35, Math.PI * 1.45); g.stroke(); arrowHead(g, Math.cos(-Math.PI * .35) * 40, Math.sin(-Math.PI * .35) * 40, -Math.PI * .35 + Math.PI / 2, 15);
+    g.beginPath(); g.moveTo(0, -26); g.bezierCurveTo(16, -8, 20, 8, 12, 18); g.quadraticCurveTo(0, 28, -12, 18); g.bezierCurveTo(-20, 8, -14, -6, 0, -26); g.fill();
+    g.save(); g.shadowColor = 'transparent'; g.fillStyle = bg; g.beginPath(); g.moveTo(0, -4); g.bezierCurveTo(7, 4, 8, 12, 0, 17); g.bezierCurveTo(-8, 12, -7, 4, 0, -4); g.fill(); g.restore();
+  } else if (id === 'split') { // 둘로 갈라지는 원
+    g.beginPath(); g.arc(-17, 4, 28, 0, 7); g.fill(); g.beginPath(); g.arc(19, -4, 28, 0, 7); g.fill();
+    g.save(); g.shadowColor = 'transparent'; g.strokeStyle = bg; g.lineWidth = 6; g.beginPath(); g.moveTo(8, -48); g.lineTo(-2, -18); g.lineTo(8, -4); g.lineTo(-4, 14); g.lineTo(4, 30); g.lineTo(-6, 48); g.stroke(); g.restore();
+    g.lineWidth = 4; for (const s of [-1, 1]) { g.beginPath(); g.moveTo(s * 40, -s * 40); g.lineTo(s * 52, -s * 46); g.stroke(); }
+  } else if (id === 'magnet') { // 말굽 자석 + 끌어당기는 선
+    g.lineWidth = 22; g.lineCap = 'butt'; g.beginPath(); g.moveTo(-26, -40); g.lineTo(-26, 2); g.arc(0, 2, 26, Math.PI, 0, true); g.lineTo(26, -40); g.stroke();
+    g.save(); g.shadowColor = 'transparent'; g.fillStyle = bg; g.fillRect(-38, -44, 24, 14); g.fillRect(14, -44, 24, 14); g.restore();
+    g.lineCap = 'round'; g.lineWidth = 4; for (const s of [-1, 1]) for (const k of [0, 1]) { g.beginPath(); g.moveTo(s * (20 + k * 16), -50 + k * 4); g.lineTo(s * (26 + k * 18), -58 + k * 2); g.stroke(); }
+  } else if (id === 'mark') { // 사슬 고리 안의 가시 눈
+    g.lineWidth = 5; for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; g.beginPath(); g.ellipse(Math.cos(a) * 44, Math.sin(a) * 44, 7, 4, a + Math.PI / 2, 0, 7); g.stroke(); }
+    eyePath(g, 30, 30); g.fill();
+    g.save(); g.shadowColor = 'transparent'; g.fillStyle = bg; g.beginPath(); g.arc(0, 0, 11, 0, 7); g.fill(); g.fillStyle = fg; g.beginPath(); g.moveTo(0, -9); g.lineTo(3, 0); g.lineTo(0, 9); g.lineTo(-3, 0); g.closePath(); g.fill(); g.restore();
+    for (const s of [-1, 1]) { g.beginPath(); g.moveTo(s * 10, s * -14); g.lineTo(s * 4, s * -30); g.lineTo(s * 18, s * -16); g.fill(); }
+  } else if (id === 'cloak') { // 점선으로 사라지는 눈
+    g.lineWidth = 7; g.setLineDash([10, 9]); eyePath(g, 46, 40); g.stroke(); g.setLineDash([]);
+    g.beginPath(); g.arc(0, 0, 14, Math.PI * .5, Math.PI * 1.5); g.fill();
+    g.globalAlpha = .45; g.beginPath(); g.arc(0, 0, 14, Math.PI * 1.5, Math.PI * 2.5); g.fill(); g.globalAlpha = 1;
+    g.lineWidth = 5; g.beginPath(); g.moveTo(-40, 40); g.lineTo(40, -40); g.stroke();
+  } else if (id === 'scout') { // 모든 걸 보는 눈 + 레이더 호
+    eyePath(g, 42, 40); g.fill();
+    g.save(); g.shadowColor = 'transparent'; g.fillStyle = bg; g.beginPath(); g.arc(0, 4, 15, 0, 7); g.fill(); g.fillStyle = fg; g.beginPath(); g.arc(0, 4, 6, 0, 7); g.fill(); g.restore();
+    g.lineWidth = 5; for (const r of [36, 50]) { g.beginPath(); g.arc(0, 8, r, -Math.PI * .78, -Math.PI * .22); g.stroke(); }
+  } else if (id === 'support') { // 원 안의 십자 + 위로 향한 화살
+    g.lineWidth = 6; g.beginPath(); g.arc(0, 4, 32, 0, 7); g.stroke();
+    g.beginPath(); g.roundRect(-8, -18, 16, 44, 4); g.roundRect(-22, -4, 44, 16, 4); g.fill();
+    for (const x of [-42, 42]) { g.lineWidth = 5; g.beginPath(); g.moveTo(x, 34); g.lineTo(x, -16); g.stroke(); arrowHead(g, x, -22, -Math.PI / 2, 11); }
+    arrowHead(g, 0, -44, -Math.PI / 2, 12);
   }
 }
 
@@ -1566,6 +1634,10 @@ function getFrameCanvas(d, t) {
   if (d.kind === 'ai') { const a = aiAssets.get(d.id)?.[t]; if (a?.frame) return a.frame; }
   if (d.shape == null) d = { ...randomFrameDesign(d.seed || 1), ...d }; // 그림이 없는 AI 그룹 → 기본 모양으로 대신 그림
   const k = frameKey(d, t); if (!_frameCache.has(k)) { if (_frameCache.size > 60) _frameCache.clear(); _frameCache.set(k, renderFrame(d, t)); } return _frameCache.get(k);
+}
+function getSkillIconCanvas(set, skill, size = 256) {
+  if (set.kind === 'ai') { const a = aiAssets.get(set.id)?.[skill]; if (a) return a; }
+  const k = ['sk', set.style, set.rim, skill, size].join('|'); if (!_iconCache.has(k)) _iconCache.set(k, renderSkillIcon(set, skill, size)); return _iconCache.get(k);
 }
 function getIconCanvas(set, role, size = 256) {
   if (set.kind === 'ai') { const a = aiAssets.get(set.id)?.[role]; if (a) return a; }
