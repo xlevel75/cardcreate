@@ -810,11 +810,17 @@ function openCombine({ artId, temp }) {
 }
 function cmbOptions(t) {
   const C = state.cmb;
-  return { design: currentFrame(C.frameId), t: t ?? C.t, iconSet: C.role ? currentIconSet(C.iconId) : null, role: C.role, name: C.name, showName: C.showName, skills: C.skills || [], showSkills: C.showSkills, zoom: C.zoom / 100, ox: C.ox, oy: C.oy, layout: { ...C.layout, icon: C.layout['icon:' + (t ?? C.t)] }, font: C.font };
+  return { design: currentFrame(C.frameId), t: t ?? C.t, iconSet: C.role ? currentIconSet(C.iconId) : null, role: C.role, name: C.name, showName: C.showName, skills: C.skills || [], showSkills: C.showSkills, skillIconSet: currentSkillIconSet(), zoom: C.zoom / 100, ox: C.ox, oy: C.oy, layout: { ...C.layout, icon: C.layout['icon:' + (t ?? C.t)] }, font: C.font };
 }
 async function currentArt() { const C = state.cmb; if (C.artId === '__temp') return C.temp?.canvas || null; if (!C.artId) return null; return artCanvas(C.artId); }
+// 카드의 스킬 표시에 쓸 스킬 아이콘 세트 ('text' = 글자로, 정하지 않았으면 첫 등록 세트)
+function currentSkillIconSet() { const id = state.cmb.skIconId; if (id === 'text') return null; return state.skillIcons.find(s => s.id === id) || state.skillIcons[0] || null; }
 function renderCombine() {
   const C = state.cmb;
+  const ks = $('#cSkIconSet'); ks.innerHTML = '';
+  ks.append(el('option', { value: 'text' }, '스킬: 글자로 표시'), ...state.skillIcons.map(s => el('option', { value: s.id }, '스킬 아이콘: ' + s.name)));
+  ks.value = currentSkillIconSet()?.id || 'text';
+  ks.onchange = e => { C.skIconId = e.target.value; saveCmbView(); drawCombine(); };
   const fs = $('#cFrame'); fs.innerHTML = '';
   if (!state.frameGroups.length) fs.append(el('option', { value: '' }, '(미등록) 현재 제안 프레임'));
   state.frameGroups.forEach(f => fs.append(el('option', { value: f.id }, f.name)));
@@ -1145,7 +1151,7 @@ const LAYER_NAME = { icon: '역할 아이콘', name: '이름', skills: '스킬' 
 for (const k of Object.keys(state.cmb.layout)) if (k === 'icon' || /^icon:[a-z]/.test(k)) delete state.cmb.layout[k];
 function saveCmbStyle() { LS.set('cmbStyle', { layout: state.cmb.layout, font: state.cmb.font }); }
 // 다른 그림을 골라도 마지막에 쓴 프레임 그룹·등급·역할 아이콘·확대·위치를 유지 (새로고침해도 남음)
-function saveCmbView() { const C = state.cmb; LS.set('cmbView', { frameId: C.frameId, t: C.t, iconId: C.iconId, role: C.role, zoom: C.zoom, ox: C.ox, oy: C.oy }); }
+function saveCmbView() { const C = state.cmb; LS.set('cmbView', { frameId: C.frameId, t: C.t, iconId: C.iconId, skIconId: C.skIconId, role: C.role, zoom: C.zoom, ox: C.ox, oy: C.oy }); }
 async function setFont(patch) {
   const F = state.cmb.font; Object.assign(F, patch);
   if (patch.family) { try { await document.fonts.load(`400 40px ${F.family}`, state.cmb.name || '가나다'); } catch { } }

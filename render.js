@@ -1664,7 +1664,14 @@ function composeCard(o) {
     boxes.icon = { x: cx - s / 2, y: cy - s / 2, w: s, h: s };
   }
   const sk = (o.skills || []).map(id => SKILLS.find(s => s.id === id)).filter(Boolean);
-  if (o.showSkills && sk.length) {
+  if (o.showSkills && sk.length && o.skillIconSet) { // 스킬 아이콘으로 표시
+    const l = lay('skills'), sz = 68, gap = 8, total = sk.length * sz + (sk.length - 1) * gap;
+    const cx = W / 2 + l.dx, cy = G.plate.y - G.plate.h / 2 - 32 - (sz - 36) / 2 + l.dy;
+    g.save(); g.translate(cx, cy); g.scale(l.s, l.s); g.shadowColor = 'rgba(0,0,0,.55)'; g.shadowBlur = 10; g.shadowOffsetY = 3;
+    sk.forEach((s, i) => g.drawImage(getSkillIconCanvas(o.skillIconSet, s.id, 256), -total / 2 + i * (sz + gap), -sz / 2, sz, sz));
+    g.restore();
+    boxes.skills = { x: cx - total / 2 * l.s, y: cy - sz / 2 * l.s, w: total * l.s, h: sz * l.s };
+  } else if (o.showSkills && sk.length) {
     const l = lay('skills'), cx = W / 2 + l.dx, cy = G.plate.y - G.plate.h / 2 - 32 + l.dy;
     g.save(); g.translate(cx, cy); g.scale(l.s, l.s);
     g.font = '700 22px "Noto Sans KR", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
